@@ -1,0 +1,48 @@
+.loading-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 200px;
+	color: var(--ion-color-medium);
+}
+
+.empty-feed {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 300px;
+	text-align: center;
+	padding: 2rem;
+}
+
+.empty-feed h3 {
+	margin-bottom: 0.5rem;
+}
+
+.empty-feed p {
+	color: var(--ion-color-medium);
+	margin-bottom: 1.5rem;
+}
+
+.feed-container {
+	padding: 0.5rem;
+}
+
+.feed-stats {
+	display: flex;
+	gap: 1rem;
+	font-size: 0.875rem;
+	color: var(--ion-color-medium);
+}
+
+.gym-location {
+	font-size: 0.875rem;
+	margin-top: 0.5rem;
+}
+
+.feed-time {
+	font-size: 0.75rem;
+	color: var(--ion-color-medium);
+	margin-top: 0.5rem;
+}

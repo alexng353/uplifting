@@ -1,0 +1,103 @@
+.admin-exercise-content {
+	--padding-top: 16px;
+	--padding-start: 16px;
+	--padding-end: 16px;
+	--padding-bottom: 24px;
+}
+
+.admin-exercise-locked {
+	display: grid;
+	gap: 12px;
+	padding: 24px;
+	text-align: center;
+}
+
+.admin-exercise-section {
+	margin-top: 20px;
+	display: grid;
+	gap: 12px;
+}
+
+.section-title {
+	font-weight: 600;
+}
+
+.body-parts-input {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.body-parts-input ion-input {
+	flex: 1;
+}
+
+.body-parts-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.body-parts-suggestions {
+	display: grid;
+	gap: 8px;
+}
+
+.muscle-selection-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.muscle-chip-group {
+	display: grid;
+	gap: 12px;
+}
+
+.muscle-chip-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 6px;
+}
+
+.muscle-list {
+	border: 1px solid var(--ion-color-step-150, #dcdcdc);
+	border-radius: 12px;
+	max-height: 320px;
+	overflow: auto;
+}
+
+.muscle-actions {
+	display: flex;
+	gap: 8px;
+}
+
+.muscle-scientific {
+	color: var(--ion-color-medium);
+}
+
+.muscle-loading {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 16px 0;
+}
+
+.muscle-chart-grid {
+	display: grid;
+	gap: 16px;
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.selection-note {
+	margin-top: 8px;
+	display: block;
+}
+
+.admin-exercise-actions {
+	display: grid;
+	gap: 12px;
+	margin-top: 20px;
+}

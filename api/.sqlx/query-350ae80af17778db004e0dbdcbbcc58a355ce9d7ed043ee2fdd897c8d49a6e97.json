@@ -1,0 +1,76 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT id, name, exercise_type as \"exercise_type: ExerciseType\", \n               official, author_id, description, created_at\n        FROM exercises\n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "exercise_type: ExerciseType",
+        "type_info": {
+          "Custom": {
+            "name": "exercise_type",
+            "kind": {
+              "Enum": [
+                "dumbbell",
+                "barbell",
+                "bodyweight",
+                "machine",
+                "kettlebell",
+                "resistance_band",
+                "cable",
+                "medicine_ball",
+                "plyometric",
+                "plate_loaded_machine"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "official",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 4,
+        "name": "author_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 5,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "350ae80af17778db004e0dbdcbbcc58a355ce9d7ed043ee2fdd897c8d49a6e97"
+}

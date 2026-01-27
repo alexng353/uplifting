@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT m.name\n        FROM muscles m\n        JOIN exercise_muscle_relations emr ON emr.muscle_id = m.id\n        WHERE emr.exercise_id = $1 AND emr.is_primary = true\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "name",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "500c614f4dc5e703efff53e16629cd7553ceda21685ca7575006044a47c4ace3"
+}

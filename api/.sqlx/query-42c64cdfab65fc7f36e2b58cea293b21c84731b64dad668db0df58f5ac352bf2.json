@@ -1,0 +1,82 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT DISTINCT e.id, e.name, e.exercise_type as \"exercise_type: ExerciseType\", \n               e.official, e.author_id, e.description, e.created_at\n        FROM exercises e\n        LEFT JOIN exercise_muscle_relations emr ON emr.exercise_id = e.id\n        LEFT JOIN muscles m ON m.id = emr.muscle_id\n        WHERE \n            (e.official = true OR e.author_id = $1)\n            AND ($2::text IS NULL OR e.exercise_type::text = $2)\n            AND ($3::text IS NULL OR LOWER(m.name) = LOWER($3))\n            AND ($4::text IS NULL OR LOWER(m.major_group) = LOWER($4) OR LOWER(m.minor_group) = LOWER($4))\n            AND ($5::text IS NULL OR LOWER(e.name) LIKE $5)\n        ORDER BY e.name ASC\n        LIMIT $6 OFFSET $7\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "exercise_type: ExerciseType",
+        "type_info": {
+          "Custom": {
+            "name": "exercise_type",
+            "kind": {
+              "Enum": [
+                "dumbbell",
+                "barbell",
+                "bodyweight",
+                "machine",
+                "kettlebell",
+                "resistance_band",
+                "cable",
+                "medicine_ball",
+                "plyometric",
+                "plate_loaded_machine"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "official",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 4,
+        "name": "author_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 5,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "42c64cdfab65fc7f36e2b58cea293b21c84731b64dad668db0df58f5ac352bf2"
+}

@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO user_activity (user_id, last_seen_at, current_workout_id, current_workout_started_at)\n        VALUES ($1, NOW(), $2, $3)\n        ON CONFLICT (user_id) DO UPDATE\n        SET \n            last_seen_at = NOW(),\n            current_workout_id = $2,\n            current_workout_started_at = COALESCE($3, user_activity.current_workout_started_at)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Timestamp"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2bdf93cfa3663e0d5c08eaf09a00edbae3577c72ebb6033257027c16d6f4d98a"
+}

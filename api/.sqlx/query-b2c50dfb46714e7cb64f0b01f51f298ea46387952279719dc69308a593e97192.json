@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM favourite_exercises WHERE user_id = $1 AND exercise_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b2c50dfb46714e7cb64f0b01f51f298ea46387952279719dc69308a593e97192"
+}

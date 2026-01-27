@@ -1,0 +1,70 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT user_id, display_unit, max_workout_duration_minutes, \n               default_rest_timer_seconds, default_privacy, share_gym_location,\n               share_online_status, share_workout_status, share_workout_history\n        FROM user_settings\n        WHERE user_id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "display_unit",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "max_workout_duration_minutes",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "default_rest_timer_seconds",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "default_privacy",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "share_gym_location",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 6,
+        "name": "share_online_status",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 7,
+        "name": "share_workout_status",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 8,
+        "name": "share_workout_history",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "67847bd44b64572b474a26231fab2b738e77b8cec64b873f39a13fe2b5798921"
+}

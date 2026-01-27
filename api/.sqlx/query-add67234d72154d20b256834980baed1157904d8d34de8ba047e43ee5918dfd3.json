@@ -1,0 +1,78 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO user_settings (user_id, display_unit, max_workout_duration_minutes,\n                                   default_rest_timer_seconds, default_privacy, share_gym_location,\n                                   share_online_status, share_workout_status, share_workout_history)\n        VALUES ($1, $2, COALESCE($3, 120), COALESCE($4, 90), COALESCE($5, 'friends'), COALESCE($6, true),\n                COALESCE($7, true), COALESCE($8, true), COALESCE($9, true))\n        ON CONFLICT (user_id) DO UPDATE\n        SET \n            display_unit = COALESCE($2, user_settings.display_unit),\n            max_workout_duration_minutes = COALESCE($3, user_settings.max_workout_duration_minutes),\n            default_rest_timer_seconds = COALESCE($4, user_settings.default_rest_timer_seconds),\n            default_privacy = COALESCE($5, user_settings.default_privacy),\n            share_gym_location = COALESCE($6, user_settings.share_gym_location),\n            share_online_status = COALESCE($7, user_settings.share_online_status),\n            share_workout_status = COALESCE($8, user_settings.share_workout_status),\n            share_workout_history = COALESCE($9, user_settings.share_workout_history)\n        RETURNING user_id, display_unit, max_workout_duration_minutes,\n                  default_rest_timer_seconds, default_privacy, share_gym_location,\n                  share_online_status, share_workout_status, share_workout_history\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "display_unit",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "max_workout_duration_minutes",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "default_rest_timer_seconds",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "default_privacy",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "share_gym_location",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 6,
+        "name": "share_online_status",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 7,
+        "name": "share_workout_status",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 8,
+        "name": "share_workout_history",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Int4",
+        "Int4",
+        "Text",
+        "Bool",
+        "Bool",
+        "Bool",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "add67234d72154d20b256834980baed1157904d8d34de8ba047e43ee5918dfd3"
+}

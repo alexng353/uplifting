@@ -1,0 +1,79 @@
+.week-streak {
+	display: flex;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+
+.week-streak__day {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+.week-streak__label {
+	font-size: 0.625rem;
+	font-weight: 600;
+	color: var(--ion-color-medium);
+	text-transform: uppercase;
+}
+
+.week-streak__dot {
+	border-radius: 50%;
+	transition:
+		background-color 0.2s ease,
+		transform 0.2s ease;
+}
+
+/* Status colors */
+.week-streak__dot--none {
+	background-color: #444; /* Dark gray for no workout */
+}
+
+.week-streak__dot--rest {
+	background-color: #999; /* Light gray for rest day */
+}
+
+.week-streak__dot--workout {
+	background-color: var(--ion-color-primary);
+}
+
+/* Today indicator */
+.week-streak__dot--today {
+	box-shadow:
+		0 0 0 2px var(--ion-background-color),
+		0 0 0 4px var(--ion-color-primary);
+}
+
+/* Future days are slightly faded */
+.week-streak__dot--future {
+	opacity: 0.4;
+}
+
+/* Size variants */
+.week-streak--small .week-streak__dot {
+	width: 0.75rem;
+	height: 0.75rem;
+}
+
+.week-streak--small .week-streak__label {
+	font-size: 0.5rem;
+}
+
+.week-streak--medium .week-streak__dot {
+	width: 1.25rem;
+	height: 1.25rem;
+}
+
+.week-streak--medium .week-streak__label {
+	font-size: 0.625rem;
+}
+
+.week-streak--large .week-streak__dot {
+	width: 2rem;
+	height: 2rem;
+}
+
+.week-streak--large .week-streak__label {
+	font-size: 0.75rem;
+}

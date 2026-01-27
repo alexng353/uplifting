@@ -1,0 +1,79 @@
+.sync-banner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.5rem 1rem;
+	background: var(--ion-color-warning-tint);
+	color: var(--ion-color-warning-contrast);
+}
+
+.sync-banner.offline {
+	background: var(--ion-color-danger-tint);
+	color: var(--ion-color-danger-contrast);
+}
+
+.sync-banner-content {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.me-content {
+	padding: 1rem 16px;
+}
+
+.muscle-chart-header {
+	text-align: center;
+	margin-bottom: 1rem;
+}
+
+.muscle-chart-header h2 {
+	margin: 0;
+	font-size: 1.25rem;
+}
+
+.muscle-chart-container {
+	margin-top: 1rem;
+}
+
+.muscle-legend {
+	display: flex;
+	justify-content: center;
+	gap: 1.5rem;
+	margin-top: 1.5rem;
+	padding: 1rem;
+	background: var(--ion-color-light);
+	border-radius: 8px;
+}
+
+.legend-item {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.75rem;
+}
+
+.legend-color {
+	width: 16px;
+	height: 16px;
+	border-radius: 4px;
+}
+
+.legend-color.untrained {
+	background: var(--ion-color-medium);
+}
+
+.legend-color.secondary {
+	background: var(--ion-color-primary-tint);
+}
+
+.legend-color.primary {
+	background: var(--ion-color-primary);
+}
+
+.last-sync-time {
+	text-align: center;
+	color: var(--ion-color-medium);
+	font-size: 0.75rem;
+	margin-top: 2rem;
+}

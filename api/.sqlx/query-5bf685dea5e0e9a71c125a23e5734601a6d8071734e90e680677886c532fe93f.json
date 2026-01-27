@@ -1,0 +1,68 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO workouts (user_id, name, start_time, privacy, gym_location, kind)\n        VALUES ($1, $2, NOW(), $3, $4, $5)\n        RETURNING id, user_id, name, start_time, end_time, privacy, gym_location, kind\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "start_time",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 4,
+        "name": "end_time",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 5,
+        "name": "privacy",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 6,
+        "name": "gym_location",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 7,
+        "name": "kind",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      true,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "5bf685dea5e0e9a71c125a23e5734601a6d8071734e90e680677886c532fe93f"
+}

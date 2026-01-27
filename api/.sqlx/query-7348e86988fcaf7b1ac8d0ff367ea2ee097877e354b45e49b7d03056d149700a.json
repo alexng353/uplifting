@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO user_sets (user_id, exercise_id, workout_id, profile_id, reps, weight, weight_unit, created_at, side)\n                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n                ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Int4",
+        "Numeric",
+        "Varchar",
+        "Timestamp",
+        "Varchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7348e86988fcaf7b1ac8d0ff367ea2ee097877e354b45e49b7d03056d149700a"
+}

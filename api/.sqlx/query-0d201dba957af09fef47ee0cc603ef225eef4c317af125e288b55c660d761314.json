@@ -1,0 +1,100 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT * FROM (\n            SELECT \n                f.id as \"friendship_id!\",\n                u.id as \"user_id!\",\n                u.username as \"username!\",\n                u.real_name as \"real_name!\",\n                u.avatar_url,\n                f.status as \"status!\",\n                f.created_at as \"created_at!\",\n                ua.last_seen_at,\n                ua.current_workout_id,\n                ua.current_workout_started_at,\n                w.name as current_workout_name,\n                us.share_online_status,\n                us.share_workout_status,\n                us.max_workout_duration_minutes\n            FROM friendships f\n            JOIN users u ON u.id = f.friend_id\n            LEFT JOIN user_activity ua ON ua.user_id = u.id\n            LEFT JOIN user_settings us ON us.user_id = u.id\n            LEFT JOIN workouts w ON w.id = ua.current_workout_id\n            WHERE f.user_id = $1 AND f.status = 'accepted'\n            UNION\n            SELECT \n                f.id as \"friendship_id!\",\n                u.id as \"user_id!\",\n                u.username as \"username!\",\n                u.real_name as \"real_name!\",\n                u.avatar_url,\n                f.status as \"status!\",\n                f.created_at as \"created_at!\",\n                ua.last_seen_at,\n                ua.current_workout_id,\n                ua.current_workout_started_at,\n                w.name as current_workout_name,\n                us.share_online_status,\n                us.share_workout_status,\n                us.max_workout_duration_minutes\n            FROM friendships f\n            JOIN users u ON u.id = f.user_id\n            LEFT JOIN user_activity ua ON ua.user_id = u.id\n            LEFT JOIN user_settings us ON us.user_id = u.id\n            LEFT JOIN workouts w ON w.id = ua.current_workout_id\n            WHERE f.friend_id = $1 AND f.status = 'accepted'\n        ) friends\n        ORDER BY \"created_at!\" DESC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "friendship_id!",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id!",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "username!",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "real_name!",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "avatar_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "status!",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 6,
+        "name": "created_at!",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 7,
+        "name": "last_seen_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 8,
+        "name": "current_workout_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 9,
+        "name": "current_workout_started_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 10,
+        "name": "current_workout_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 11,
+        "name": "share_online_status",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 12,
+        "name": "share_workout_status",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 13,
+        "name": "max_workout_duration_minutes",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "0d201dba957af09fef47ee0cc603ef225eef4c317af125e288b55c660d761314"
+}

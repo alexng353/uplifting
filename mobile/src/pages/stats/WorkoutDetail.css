@@ -1,0 +1,68 @@
+.workout-detail-content {
+	padding: 0.5rem;
+}
+
+.workout-detail-meta {
+	margin-bottom: 1.5rem;
+}
+
+.workout-date {
+	font-size: 1.1rem;
+	font-weight: 600;
+	margin: 0 0 0.25rem 0;
+}
+
+.workout-time {
+	font-size: 0.9rem;
+	color: var(--ion-color-medium);
+	margin: 0 0 0.25rem 0;
+}
+
+.workout-location {
+	font-size: 0.9rem;
+	color: var(--ion-color-medium);
+	margin: 0;
+}
+
+.workout-exercises-list {
+	margin-top: 1.5rem;
+}
+
+.workout-exercises-list h3 {
+	font-size: 1rem;
+	font-weight: 600;
+	margin: 0 0 1rem 0;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--ion-color-medium);
+}
+
+.workout-exercise-item {
+	padding: 0.75rem 0;
+	border-bottom: 1px solid var(--ion-color-light);
+}
+
+.workout-exercise-item:last-child {
+	border-bottom: none;
+}
+
+.workout-exercise-name {
+	font-weight: 600;
+	margin-bottom: 0.25rem;
+}
+
+.workout-exercise-profile {
+	font-weight: 400;
+	color: var(--ion-color-medium);
+}
+
+.workout-exercise-sets {
+	font-size: 0.875rem;
+	color: var(--ion-color-medium);
+}
+
+.edit-danger-zone {
+	margin-top: 3rem;
+	padding-top: 1.5rem;
+	border-top: 1px solid var(--ion-color-light);
+}

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO favourite_exercises (user_id, exercise_id)\n        VALUES ($1, $2)\n        ON CONFLICT (user_id, exercise_id) DO NOTHING\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1928c934837c0befeb732ce5a18444ed09b96173998d991410a904dade569ca7"
+}

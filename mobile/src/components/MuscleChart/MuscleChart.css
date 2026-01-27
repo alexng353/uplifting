@@ -1,0 +1,65 @@
+.muscle-chart-wrapper {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 100%;
+	max-width: 280px;
+	margin: 0 auto;
+	padding: 1rem;
+}
+
+.muscle-chart-svg {
+	width: 100%;
+	height: auto;
+	max-height: 420px;
+	filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+}
+
+/* Muscle color customization */
+.muscle-chart-wrapper {
+	--muscle-color-primary: var(--ion-color-primary);
+	--muscle-color-secondary: var(--ion-color-primary-tint);
+	--muscle-color-none: rgba(var(--ion-color-medium-rgb), 0.25);
+}
+
+/* Smooth transitions for color changes */
+.muscle-chart-svg ellipse,
+.muscle-chart-svg rect,
+.muscle-chart-svg path[data-muscle] {
+	transition:
+		fill 0.3s ease,
+		filter 0.2s ease;
+}
+
+/* Subtle outline for muscle shapes */
+.muscle-chart-svg ellipse[data-muscle],
+.muscle-chart-svg rect[data-muscle],
+.muscle-chart-svg path[data-muscle] {
+	stroke: rgba(0, 0, 0, 0.1);
+	stroke-width: 0.5;
+}
+
+/* Hover effect for interactive charts */
+.muscle-chart-svg ellipse[data-muscle]:hover,
+.muscle-chart-svg rect[data-muscle]:hover,
+.muscle-chart-svg path[data-muscle]:hover {
+	filter: brightness(1.15);
+	cursor: pointer;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+	.muscle-chart-wrapper {
+		--muscle-color-none: rgba(var(--ion-color-medium-rgb), 0.2);
+	}
+
+	.muscle-chart-svg ellipse[data-muscle],
+	.muscle-chart-svg rect[data-muscle],
+	.muscle-chart-svg path[data-muscle] {
+		stroke: rgba(255, 255, 255, 0.1);
+	}
+
+	.muscle-chart-svg {
+		filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.3));
+	}
+}

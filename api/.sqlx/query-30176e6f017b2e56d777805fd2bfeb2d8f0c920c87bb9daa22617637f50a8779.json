@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT s.weight, s.weight_unit, s.reps, s.created_at\n        FROM user_sets s\n        WHERE s.user_id = $1 AND s.exercise_id = $2\n        ORDER BY s.weight DESC, s.reps DESC\n        LIMIT 1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "weight",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 1,
+        "name": "weight_unit",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "reps",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "30176e6f017b2e56d777805fd2bfeb2d8f0c920c87bb9daa22617637f50a8779"
+}

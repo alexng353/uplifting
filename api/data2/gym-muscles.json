@@ -1,0 +1,482 @@
+[
+  {
+    "muscle": "pectoralis major",
+    "location": "chest (left/right)",
+    "category": "upper_body_push",
+    "common_name": "chest",
+    "action": "horizontal adduction, flexion, and internal rotation of the arm",
+    "common_exercises": ["bench press", "push-ups", "dumbbell flyes", "cable crossovers"]
+  },
+  {
+    "muscle": "pectoralis minor",
+    "location": "chest, deep (left/right)",
+    "category": "upper_body_push",
+    "common_name": "chest",
+    "action": "stabilizes scapula, protracts and depresses scapula",
+    "common_exercises": ["dips", "push-ups"]
+  },
+  {
+    "muscle": "anterior deltoid",
+    "location": "shoulder, front (left/right)",
+    "category": "upper_body_push",
+    "common_name": "front delt",
+    "action": "shoulder flexion, internal rotation",
+    "common_exercises": ["overhead press", "front raises", "bench press"]
+  },
+  {
+    "muscle": "lateral deltoid",
+    "location": "shoulder, side (left/right)",
+    "category": "upper_body_push",
+    "common_name": "side delt",
+    "action": "shoulder abduction",
+    "common_exercises": ["lateral raises", "overhead press", "upright rows"]
+  },
+  {
+    "muscle": "posterior deltoid",
+    "location": "shoulder, rear (left/right)",
+    "category": "upper_body_pull",
+    "common_name": "rear delt",
+    "action": "shoulder extension, external rotation, horizontal abduction",
+    "common_exercises": ["face pulls", "reverse flyes", "bent-over rows"]
+  },
+  {
+    "muscle": "triceps brachii, long head",
+    "location": "arm, posterior (left/right)",
+    "category": "upper_body_push",
+    "common_name": "triceps",
+    "action": "elbow extension, shoulder extension",
+    "common_exercises": ["overhead tricep extensions", "dips", "close-grip bench press"]
+  },
+  {
+    "muscle": "triceps brachii, lateral head",
+    "location": "arm, posterior (left/right)",
+    "category": "upper_body_push",
+    "common_name": "triceps",
+    "action": "elbow extension",
+    "common_exercises": ["tricep pushdowns", "dips", "bench press"]
+  },
+  {
+    "muscle": "triceps brachii, medial head",
+    "location": "arm, posterior (left/right)",
+    "category": "upper_body_push",
+    "common_name": "triceps",
+    "action": "elbow extension",
+    "common_exercises": ["tricep pushdowns", "close-grip bench press"]
+  },
+  {
+    "muscle": "latissimus dorsi",
+    "location": "back, lateral (left/right)",
+    "category": "upper_body_pull",
+    "common_name": "lats",
+    "action": "shoulder adduction, extension, and internal rotation",
+    "common_exercises": ["pull-ups", "lat pulldowns", "rows", "deadlifts"]
+  },
+  {
+    "muscle": "trapezius, upper",
+    "location": "back, upper (left/right)",
+    "category": "upper_body_pull",
+    "common_name": "upper traps",
+    "action": "elevates and upwardly rotates scapula",
+    "common_exercises": ["shrugs", "upright rows", "farmer carries"]
+  },
+  {
+    "muscle": "trapezius, middle",
+    "location": "back, middle (left/right)",
+    "category": "upper_body_pull",
+    "common_name": "mid traps",
+    "action": "retracts scapula",
+    "common_exercises": ["face pulls", "rows", "reverse flyes"]
+  },
+  {
+    "muscle": "trapezius, lower",
+    "location": "back, lower (left/right)",
+    "category": "upper_body_pull",
+    "common_name": "lower traps",
+    "action": "depresses and upwardly rotates scapula",
+    "common_exercises": ["Y raises", "prone Y raises", "face pulls"]
+  },
+  {
+    "muscle": "rhomboid major",
+    "location": "back, between scapulae (left/right)",
+    "category": "upper_body_pull",
+    "common_name": "rhomboids",
+    "action": "retracts and elevates scapula",
+    "common_exercises": ["rows", "face pulls", "reverse flyes"]
+  },
+  {
+    "muscle": "rhomboid minor",
+    "location": "back, between scapulae (left/right)",
+    "category": "upper_body_pull",
+    "common_name": "rhomboids",
+    "action": "retracts and elevates scapula",
+    "common_exercises": ["rows", "face pulls", "reverse flyes"]
+  },
+  {
+    "muscle": "erector spinae",
+    "location": "back, spine (left/right)",
+    "category": "upper_body_pull",
+    "common_name": "spinal erectors",
+    "action": "extends and laterally flexes spine",
+    "common_exercises": ["deadlifts", "back extensions", "good mornings", "squats"]
+  },
+  {
+    "muscle": "biceps brachii, long head",
+    "location": "arm, anterior (left/right)",
+    "category": "upper_body_pull",
+    "common_name": "biceps",
+    "action": "elbow flexion, forearm supination",
+    "common_exercises": ["incline curls", "hammer curls", "chin-ups"]
+  },
+  {
+    "muscle": "biceps brachii, short head",
+    "location": "arm, anterior (left/right)",
+    "category": "upper_body_pull",
+    "common_name": "biceps",
+    "action": "elbow flexion, forearm supination",
+    "common_exercises": ["preacher curls", "concentration curls", "chin-ups"]
+  },
+  {
+    "muscle": "brachialis",
+    "location": "arm, anterior deep (left/right)",
+    "category": "upper_body_pull",
+    "common_name": "brachialis",
+    "action": "elbow flexion",
+    "common_exercises": ["hammer curls", "reverse curls", "cross-body curls"]
+  },
+  {
+    "muscle": "brachioradialis",
+    "location": "forearm, lateral (left/right)",
+    "category": "upper_body_pull",
+    "common_name": "forearm",
+    "action": "elbow flexion",
+    "common_exercises": ["hammer curls", "reverse curls"]
+  },
+  {
+    "muscle": "flexor carpi radialis",
+    "location": "forearm, anterior (left/right)",
+    "category": "upper_body_pull",
+    "common_name": "forearm flexors",
+    "action": "wrist flexion and radial deviation",
+    "common_exercises": ["wrist curls", "farmer carries"]
+  },
+  {
+    "muscle": "flexor carpi ulnaris",
+    "location": "forearm, anterior (left/right)",
+    "category": "upper_body_pull",
+    "common_name": "forearm flexors",
+    "action": "wrist flexion and ulnar deviation",
+    "common_exercises": ["wrist curls", "farmer carries"]
+  },
+  {
+    "muscle": "extensor carpi radialis",
+    "location": "forearm, posterior (left/right)",
+    "category": "upper_body_pull",
+    "common_name": "forearm extensors",
+    "action": "wrist extension and radial deviation",
+    "common_exercises": ["reverse wrist curls", "wrist roller"]
+  },
+  {
+    "muscle": "extensor carpi ulnaris",
+    "location": "forearm, posterior (left/right)",
+    "category": "upper_body_pull",
+    "common_name": "forearm extensors",
+    "action": "wrist extension and ulnar deviation",
+    "common_exercises": ["reverse wrist curls", "wrist roller"]
+  },
+  {
+    "muscle": "rectus abdominis",
+    "location": "abdomen, anterior (midline)",
+    "category": "core",
+    "common_name": "abs",
+    "action": "trunk flexion, compression of abdomen",
+    "common_exercises": ["crunches", "leg raises", "planks", "cable crunches"]
+  },
+  {
+    "muscle": "external oblique",
+    "location": "abdomen, lateral (left/right)",
+    "category": "core",
+    "common_name": "obliques",
+    "action": "trunk rotation, lateral flexion, compression of abdomen",
+    "common_exercises": ["woodchops", "side planks", "russian twists", "bicycle crunches"]
+  },
+  {
+    "muscle": "internal oblique",
+    "location": "abdomen, lateral deep (left/right)",
+    "category": "core",
+    "common_name": "obliques",
+    "action": "trunk rotation, lateral flexion, compression of abdomen",
+    "common_exercises": ["woodchops", "side planks", "russian twists"]
+  },
+  {
+    "muscle": "transverse abdominis",
+    "location": "abdomen, deep (midline)",
+    "category": "core",
+    "common_name": "TVA",
+    "action": "compression of abdomen, stabilizes spine",
+    "common_exercises": ["planks", "dead bugs", "vacuum exercises"]
+  },
+  {
+    "muscle": "quadriceps, rectus femoris",
+    "location": "thigh, anterior (left/right)",
+    "category": "lower_body",
+    "common_name": "quads",
+    "action": "knee extension, hip flexion",
+    "common_exercises": ["squats", "leg press", "leg extensions", "lunges"]
+  },
+  {
+    "muscle": "quadriceps, vastus lateralis",
+    "location": "thigh, anterior lateral (left/right)",
+    "category": "lower_body",
+    "common_name": "quads",
+    "action": "knee extension",
+    "common_exercises": ["squats", "leg press", "leg extensions"]
+  },
+  {
+    "muscle": "quadriceps, vastus medialis",
+    "location": "thigh, anterior medial (left/right)",
+    "category": "lower_body",
+    "common_name": "quads",
+    "action": "knee extension, stabilizes patella",
+    "common_exercises": ["squats", "leg extensions", "step-ups"]
+  },
+  {
+    "muscle": "quadriceps, vastus intermedius",
+    "location": "thigh, anterior deep (left/right)",
+    "category": "lower_body",
+    "common_name": "quads",
+    "action": "knee extension",
+    "common_exercises": ["squats", "leg press", "leg extensions"]
+  },
+  {
+    "muscle": "hamstrings, biceps femoris long head",
+    "location": "thigh, posterior lateral (left/right)",
+    "category": "lower_body",
+    "common_name": "hamstrings",
+    "action": "knee flexion, hip extension",
+    "common_exercises": ["romanian deadlifts", "leg curls", "good mornings"]
+  },
+  {
+    "muscle": "hamstrings, biceps femoris short head",
+    "location": "thigh, posterior lateral (left/right)",
+    "category": "lower_body",
+    "common_name": "hamstrings",
+    "action": "knee flexion",
+    "common_exercises": ["leg curls"]
+  },
+  {
+    "muscle": "hamstrings, semitendinosus",
+    "location": "thigh, posterior medial (left/right)",
+    "category": "lower_body",
+    "common_name": "hamstrings",
+    "action": "knee flexion, hip extension, tibial internal rotation",
+    "common_exercises": ["romanian deadlifts", "leg curls", "nordic curls"]
+  },
+  {
+    "muscle": "hamstrings, semimembranosus",
+    "location": "thigh, posterior medial deep (left/right)",
+    "category": "lower_body",
+    "common_name": "hamstrings",
+    "action": "knee flexion, hip extension, tibial internal rotation",
+    "common_exercises": ["romanian deadlifts", "leg curls", "nordic curls"]
+  },
+  {
+    "muscle": "gluteus maximus",
+    "location": "hip, posterior (left/right)",
+    "category": "lower_body",
+    "common_name": "glutes",
+    "action": "hip extension, external rotation, abduction",
+    "common_exercises": ["squats", "hip thrusts", "deadlifts", "lunges", "glute bridges"]
+  },
+  {
+    "muscle": "gluteus medius",
+    "location": "hip, lateral (left/right)",
+    "category": "lower_body",
+    "common_name": "glutes",
+    "action": "hip abduction, internal/external rotation, pelvis stabilization",
+    "common_exercises": ["side-lying abductions", "clamshells", "banded walks", "single-leg exercises"]
+  },
+  {
+    "muscle": "gluteus minimus",
+    "location": "hip, lateral deep (left/right)",
+    "category": "lower_body",
+    "common_name": "glutes",
+    "action": "hip abduction, internal rotation",
+    "common_exercises": ["side-lying abductions", "clamshells", "banded walks"]
+  },
+  {
+    "muscle": "gastrocnemius, medial head",
+    "location": "lower leg, posterior (left/right)",
+    "category": "lower_body",
+    "common_name": "calves",
+    "action": "plantarflexion, knee flexion",
+    "common_exercises": ["standing calf raises", "calf raises on leg press"]
+  },
+  {
+    "muscle": "gastrocnemius, lateral head",
+    "location": "lower leg, posterior (left/right)",
+    "category": "lower_body",
+    "common_name": "calves",
+    "action": "plantarflexion, knee flexion",
+    "common_exercises": ["standing calf raises", "calf raises on leg press"]
+  },
+  {
+    "muscle": "soleus",
+    "location": "lower leg, posterior deep (left/right)",
+    "category": "lower_body",
+    "common_name": "calves",
+    "action": "plantarflexion",
+    "common_exercises": ["seated calf raises"]
+  },
+  {
+    "muscle": "adductor magnus",
+    "location": "thigh, medial (left/right)",
+    "category": "lower_body",
+    "common_name": "adductors",
+    "action": "hip adduction, extension, internal rotation",
+    "common_exercises": ["sumo squats", "copenhagen planks", "adductor machine", "wide stance deadlifts"]
+  },
+  {
+    "muscle": "adductor longus",
+    "location": "thigh, medial (left/right)",
+    "category": "lower_body",
+    "common_name": "adductors",
+    "action": "hip adduction, flexion",
+    "common_exercises": ["adductor machine", "copenhagen planks", "sumo squats"]
+  },
+  {
+    "muscle": "adductor brevis",
+    "location": "thigh, medial deep (left/right)",
+    "category": "lower_body",
+    "common_name": "adductors",
+    "action": "hip adduction, flexion",
+    "common_exercises": ["adductor machine", "sumo squats"]
+  },
+  {
+    "muscle": "gracilis",
+    "location": "thigh, medial (left/right)",
+    "category": "lower_body",
+    "common_name": "adductors",
+    "action": "hip adduction, knee flexion, tibial internal rotation",
+    "common_exercises": ["adductor machine", "sumo squats"]
+  },
+  {
+    "muscle": "tensor fasciae latae",
+    "location": "hip, anterolateral (left/right)",
+    "category": "lower_body",
+    "common_name": "TFL",
+    "action": "hip abduction, flexion, internal rotation",
+    "common_exercises": ["side-lying leg raises", "banded walks"]
+  },
+  {
+    "muscle": "iliopsoas",
+    "location": "hip, anterior deep (left/right)",
+    "category": "lower_body",
+    "common_name": "hip flexors",
+    "action": "hip flexion, external rotation",
+    "common_exercises": ["hanging leg raises", "psoas march", "hip flexor stretches"]
+  },
+  {
+    "muscle": "serratus anterior",
+    "location": "thorax, lateral (left/right)",
+    "category": "scapular",
+    "common_name": "serratus",
+    "action": "protracts and upwardly rotates scapula",
+    "common_exercises": ["push-up plus", "serratus punches", "landmine press", "overhead pressing"]
+  },
+  {
+    "muscle": "levator scapulae",
+    "location": "neck/shoulder (left/right)",
+    "category": "scapular",
+    "common_name": "levator scap",
+    "action": "elevates and downwardly rotates scapula",
+    "common_exercises": ["shrugs", "neck stretches"]
+  },
+  {
+    "muscle": "supraspinatus",
+    "location": "shoulder, rotator cuff (left/right)",
+    "category": "rotator_cuff",
+    "common_name": "rotator cuff",
+    "action": "initiates shoulder abduction, stabilizes humeral head",
+    "common_exercises": ["empty can raises", "full can raises", "band external rotations"]
+  },
+  {
+    "muscle": "infraspinatus",
+    "location": "shoulder, rotator cuff (left/right)",
+    "category": "rotator_cuff",
+    "common_name": "rotator cuff",
+    "action": "external rotation, stabilizes humeral head",
+    "common_exercises": ["external rotations", "face pulls", "Cuban press"]
+  },
+  {
+    "muscle": "teres minor",
+    "location": "shoulder, rotator cuff (left/right)",
+    "category": "rotator_cuff",
+    "common_name": "rotator cuff",
+    "action": "external rotation, stabilizes humeral head",
+    "common_exercises": ["external rotations", "face pulls"]
+  },
+  {
+    "muscle": "subscapularis",
+    "location": "shoulder, rotator cuff anterior (left/right)",
+    "category": "rotator_cuff",
+    "common_name": "rotator cuff",
+    "action": "internal rotation, stabilizes humeral head",
+    "common_exercises": ["internal rotations", "subscap lifts"]
+  },
+  {
+    "muscle": "teres major",
+    "location": "shoulder, posterior (left/right)",
+    "category": "upper_body_pull",
+    "common_name": "teres major",
+    "action": "shoulder adduction, extension, internal rotation",
+    "common_exercises": ["pull-ups", "lat pulldowns", "rows"]
+  },
+  {
+    "muscle": "coracobrachialis",
+    "location": "arm, anterior deep (left/right)",
+    "category": "upper_body_pull",
+    "common_name": "coracobrachialis",
+    "action": "shoulder flexion, adduction",
+    "common_exercises": ["dumbbell flyes", "cable crossovers"]
+  },
+  {
+    "muscle": "tibialis anterior",
+    "location": "lower leg, anterior (left/right)",
+    "category": "lower_body",
+    "common_name": "tibialis",
+    "action": "dorsiflexion, foot inversion",
+    "common_exercises": ["tibialis raises", "heel walks", "banded dorsiflexion"]
+  },
+  {
+    "muscle": "piriformis",
+    "location": "hip, deep posterior (left/right)",
+    "category": "lower_body",
+    "common_name": "piriformis",
+    "action": "external rotation of hip, hip abduction when flexed",
+    "common_exercises": ["clamshells", "seated external rotations", "piriformis stretches"]
+  },
+  {
+    "muscle": "sternocleidomastoid",
+    "location": "neck, anterior (left/right)",
+    "category": "neck",
+    "common_name": "SCM",
+    "action": "neck flexion, rotation, lateral flexion",
+    "common_exercises": ["neck curls", "neck harness work"]
+  },
+  {
+    "muscle": "splenius capitis",
+    "location": "neck, posterior (left/right)",
+    "category": "neck",
+    "common_name": "neck extensors",
+    "action": "neck extension, rotation, lateral flexion",
+    "common_exercises": ["neck extensions", "neck harness work"]
+  },
+  {
+    "muscle": "semispinalis capitis",
+    "location": "neck, posterior deep (left/right)",
+    "category": "neck",
+    "common_name": "neck extensors",
+    "action": "neck extension, lateral flexion",
+    "common_exercises": ["neck extensions", "neck harness work"]
+  }
+]

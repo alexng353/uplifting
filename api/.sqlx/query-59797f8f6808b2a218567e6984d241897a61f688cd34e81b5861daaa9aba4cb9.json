@@ -1,0 +1,44 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO exercises (name, exercise_type, official, author_id, description)\n        VALUES ($1, $2, $3, $4, $5)\n        RETURNING id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        {
+          "Custom": {
+            "name": "exercise_type",
+            "kind": {
+              "Enum": [
+                "dumbbell",
+                "barbell",
+                "bodyweight",
+                "machine",
+                "kettlebell",
+                "resistance_band",
+                "cable",
+                "medicine_ball",
+                "plyometric",
+                "plate_loaded_machine"
+              ]
+            }
+          }
+        },
+        "Bool",
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "59797f8f6808b2a218567e6984d241897a61f688cd34e81b5861daaa9aba4cb9"
+}

@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT COUNT(DISTINCT e.id)\n        FROM exercises e\n        LEFT JOIN exercise_muscle_relations emr ON emr.exercise_id = e.id\n        LEFT JOIN muscles m ON m.id = emr.muscle_id\n        WHERE \n            (e.official = true OR e.author_id = $1)\n            AND ($2::text IS NULL OR e.exercise_type::text = $2)\n            AND ($3::text IS NULL OR LOWER(m.name) = LOWER($3))\n            AND ($4::text IS NULL OR LOWER(m.major_group) = LOWER($4) OR LOWER(m.minor_group) = LOWER($4))\n            AND ($5::text IS NULL OR LOWER(e.name) LIKE $5)\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "bfff31b5f80e12bf0455651404d1df9bebd9f0daf85cb9471edbeab113090102"
+}

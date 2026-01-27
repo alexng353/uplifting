@@ -1,0 +1,12 @@
+target/
+.git/
+.gitignore
+*.md
+LICENSE
+Justfile
+db.just
+docker-compose.yml
+data/
+data2/
+gen.ts
+openapi.json

@@ -1,0 +1,51 @@
+.stats-content {
+	padding: 0.5rem;
+}
+
+.week-stats {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 1rem;
+	margin-top: 1rem;
+}
+
+.stat-item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+}
+
+.stat-value {
+	font-size: 2rem;
+	font-weight: 700;
+	color: var(--ion-color-primary);
+}
+
+.stat-label {
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	color: var(--ion-color-medium);
+}
+
+.section-title {
+	padding: 1rem;
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 600;
+}
+
+.empty-state {
+	text-align: center;
+	padding: 2rem;
+	color: var(--ion-color-medium);
+}
+
+.workout-duration {
+	font-size: 0.875rem;
+	color: var(--ion-color-medium);
+}
+
+.pending-workout {
+	--background: var(--ion-color-warning-tint);
+}

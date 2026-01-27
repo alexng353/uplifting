@@ -1,0 +1,34 @@
+_default:
+    just --list
+
+install:
+    bun install
+
+dev:
+  bun scripts/watch-openapi.ts &
+  bun run vite
+
+dev-vite:
+  bun run vite
+
+dev-watch:
+  bun scripts/watch-openapi.ts
+
+build:
+  bun run tsc
+  bun run vite build
+
+preview:
+  bun run vite preview
+
+test-e2e:
+  bun run cypress run
+
+test-unit:
+  bun run vitest
+
+lint:
+  bun run biome check --write
+
+postinstall:
+  bun scripts/postinstall.ts

@@ -1,0 +1,72 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            w.id,\n            w.name,\n            w.start_time,\n            w.end_time,\n            EXTRACT(EPOCH FROM (COALESCE(w.end_time, NOW()) - w.start_time))::bigint / 60 as \"duration_minutes!\",\n            COALESCE((SELECT SUM(s.weight * s.reps) FROM user_sets s WHERE s.workout_id = w.id), 0) as \"total_volume!\",\n            (SELECT COUNT(*) FROM user_sets s WHERE s.workout_id = w.id)::bigint as \"total_sets!\",\n            (SELECT COALESCE(SUM(s.reps), 0) FROM user_sets s WHERE s.workout_id = w.id)::bigint as \"total_reps!\",\n            (SELECT COUNT(DISTINCT s.exercise_id) FROM user_sets s WHERE s.workout_id = w.id)::bigint as \"exercises_count!\"\n        FROM workouts w\n        WHERE w.user_id = $1 \n          AND w.end_time IS NOT NULL\n          AND w.kind = 'workout'\n          AND w.privacy IN ('friends', 'public')\n        ORDER BY w.end_time DESC\n        LIMIT $2 OFFSET $3\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "start_time",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 3,
+        "name": "end_time",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 4,
+        "name": "duration_minutes!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
+        "name": "total_volume!",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 6,
+        "name": "total_sets!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 7,
+        "name": "total_reps!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 8,
+        "name": "exercises_count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      true,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "e8a043bbfcb17443dd70488bf1fe50b49ae253bbc7a7edb68876d91c15c431ca"
+}

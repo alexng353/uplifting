@@ -1,0 +1,402 @@
+.start-workout-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	text-align: center;
+	padding: 2rem;
+}
+
+.start-workout-container h2 {
+	margin-bottom: 1rem;
+}
+
+.start-workout-container p {
+	color: var(--ion-color-medium);
+	margin-bottom: 2rem;
+}
+
+.rest-day-button {
+	margin-top: 1rem;
+}
+
+.alert-button.workout-cancel-alert-button-no,
+.alert-button.workout-cancel-alert-button-no .alert-button-inner {
+	color: var(--ion-color-primary);
+}
+
+.alert-button.workout-cancel-alert-button-cancel,
+.alert-button.workout-cancel-alert-button-cancel .alert-button-inner {
+	color: var(--ion-color-danger);
+}
+
+.workout-swiper {
+	height: 100%;
+}
+
+.workout-swiper .swiper-slide {
+	height: 100%;
+	overflow-y: auto;
+}
+
+.exercise-slide {
+	padding: 1rem;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.exercise-slide-header {
+	margin-bottom: 1rem;
+}
+
+.exercise-slide-header h2 {
+	margin: 0 0 0.5rem 0;
+}
+
+.exercise-slide-header p {
+	margin: 0;
+	color: var(--ion-color-medium);
+	font-size: 0.875rem;
+}
+
+.exercise-slide-controls {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	margin-top: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.exercise-remove-button {
+	--background: var(--ion-color-danger);
+	--background-activated: var(--ion-color-danger-shade);
+	--background-hover: var(--ion-color-danger-shade);
+	--color: var(--ion-color-danger-contrast);
+	--padding-start: 1rem;
+	--padding-end: 1rem;
+	--border-radius: 8px;
+	font-weight: 600;
+}
+
+.sets-container {
+	flex: 1;
+	overflow-y: auto;
+	padding-bottom: 160px; /* Space for timer + action buttons */
+}
+
+/* Normal mode: set | reps | weight | unit */
+.set-row {
+	display: grid;
+	grid-template-columns: 40px 1fr 1fr 50px;
+	gap: 0.5rem;
+	align-items: center;
+	padding: 0.5rem 0;
+	border-bottom: 1px solid var(--ion-color-light);
+}
+
+.set-row.header {
+	font-weight: 600;
+	font-size: 0.75rem;
+	color: var(--ion-color-medium);
+	text-transform: uppercase;
+	position: sticky;
+	top: 0;
+	background: var(--ion-background-color);
+	z-index: 10;
+}
+
+/* Unilateral mode: set | side | reps | weight | unit */
+.set-row.unilateral-header {
+	grid-template-columns: 40px 40px 1fr 1fr 50px;
+}
+
+.set-row.unilateral-row {
+	grid-template-columns: 40px 40px 1fr 1fr 50px;
+}
+
+.unilateral-group {
+	border-bottom: 1px solid var(--ion-color-light);
+	padding-bottom: 0.25rem;
+	margin-bottom: 0.25rem;
+}
+
+.unilateral-group .set-row {
+	border-bottom: none;
+}
+
+.unilateral-group .left-row {
+	padding-top: 0;
+}
+
+.side-label {
+	font-weight: 700;
+	font-size: 0.875rem;
+	text-align: center;
+}
+
+.side-label.right {
+	color: var(--ion-color-primary);
+}
+
+.side-label.left {
+	color: var(--ion-color-secondary);
+}
+
+/* Input styling in set rows */
+.set-row ion-input {
+	--border-width: 0;
+	--highlight-color-valid: transparent;
+	--highlight-color-invalid: transparent;
+	--background: transparent;
+	--highlight-color-focused: var(--ion-color-primary);
+	border-bottom: 1px solid transparent;
+	transition: border-color 0.15s ease;
+}
+
+.set-row ion-input.has-focus {
+	border-bottom-color: var(--ion-color-primary);
+}
+
+.set-row ion-input::part(native) {
+	border: none;
+	outline: none;
+	caret-color: var(--ion-color-primary);
+}
+
+.set-number {
+	text-align: center;
+	font-weight: 600;
+}
+
+.unit-label {
+	font-size: 0.75rem;
+	color: var(--ion-color-medium);
+	text-align: center;
+}
+
+/* Set action buttons (add/duplicate/remove) pinned to bottom */
+.set-actions-container {
+	position: fixed;
+	bottom: 50px; /* Above tab bar */
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 100;
+	display: flex;
+	gap: 0.75rem;
+	transition: opacity 0.15s ease;
+}
+
+.set-actions-container.is-hidden {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.set-action-button {
+	--padding-start: 1rem;
+	--padding-end: 1rem;
+	--border-width: 2px;
+	--border-radius: 6px;
+	--background: #000;
+}
+
+.set-action-button ion-icon {
+	font-size: 1.5rem;
+}
+
+/* Rest Timer */
+.rest-timer-container {
+	position: fixed;
+	bottom: 108px; /* Above action buttons */
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 100;
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	background: var(--ion-background-color);
+	padding: 0.5rem 1rem;
+	border-radius: 8px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	transition: opacity 0.15s ease;
+}
+
+.rest-timer-container.is-hidden {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.rest-timer-display {
+	font-family: "SF Mono", "Menlo", "Monaco", monospace;
+	font-size: 1.5rem;
+	font-weight: 600;
+	min-width: 80px;
+	text-align: center;
+	color: var(--ion-text-color);
+}
+
+.rest-timer-button {
+	--padding-start: 0.75rem;
+	--padding-end: 0.75rem;
+	--border-radius: 6px;
+	margin: 0;
+}
+
+.rest-timer-button ion-icon {
+	font-size: 1.25rem;
+}
+
+/* Add button - blue outline */
+.set-action-button.add-button {
+	--color: var(--ion-color-primary);
+	--border-color: var(--ion-color-primary);
+	--background-activated: var(
+		--ion-color-primary-tint,
+		rgba(56, 128, 255, 0.2)
+	);
+	--color-activated: var(--ion-color-primary);
+}
+
+/* Duplicate button - green outline */
+.set-action-button.duplicate-button {
+	--color: var(--ion-color-success);
+	--border-color: var(--ion-color-success);
+	--background-activated: var(
+		--ion-color-success-tint,
+		rgba(45, 211, 111, 0.2)
+	);
+	--color-activated: var(--ion-color-success);
+}
+
+/* Remove button - red outline */
+.set-action-button.remove-button {
+	--color: var(--ion-color-danger);
+	--border-color: var(--ion-color-danger);
+	--background-activated: var(--ion-color-danger-tint, rgba(235, 68, 90, 0.2));
+	--color-activated: var(--ion-color-danger);
+}
+
+.add-exercise-slide {
+	padding: 1rem;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.add-exercise-slide h2 {
+	margin: 0 0 1rem 0;
+}
+
+.exercise-list-container {
+	flex: 1;
+	overflow-y: auto;
+}
+
+.summary-content {
+	padding: 1rem;
+}
+
+.summary-stats {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 1rem;
+	margin: 1rem 0;
+}
+
+.summary-stat {
+	background: var(--ion-color-light);
+	padding: 1rem;
+	border-radius: 8px;
+	text-align: center;
+}
+
+.summary-stat-value {
+	font-size: 1.5rem;
+	font-weight: 700;
+}
+
+.summary-stat-label {
+	font-size: 0.75rem;
+	color: var(--ion-color-medium);
+	text-transform: uppercase;
+}
+
+.summary-exercises {
+	margin-top: 1rem;
+}
+
+.summary-exercise {
+	padding: 0.75rem 0;
+	border-bottom: 1px solid var(--ion-color-light);
+}
+
+.summary-exercise-name {
+	font-weight: 600;
+}
+
+.summary-exercise-sets {
+	font-size: 0.875rem;
+	color: var(--ion-color-medium);
+}
+
+.summary-buttons {
+	display: flex;
+	gap: 1rem;
+	margin-top: 2rem;
+}
+
+.summary-buttons ion-button {
+	flex: 1;
+}
+
+/* Pagination dots */
+.workout-swiper .swiper-pagination {
+	bottom: 10px;
+}
+
+.workout-swiper .swiper-pagination-bullet {
+	background: var(--ion-color-medium);
+	opacity: 0.5;
+}
+
+.workout-swiper .swiper-pagination-bullet-active {
+	background: var(--ion-color-primary);
+	opacity: 1;
+}
+
+/* Exercise meta row (type + profiles) */
+.exercise-meta {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	font-size: 0.875rem;
+	color: var(--ion-color-medium);
+}
+
+.profiles-label {
+	font-size: 0.75rem;
+	color: var(--ion-color-primary);
+}
+
+/* Exercise list loading/empty states */
+.exercise-list-loading,
+.exercise-list-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 2rem;
+	color: var(--ion-color-medium);
+}
+
+.exercise-list-loading ion-spinner {
+	margin-bottom: 1rem;
+}
+
+/* Favourite button */
+.favourite-button {
+	--padding-start: 0;
+	--padding-end: 0;
+	margin: 0;
+}

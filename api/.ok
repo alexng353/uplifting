@@ -1,0 +1,4 @@
+migrate: sqlx migrate run
+build: cargo build --release
+run: cargo run
+dev: cargo watch -x run -i "openapi.json"
