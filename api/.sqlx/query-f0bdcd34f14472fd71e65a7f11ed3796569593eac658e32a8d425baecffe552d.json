@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT \n            w.id as workout_id,\n            u.id as user_id,\n            u.username,\n            u.real_name,\n            u.avatar_url,\n            w.name as workout_name,\n            w.start_time,\n            w.end_time,\n            EXTRACT(EPOCH FROM (COALESCE(w.end_time, NOW()) - w.start_time))::bigint / 60 as duration_minutes,\n            (SELECT SUM(s.weight * s.reps) FROM user_sets s WHERE s.workout_id = w.id) as total_volume,\n            (SELECT COUNT(*) FROM user_sets s WHERE s.workout_id = w.id) as total_sets,\n            w.gym_location\n        FROM workouts w\n        JOIN users u ON u.id = w.user_id\n        WHERE w.privacy = 'friends'\n          AND w.end_time IS NOT NULL\n          AND (\n            -- Friends where I sent the request\n            EXISTS (\n                SELECT 1 FROM friendships f \n                WHERE f.user_id = $1 AND f.friend_id = w.user_id AND f.status = 'accepted'\n            )\n            OR\n            -- Friends where they sent the request\n            EXISTS (\n                SELECT 1 FROM friendships f \n                WHERE f.friend_id = $1 AND f.user_id = w.user_id AND f.status = 'accepted'\n            )\n          )\n        ORDER BY w.end_time DESC\n        LIMIT $2 OFFSET $3\n        ",
+  "query": "\n        SELECT \n            w.id as workout_id,\n            u.id as user_id,\n            u.username,\n            u.real_name,\n            u.avatar_url,\n            w.name as workout_name,\n            w.start_time,\n            w.end_time,\n            EXTRACT(EPOCH FROM (COALESCE(w.end_time, NOW()) - w.start_time))::bigint / 60 as duration_minutes,\n            (SELECT SUM(s.weight * s.reps) FROM user_sets s WHERE s.workout_id = w.id) as total_volume,\n            (SELECT COUNT(*) FILTER (WHERE s.side IS NULL OR s.side = 'R') FROM user_sets s WHERE s.workout_id = w.id) as total_sets,\n            w.gym_location\n        FROM workouts w\n        JOIN users u ON u.id = w.user_id\n        WHERE w.privacy = 'friends'\n          AND w.end_time IS NOT NULL\n          AND (\n            -- Friends where I sent the request\n            EXISTS (\n                SELECT 1 FROM friendships f \n                WHERE f.user_id = $1 AND f.friend_id = w.user_id AND f.status = 'accepted'\n            )\n            OR\n            -- Friends where they sent the request\n            EXISTS (\n                SELECT 1 FROM friendships f \n                WHERE f.friend_id = $1 AND f.user_id = w.user_id AND f.status = 'accepted'\n            )\n          )\n        ORDER BY w.end_time DESC\n        LIMIT $2 OFFSET $3\n        ",
   "describe": {
     "columns": [
       {
@@ -86,5 +86,5 @@
       true
     ]
   },
-  "hash": "931f58850eafbbea80396e0b7d5b0a281d553433645db955f587e060c8a80ef6"
+  "hash": "f0bdcd34f14472fd71e65a7f11ed3796569593eac658e32a8d425baecffe552d"
 }
