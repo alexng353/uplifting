@@ -7,6 +7,16 @@ use uuid::Uuid;
 
 use super::sets::UserSet;
 
+/// A group of sets for a single exercise within a workout
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct WorkoutExerciseGroup {
+    pub exercise_id: Uuid,
+    pub profile_id: Option<Uuid>,
+    /// Whether this exercise was performed unilaterally (sets have L/R sides)
+    pub is_unilateral: bool,
+    pub sets: Vec<UserSet>,
+}
+
 /// The kind of workout entry
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Default, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -51,7 +61,7 @@ pub struct Workout {
 pub struct WorkoutWithSets {
     #[serde(flatten)]
     pub workout: Workout,
-    pub sets: Vec<UserSet>,
+    pub exercises: Vec<WorkoutExerciseGroup>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT \n            w.id,\n            w.name,\n            w.start_time,\n            w.end_time,\n            COALESCE(EXTRACT(EPOCH FROM (COALESCE(w.end_time, NOW()) - w.start_time)) / 60, 0)::bigint as \"duration_minutes!\",\n            COALESCE(SUM(s.weight * s.reps), 0) as \"total_volume!\",\n            COUNT(s.id) as \"total_sets!\",\n            COALESCE(SUM(s.reps), 0) as \"total_reps!\",\n            COUNT(DISTINCT s.exercise_id) as \"exercises_count!\"\n        FROM workouts w\n        LEFT JOIN user_sets s ON s.workout_id = w.id\n        WHERE w.id = $1\n        GROUP BY w.id\n        ",
+  "query": "\n        SELECT \n            w.id,\n            w.name,\n            w.start_time,\n            w.end_time,\n            EXTRACT(EPOCH FROM (COALESCE(w.end_time, NOW()) - w.start_time))::bigint / 60 as \"duration_minutes!\",\n            COALESCE((SELECT SUM(s.weight * s.reps) FROM user_sets s WHERE s.workout_id = w.id), 0) as \"total_volume!\",\n            (SELECT COUNT(*) FILTER (WHERE s.side IS NULL OR s.side = 'R') FROM user_sets s WHERE s.workout_id = w.id)::bigint as \"total_sets!\",\n            (SELECT COALESCE(SUM(s.reps), 0) FROM user_sets s WHERE s.workout_id = w.id)::bigint as \"total_reps!\",\n            (SELECT COUNT(DISTINCT s.exercise_id) FROM user_sets s WHERE s.workout_id = w.id)::bigint as \"exercises_count!\"\n        FROM workouts w\n        WHERE w.user_id = $1 \n          AND w.end_time IS NOT NULL\n          AND w.kind = 'workout'\n          AND w.privacy IN ('friends', 'public')\n        ORDER BY w.end_time DESC\n        LIMIT $2 OFFSET $3\n        ",
   "describe": {
     "columns": [
       {
@@ -51,7 +51,9 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "Uuid",
+        "Int8",
+        "Int8"
       ]
     },
     "nullable": [
@@ -66,5 +68,5 @@
       null
     ]
   },
-  "hash": "b1048b79aaefdf2690f1d31be4d0491ef7c147b71373de9bdb0ddc877c6e1a38"
+  "hash": "b1b0286fcfd5f97a57f63004c7b3f7f038c14b6aece4ab5227855e15fb5c45b4"
 }

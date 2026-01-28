@@ -1,2902 +1,2565 @@
 {
-  "openapi": "3.1.0",
-  "info": {
-    "title": "api",
-    "description": "",
-    "license": {
-      "name": ""
-    },
-    "version": "0.1.0"
-  },
-  "paths": {
-    "/": {
-      "get": {
-        "operationId": "index",
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/.well-known/health-check": {
-      "get": {
-        "summary": "Get health of the API.",
-        "operationId": "health_check",
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/auth/change-password": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "Change password with verification code",
-        "operationId": "change_password",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChangePasswordBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Password changed successfully"
-          },
-          "401": {
-            "description": "Invalid or expired code"
-          }
-        }
-      }
-    },
-    "/api/v1/auth/login": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "Login",
-        "operationId": "login",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/auth/request-password-change": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "Request a password change verification code",
-        "operationId": "request_password_change",
-        "responses": {
-          "200": {
-            "description": "Verification code sent to email"
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      }
-    },
-    "/api/v1/auth/send-verification": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "Send email verification code",
-        "operationId": "send_verification",
-        "responses": {
-          "200": {
-            "description": "Verification code sent to email"
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      }
-    },
-    "/api/v1/auth/signup": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "Sign up",
-        "operationId": "signup",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SignupBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/auth/verify-email": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "Verify email with code",
-        "operationId": "verify_email",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifyEmailBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Email verified successfully"
-          },
-          "401": {
-            "description": "Invalid or expired code"
-          }
-        }
-      }
-    },
-    "/api/v1/exercises": {
-      "get": {
-        "tags": [
-          "exercises"
-        ],
-        "summary": "List exercises with optional filters",
-        "operationId": "list_exercises",
-        "parameters": [
-          {
-            "name": "exercise_type",
-            "in": "query",
-            "description": "Filter by exercise type",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "muscle",
-            "in": "query",
-            "description": "Filter by muscle name",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "muscle_group",
-            "in": "query",
-            "description": "Filter by muscle group",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "in": "query",
-            "description": "Search by name",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "Limit results (default: 50)",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "Offset for pagination",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExerciseListResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      }
-    },
-    "/api/v1/exercises/create": {
-      "post": {
-        "tags": [
-          "exercises"
-        ],
-        "operationId": "create",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateExerciseBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      }
-    },
-    "/api/v1/exercises/favourites": {
-      "get": {
-        "tags": [
-          "exercises"
-        ],
-        "summary": "Get all favourite exercise IDs",
-        "operationId": "list_favourites",
-        "responses": {
-          "200": {
-            "description": "List of favourite exercise IDs",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "format": "uuid"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      }
-    },
-    "/api/v1/exercises/profiles": {
-      "get": {
-        "tags": [
-          "exercises"
-        ],
-        "summary": "Get all profiles for the current user",
-        "operationId": "get_all_profiles",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ExerciseProfile"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      }
-    },
-    "/api/v1/exercises/types": {
-      "get": {
-        "tags": [
-          "exercises"
-        ],
-        "operationId": "list_types",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ExerciseType"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/exercises/{exercise_id}": {
-      "get": {
-        "tags": [
-          "exercises"
-        ],
-        "summary": "Get exercise details with user's personal record",
-        "operationId": "get_exercise",
-        "parameters": [
-          {
-            "name": "exercise_id",
-            "in": "path",
-            "description": "Exercise ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExerciseWithDetails"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          },
-          "404": {
-            "description": "Exercise not found"
-          }
-        }
-      }
-    },
-    "/api/v1/exercises/{exercise_id}/favourite": {
-      "post": {
-        "tags": [
-          "exercises"
-        ],
-        "summary": "Add exercise to favourites",
-        "operationId": "add_favourite",
-        "parameters": [
-          {
-            "name": "exercise_id",
-            "in": "path",
-            "description": "Exercise ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Added to favourites"
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "exercises"
-        ],
-        "summary": "Remove exercise from favourites",
-        "operationId": "remove_favourite",
-        "parameters": [
-          {
-            "name": "exercise_id",
-            "in": "path",
-            "description": "Exercise ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Removed from favourites"
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      }
-    },
-    "/api/v1/exercises/{exercise_id}/profiles": {
-      "get": {
-        "tags": [
-          "exercises"
-        ],
-        "summary": "Get user's profiles for an exercise",
-        "operationId": "get_profiles",
-        "parameters": [
-          {
-            "name": "exercise_id",
-            "in": "path",
-            "description": "Exercise ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ExerciseProfile"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "exercises"
-        ],
-        "summary": "Create a new profile for an exercise",
-        "operationId": "create_profile",
-        "parameters": [
-          {
-            "name": "exercise_id",
-            "in": "path",
-            "description": "Exercise ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateProfileBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExerciseProfile"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      }
-    },
-    "/api/v1/friends": {
-      "get": {
-        "tags": [
-          "friends"
-        ],
-        "summary": "List accepted friends with activity status",
-        "operationId": "list_friends",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/FriendWithStatus"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "friends"
-        ],
-        "summary": "Send a friend request",
-        "operationId": "send_request",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SendFriendRequestBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Friendship"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Cannot send request to self or already exists"
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      }
-    },
-    "/api/v1/friends/activity": {
-      "post": {
-        "tags": [
-          "friends"
-        ],
-        "summary": "Update user activity (heartbeat)",
-        "description": "Call this periodically to update online status and current workout.\nShould be called every ~60 seconds when app is open.",
-        "operationId": "update_activity",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateActivityBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Activity updated"
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      }
-    },
-    "/api/v1/friends/feed": {
-      "get": {
-        "tags": [
-          "friends"
-        ],
-        "summary": "Get friends' activity feed",
-        "operationId": "get_feed",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "Number of items (default: 20)",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "Offset for pagination",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/FeedItem"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      }
-    },
-    "/api/v1/friends/requests": {
-      "get": {
-        "tags": [
-          "friends"
-        ],
-        "summary": "List pending friend requests (received)",
-        "operationId": "list_requests",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/FriendWithProfile"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      }
-    },
-    "/api/v1/friends/{friend_id}/workouts": {
-      "get": {
-        "tags": [
-          "friends"
-        ],
-        "summary": "Get a friend's workout history",
-        "description": "Returns the friend's workouts if they have sharing enabled and you are friends.",
-        "operationId": "get_friend_workouts",
-        "parameters": [
-          {
-            "name": "friend_id",
-            "in": "path",
-            "description": "Friend's user ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FriendWorkoutsResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          },
-          "403": {
-            "description": "Not friends or sharing disabled"
-          }
-        }
-      }
-    },
-    "/api/v1/friends/{friendship_id}": {
-      "put": {
-        "tags": [
-          "friends"
-        ],
-        "summary": "Respond to a friend request (accept, decline, or block)",
-        "operationId": "respond_request",
-        "parameters": [
-          {
-            "name": "friendship_id",
-            "in": "path",
-            "description": "Friendship ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RespondFriendRequestBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Friendship"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          },
-          "404": {
-            "description": "Request not found"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "friends"
-        ],
-        "summary": "Remove a friend (unfriend)",
-        "operationId": "remove_friend",
-        "parameters": [
-          {
-            "name": "friendship_id",
-            "in": "path",
-            "description": "Friendship ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Friend removed"
-          },
-          "401": {
-            "description": "Not authenticated"
-          },
-          "404": {
-            "description": "Friendship not found"
-          }
-        }
-      }
-    },
-    "/api/v1/muscles/all": {
-      "get": {
-        "tags": [
-          "muscles"
-        ],
-        "operationId": "get_all",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Muscle"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/muscles/create": {
-      "post": {
-        "tags": [
-          "muscles"
-        ],
-        "operationId": "create",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateMuscleBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/muscles/groups": {
-      "get": {
-        "tags": [
-          "muscles"
-        ],
-        "operationId": "get_groups",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MuscleGroups"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/sets/workouts/{workout_id}/sets": {
-      "post": {
-        "tags": [
-          "sets"
-        ],
-        "summary": "Add a set to a workout",
-        "operationId": "create_set",
-        "parameters": [
-          {
-            "name": "workout_id",
-            "in": "path",
-            "description": "Workout ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateSetBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserSet"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          },
-          "404": {
-            "description": "Workout not found"
-          }
-        }
-      }
-    },
-    "/api/v1/sets/{set_id}": {
-      "put": {
-        "tags": [
-          "sets"
-        ],
-        "summary": "Update a set",
-        "operationId": "update_set",
-        "parameters": [
-          {
-            "name": "set_id",
-            "in": "path",
-            "description": "Set ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateSetBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserSet"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          },
-          "404": {
-            "description": "Set not found"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "sets"
-        ],
-        "summary": "Delete a set",
-        "operationId": "delete_set",
-        "parameters": [
-          {
-            "name": "set_id",
-            "in": "path",
-            "description": "Set ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Set deleted"
-          },
-          "401": {
-            "description": "Not authenticated"
-          },
-          "404": {
-            "description": "Set not found"
-          }
-        }
-      }
-    },
-    "/api/v1/sync/workout": {
-      "post": {
-        "tags": [
-          "sync"
-        ],
-        "summary": "Sync a completed workout from offline storage",
-        "operationId": "sync_workout",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SyncWorkoutRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SyncWorkoutResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      }
-    },
-    "/api/v1/users/me": {
-      "get": {
-        "tags": [
-          "users"
-        ],
-        "summary": "Get current user profile",
-        "operationId": "get_me",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserProfile"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "users"
-        ],
-        "summary": "Update current user profile",
-        "operationId": "update_me",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateProfileBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserProfile"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "users"
-        ],
-        "summary": "Delete current user account",
-        "operationId": "delete_me",
-        "responses": {
-          "200": {
-            "description": "Account deleted"
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      }
-    },
-    "/api/v1/users/me/settings": {
-      "get": {
-        "tags": [
-          "users"
-        ],
-        "summary": "Get user settings",
-        "operationId": "get_settings",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserSettings"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "users"
-        ],
-        "summary": "Update user settings",
-        "operationId": "update_settings",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateSettingsBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserSettings"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      }
-    },
-    "/api/v1/users/search": {
-      "get": {
-        "tags": [
-          "users"
-        ],
-        "summary": "Search users by username",
-        "operationId": "search_users",
-        "parameters": [
-          {
-            "name": "q",
-            "in": "query",
-            "description": "Search query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserSearchResult"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      }
-    },
-    "/api/v1/workouts": {
-      "get": {
-        "tags": [
-          "workouts"
-        ],
-        "summary": "List user's workouts with pagination",
-        "operationId": "list_workouts",
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Page number (default: 1)",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "per_page",
-            "in": "query",
-            "description": "Items per page (default: 20)",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WorkoutListResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "workouts"
-        ],
-        "summary": "Create a new workout",
-        "operationId": "create_workout",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateWorkoutBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Workout"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        }
-      }
-    },
-    "/api/v1/workouts/{workout_id}": {
-      "get": {
-        "tags": [
-          "workouts"
-        ],
-        "summary": "Get a workout with all its sets",
-        "operationId": "get_workout",
-        "parameters": [
-          {
-            "name": "workout_id",
-            "in": "path",
-            "description": "Workout ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WorkoutWithSets"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          },
-          "404": {
-            "description": "Workout not found"
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "workouts"
-        ],
-        "summary": "Update a workout",
-        "operationId": "update_workout",
-        "parameters": [
-          {
-            "name": "workout_id",
-            "in": "path",
-            "description": "Workout ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateWorkoutBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Workout"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          },
-          "404": {
-            "description": "Workout not found"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "workouts"
-        ],
-        "summary": "Delete a workout and all its sets",
-        "operationId": "delete_workout",
-        "parameters": [
-          {
-            "name": "workout_id",
-            "in": "path",
-            "description": "Workout ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Workout deleted"
-          },
-          "401": {
-            "description": "Not authenticated"
-          },
-          "404": {
-            "description": "Workout not found"
-          }
-        }
-      }
-    },
-    "/api/v1/workouts/{workout_id}/summary": {
-      "get": {
-        "tags": [
-          "workouts"
-        ],
-        "summary": "Get workout summary with computed stats",
-        "operationId": "workout_summary",
-        "parameters": [
-          {
-            "name": "workout_id",
-            "in": "path",
-            "description": "Workout ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WorkoutSummary"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          },
-          "404": {
-            "description": "Workout not found"
-          }
-        }
-      }
-    }
-  },
-  "components": {
-    "schemas": {
-      "ChangePasswordBody": {
-        "type": "object",
-        "required": [
-          "code",
-          "new_password"
-        ],
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "new_password": {
-            "type": "string"
-          }
-        }
-      },
-      "CreateExerciseBody": {
-        "type": "object",
-        "required": [
-          "name",
-          "exercise_type",
-          "description",
-          "body_parts",
-          "primary_muscles",
-          "secondary_muscles"
-        ],
-        "properties": {
-          "body_parts": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "description": {
-            "type": "string"
-          },
-          "exercise_type": {
-            "$ref": "#/components/schemas/ExerciseType"
-          },
-          "name": {
-            "type": "string"
-          },
-          "primary_muscles": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "secondary_muscles": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "CreateMuscleBody": {
-        "type": "object",
-        "required": [
-          "name",
-          "scientific_name",
-          "major_group",
-          "minor_group"
-        ],
-        "properties": {
-          "major_group": {
-            "type": "string"
-          },
-          "minor_group": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "scientific_name": {
-            "type": "string"
-          }
-        }
-      },
-      "CreateProfileBody": {
-        "type": "object",
-        "required": [
-          "name"
-        ],
-        "properties": {
-          "name": {
-            "type": "string"
-          }
-        }
-      },
-      "CreateSetBody": {
-        "type": "object",
-        "required": [
-          "exercise_id",
-          "reps",
-          "weight",
-          "weight_unit"
-        ],
-        "properties": {
-          "exercise_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "profile_id": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid"
-          },
-          "reps": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "side": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Side for unilateral exercises: \"L\" or \"R\""
-          },
-          "weight": {
-            "type": "string"
-          },
-          "weight_unit": {
-            "type": "string"
-          }
-        }
-      },
-      "CreateWorkoutBody": {
-        "type": "object",
-        "properties": {
-          "gym_location": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "kind": {
-            "$ref": "#/components/schemas/WorkoutKind"
-          },
-          "name": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "privacy": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        }
-      },
-      "Exercise": {
-        "type": "object",
-        "required": [
-          "id",
-          "name",
-          "exercise_type",
-          "official",
-          "created_at"
-        ],
-        "properties": {
-          "author_id": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "description": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "exercise_type": {
-            "$ref": "#/components/schemas/ExerciseType"
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "official": {
-            "type": "boolean"
-          }
-        }
-      },
-      "ExerciseListResponse": {
-        "type": "object",
-        "required": [
-          "exercises",
-          "total"
-        ],
-        "properties": {
-          "exercises": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Exercise"
-            }
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "ExerciseProfile": {
-        "type": "object",
-        "required": [
-          "id",
-          "user_id",
-          "exercise_id",
-          "name",
-          "created_at"
-        ],
-        "properties": {
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "exercise_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "user_id": {
-            "type": "string",
-            "format": "uuid"
-          }
-        }
-      },
-      "ExerciseType": {
-        "type": "string",
-        "enum": [
-          "Dumbbell",
-          "Barbell",
-          "Bodyweight",
-          "Machine",
-          "Kettlebell",
-          "ResistanceBand",
-          "Cable",
-          "MedicineBall",
-          "Plyometric",
-          "PlateLoadedMachine"
-        ]
-      },
-      "ExerciseWithDetails": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Exercise"
-          },
-          {
-            "type": "object",
-            "required": [
-              "primary_muscles",
-              "secondary_muscles",
-              "is_favourite"
-            ],
-            "properties": {
-              "is_favourite": {
-                "type": "boolean"
-              },
-              "personal_record": {
-                "oneOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "$ref": "#/components/schemas/PersonalRecord"
-                  }
-                ]
-              },
-              "primary_muscles": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "secondary_muscles": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        ]
-      },
-      "FeedItem": {
-        "type": "object",
-        "description": "Feed item showing a friend's workout",
-        "required": [
-          "workout_id",
-          "user_id",
-          "username",
-          "real_name",
-          "start_time"
-        ],
-        "properties": {
-          "avatar_url": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "duration_minutes": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int64"
-          },
-          "end_time": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time"
-          },
-          "gym_location": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "real_name": {
-            "type": "string"
-          },
-          "start_time": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "total_sets": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int64"
-          },
-          "total_volume": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "user_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "username": {
-            "type": "string"
-          },
-          "workout_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workout_name": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        }
-      },
-      "FriendWithProfile": {
-        "type": "object",
-        "required": [
-          "friendship_id",
-          "user_id",
-          "username",
-          "real_name",
-          "status",
-          "created_at"
-        ],
-        "properties": {
-          "avatar_url": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "friendship_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "real_name": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "user_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "username": {
-            "type": "string"
-          }
-        }
-      },
-      "FriendWithStatus": {
-        "type": "object",
-        "description": "Friend with activity status (online, in workout)",
-        "required": [
-          "friendship_id",
-          "user_id",
-          "username",
-          "real_name",
-          "status",
-          "created_at"
-        ],
-        "properties": {
-          "avatar_url": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "current_workout_name": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "current_workout_started_at": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time"
-          },
-          "friendship_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "is_in_workout": {
-            "type": [
-              "boolean",
-              "null"
-            ]
-          },
-          "is_online": {
-            "type": [
-              "boolean",
-              "null"
-            ]
-          },
-          "real_name": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "user_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "username": {
-            "type": "string"
-          }
-        }
-      },
-      "FriendWorkoutsResponse": {
-        "type": "object",
-        "description": "Response for friend workouts including week summary",
-        "required": [
-          "workouts",
-          "this_week_count",
-          "this_week_volume",
-          "this_week_duration_minutes",
-          "can_view"
-        ],
-        "properties": {
-          "can_view": {
-            "type": "boolean"
-          },
-          "this_week_count": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "this_week_duration_minutes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "this_week_volume": {
-            "type": "string"
-          },
-          "workouts": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WorkoutSummary"
-            }
-          }
-        }
-      },
-      "Friendship": {
-        "type": "object",
-        "required": [
-          "id",
-          "user_id",
-          "friend_id",
-          "status",
-          "created_at"
-        ],
-        "properties": {
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "friend_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "type": "string"
-          },
-          "user_id": {
-            "type": "string",
-            "format": "uuid"
-          }
-        }
-      },
-      "JSDate": {
-        "type": "string",
-        "format": "date-time",
-        "description": "A NaiveDateTime wrapper that deserializes from JavaScript ISO 8601 strings.\nJavaScript's toISOString() produces \"2026-01-16T07:57:30.097Z\" but NaiveDateTime\nexpects no timezone suffix. This type handles both formats."
-      },
-      "LoginBody": {
-        "type": "object",
-        "required": [
-          "username",
-          "password"
-        ],
-        "properties": {
-          "password": {
-            "type": "string"
-          },
-          "username": {
-            "type": "string"
-          }
-        }
-      },
-      "Muscle": {
-        "type": "object",
-        "required": [
-          "id",
-          "name",
-          "minor_group"
-        ],
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "major_group": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "minor_group": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "scientific_name": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        }
-      },
-      "MuscleGroups": {
-        "type": "object",
-        "required": [
-          "major_groups",
-          "minor_groups"
-        ],
-        "properties": {
-          "major_groups": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "minor_groups": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "PersonalRecord": {
-        "type": "object",
-        "required": [
-          "weight",
-          "weight_unit",
-          "reps",
-          "date"
-        ],
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "reps": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "weight": {
-            "type": "string"
-          },
-          "weight_unit": {
-            "type": "string"
-          }
-        }
-      },
-      "PreviousSet": {
-        "type": "object",
-        "required": [
-          "reps",
-          "weight",
-          "weight_unit"
-        ],
-        "properties": {
-          "reps": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "side": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Side for unilateral exercises: \"L\" or \"R\""
-          },
-          "weight": {
-            "type": "string"
-          },
-          "weight_unit": {
-            "type": "string"
-          }
-        }
-      },
-      "PreviousSetData": {
-        "type": "object",
-        "description": "Previous session data for an exercise+profile combination",
-        "required": [
-          "exercise_id",
-          "sets"
-        ],
-        "properties": {
-          "exercise_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "profile_id": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid"
-          },
-          "sets": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PreviousSet"
-            }
-          }
-        }
-      },
-      "RespondFriendRequestBody": {
-        "type": "object",
-        "required": [
-          "action"
-        ],
-        "properties": {
-          "action": {
-            "type": "string"
-          }
-        }
-      },
-      "SendFriendRequestBody": {
-        "type": "object",
-        "required": [
-          "friend_id"
-        ],
-        "properties": {
-          "friend_id": {
-            "type": "string",
-            "format": "uuid"
-          }
-        }
-      },
-      "SignupBody": {
-        "type": "object",
-        "required": [
-          "real_name",
-          "username",
-          "email",
-          "password"
-        ],
-        "properties": {
-          "email": {
-            "type": "string"
-          },
-          "password": {
-            "type": "string"
-          },
-          "real_name": {
-            "type": "string"
-          },
-          "username": {
-            "type": "string"
-          }
-        }
-      },
-      "SyncExercise": {
-        "type": "object",
-        "required": [
-          "exercise_id",
-          "sets"
-        ],
-        "properties": {
-          "exercise_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "profile_id": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid"
-          },
-          "sets": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SyncSet"
-            }
-          }
-        }
-      },
-      "SyncSet": {
-        "type": "object",
-        "required": [
-          "reps",
-          "weight",
-          "weight_unit",
-          "created_at"
-        ],
-        "properties": {
-          "created_at": {
-            "$ref": "#/components/schemas/JSDate"
-          },
-          "reps": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "side": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Side for unilateral exercises: \"L\" or \"R\""
-          },
-          "weight": {
-            "type": "string"
-          },
-          "weight_unit": {
-            "type": "string"
-          }
-        }
-      },
-      "SyncWorkoutRequest": {
-        "type": "object",
-        "description": "Request to sync a completed workout from offline storage",
-        "required": [
-          "start_time",
-          "end_time",
-          "privacy",
-          "exercises"
-        ],
-        "properties": {
-          "end_time": {
-            "$ref": "#/components/schemas/JSDate"
-          },
-          "exercises": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SyncExercise"
-            }
-          },
-          "gym_location": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "kind": {
-            "$ref": "#/components/schemas/WorkoutKind"
-          },
-          "name": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "privacy": {
-            "type": "string"
-          },
-          "start_time": {
-            "$ref": "#/components/schemas/JSDate"
-          }
-        }
-      },
-      "SyncWorkoutResponse": {
-        "type": "object",
-        "description": "Response after syncing a workout",
-        "required": [
-          "workout_id",
-          "previous_sets"
-        ],
-        "properties": {
-          "previous_sets": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PreviousSetData"
-            },
-            "description": "Updated previous sets data for exercises used in this workout"
-          },
-          "workout_id": {
-            "type": "string",
-            "format": "uuid"
-          }
-        }
-      },
-      "UpdateActivityBody": {
-        "type": "object",
-        "description": "Request body for updating activity (heartbeat)",
-        "properties": {
-          "current_workout_id": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid"
-          }
-        }
-      },
-      "UpdateProfileBody": {
-        "type": "object",
-        "properties": {
-          "avatar_url": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "real_name": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "username": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        }
-      },
-      "UpdateSetBody": {
-        "type": "object",
-        "properties": {
-          "reps": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int32"
-          },
-          "weight": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "weight_unit": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        }
-      },
-      "UpdateSettingsBody": {
-        "type": "object",
-        "properties": {
-          "default_privacy": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "default_rest_timer_seconds": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int32"
-          },
-          "display_unit": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "max_workout_duration_minutes": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int32"
-          },
-          "share_gym_location": {
-            "type": [
-              "boolean",
-              "null"
-            ]
-          },
-          "share_online_status": {
-            "type": [
-              "boolean",
-              "null"
-            ]
-          },
-          "share_workout_history": {
-            "type": [
-              "boolean",
-              "null"
-            ]
-          },
-          "share_workout_status": {
-            "type": [
-              "boolean",
-              "null"
-            ]
-          }
-        }
-      },
-      "UpdateWorkoutBody": {
-        "type": "object",
-        "properties": {
-          "end_time": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time"
-          },
-          "gym_location": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "name": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "privacy": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        }
-      },
-      "UserProfile": {
-        "type": "object",
-        "required": [
-          "id",
-          "username",
-          "real_name",
-          "email",
-          "email_verified",
-          "is_admin",
-          "created_at"
-        ],
-        "properties": {
-          "avatar_url": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "email": {
-            "type": "string"
-          },
-          "email_verified": {
-            "type": "boolean"
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "is_admin": {
-            "type": "boolean"
-          },
-          "real_name": {
-            "type": "string"
-          },
-          "username": {
-            "type": "string"
-          }
-        }
-      },
-      "UserSearchResult": {
-        "type": "object",
-        "required": [
-          "id",
-          "username",
-          "real_name"
-        ],
-        "properties": {
-          "avatar_url": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "real_name": {
-            "type": "string"
-          },
-          "username": {
-            "type": "string"
-          }
-        }
-      },
-      "UserSet": {
-        "type": "object",
-        "required": [
-          "id",
-          "user_id",
-          "exercise_id",
-          "workout_id",
-          "reps",
-          "weight",
-          "weight_unit",
-          "created_at"
-        ],
-        "properties": {
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "exercise_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "profile_id": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid"
-          },
-          "reps": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "side": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Side for unilateral exercises: \"L\" or \"R\""
-          },
-          "user_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "weight": {
-            "type": "string"
-          },
-          "weight_unit": {
-            "type": "string"
-          },
-          "workout_id": {
-            "type": "string",
-            "format": "uuid"
-          }
-        }
-      },
-      "UserSettings": {
-        "type": "object",
-        "required": [
-          "user_id",
-          "max_workout_duration_minutes",
-          "default_rest_timer_seconds",
-          "default_privacy",
-          "share_gym_location",
-          "share_online_status",
-          "share_workout_status",
-          "share_workout_history"
-        ],
-        "properties": {
-          "default_privacy": {
-            "type": "string"
-          },
-          "default_rest_timer_seconds": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "display_unit": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "max_workout_duration_minutes": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "share_gym_location": {
-            "type": "boolean"
-          },
-          "share_online_status": {
-            "type": "boolean"
-          },
-          "share_workout_history": {
-            "type": "boolean"
-          },
-          "share_workout_status": {
-            "type": "boolean"
-          },
-          "user_id": {
-            "type": "string",
-            "format": "uuid"
-          }
-        }
-      },
-      "VerifyEmailBody": {
-        "type": "object",
-        "required": [
-          "code"
-        ],
-        "properties": {
-          "code": {
-            "type": "string"
-          }
-        }
-      },
-      "Workout": {
-        "type": "object",
-        "required": [
-          "id",
-          "user_id",
-          "start_time",
-          "privacy",
-          "kind"
-        ],
-        "properties": {
-          "end_time": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time"
-          },
-          "gym_location": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "kind": {
-            "$ref": "#/components/schemas/WorkoutKind"
-          },
-          "name": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "privacy": {
-            "type": "string"
-          },
-          "start_time": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "user_id": {
-            "type": "string",
-            "format": "uuid"
-          }
-        }
-      },
-      "WorkoutKind": {
-        "type": "string",
-        "description": "The kind of workout entry",
-        "enum": [
-          "workout",
-          "rest"
-        ]
-      },
-      "WorkoutListResponse": {
-        "type": "object",
-        "required": [
-          "workouts",
-          "total",
-          "page",
-          "per_page"
-        ],
-        "properties": {
-          "page": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "per_page": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "workouts": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Workout"
-            }
-          }
-        }
-      },
-      "WorkoutSummary": {
-        "type": "object",
-        "required": [
-          "id",
-          "start_time",
-          "duration_minutes",
-          "total_volume",
-          "total_sets",
-          "total_reps",
-          "exercises_count"
-        ],
-        "properties": {
-          "duration_minutes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "end_time": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time"
-          },
-          "exercises_count": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "start_time": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "total_reps": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "total_sets": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "total_volume": {
-            "type": "string"
-          }
-        }
-      },
-      "WorkoutWithSets": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Workout"
-          },
-          {
-            "type": "object",
-            "required": [
-              "sets"
-            ],
-            "properties": {
-              "sets": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/UserSet"
-                }
-              }
-            }
-          }
-        ]
-      }
-    }
-  },
-  "tags": [
-    {
-      "name": "auth",
-      "description": "Authentication API endpoints"
-    },
-    {
-      "name": "exercises",
-      "description": "Exercise API endpoints"
-    },
-    {
-      "name": "friends",
-      "description": "Friends API endpoints"
-    },
-    {
-      "name": "muscles",
-      "description": "Muscle API endpoints"
-    },
-    {
-      "name": "sets",
-      "description": "Set API endpoints"
-    },
-    {
-      "name": "sync",
-      "description": "Sync API endpoints"
-    },
-    {
-      "name": "users",
-      "description": "Users API endpoints"
-    },
-    {
-      "name": "workouts",
-      "description": "Workout API endpoints"
-    }
-  ]
+	"openapi": "3.1.0",
+	"info": {
+		"title": "api",
+		"description": "",
+		"license": {
+			"name": ""
+		},
+		"version": "0.1.0"
+	},
+	"paths": {
+		"/": {
+			"get": {
+				"operationId": "index",
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/.well-known/health-check": {
+			"get": {
+				"summary": "Get health of the API.",
+				"operationId": "health_check",
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/auth/change-password": {
+			"post": {
+				"tags": ["auth"],
+				"summary": "Change password with verification code",
+				"operationId": "change_password",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ChangePasswordBody"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Password changed successfully"
+					},
+					"401": {
+						"description": "Invalid or expired code"
+					}
+				}
+			}
+		},
+		"/api/v1/auth/login": {
+			"post": {
+				"tags": ["auth"],
+				"summary": "Login",
+				"operationId": "login",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/LoginBody"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/auth/request-password-change": {
+			"post": {
+				"tags": ["auth"],
+				"summary": "Request a password change verification code",
+				"operationId": "request_password_change",
+				"responses": {
+					"200": {
+						"description": "Verification code sent to email"
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			}
+		},
+		"/api/v1/auth/send-verification": {
+			"post": {
+				"tags": ["auth"],
+				"summary": "Send email verification code",
+				"operationId": "send_verification",
+				"responses": {
+					"200": {
+						"description": "Verification code sent to email"
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			}
+		},
+		"/api/v1/auth/signup": {
+			"post": {
+				"tags": ["auth"],
+				"summary": "Sign up",
+				"operationId": "signup",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SignupBody"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/auth/verify-email": {
+			"post": {
+				"tags": ["auth"],
+				"summary": "Verify email with code",
+				"operationId": "verify_email",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/VerifyEmailBody"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Email verified successfully"
+					},
+					"401": {
+						"description": "Invalid or expired code"
+					}
+				}
+			}
+		},
+		"/api/v1/exercises": {
+			"get": {
+				"tags": ["exercises"],
+				"summary": "List exercises with optional filters",
+				"operationId": "list_exercises",
+				"parameters": [
+					{
+						"name": "exercise_type",
+						"in": "query",
+						"description": "Filter by exercise type",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "muscle",
+						"in": "query",
+						"description": "Filter by muscle name",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "muscle_group",
+						"in": "query",
+						"description": "Filter by muscle group",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "search",
+						"in": "query",
+						"description": "Search by name",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"description": "Limit results (default: 50)",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"format": "int64"
+						}
+					},
+					{
+						"name": "offset",
+						"in": "query",
+						"description": "Offset for pagination",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"format": "int64"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ExerciseListResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			}
+		},
+		"/api/v1/exercises/create": {
+			"post": {
+				"tags": ["exercises"],
+				"operationId": "create",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateExerciseBody"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			}
+		},
+		"/api/v1/exercises/favourites": {
+			"get": {
+				"tags": ["exercises"],
+				"summary": "Get all favourite exercise IDs",
+				"operationId": "list_favourites",
+				"responses": {
+					"200": {
+						"description": "List of favourite exercise IDs",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"type": "string",
+										"format": "uuid"
+									}
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			}
+		},
+		"/api/v1/exercises/profiles": {
+			"get": {
+				"tags": ["exercises"],
+				"summary": "Get all profiles for the current user",
+				"operationId": "get_all_profiles",
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/ExerciseProfile"
+									}
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			}
+		},
+		"/api/v1/exercises/types": {
+			"get": {
+				"tags": ["exercises"],
+				"operationId": "list_types",
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/ExerciseType"
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/exercises/{exercise_id}": {
+			"get": {
+				"tags": ["exercises"],
+				"summary": "Get exercise details with user's personal record",
+				"operationId": "get_exercise",
+				"parameters": [
+					{
+						"name": "exercise_id",
+						"in": "path",
+						"description": "Exercise ID",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ExerciseWithDetails"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					},
+					"404": {
+						"description": "Exercise not found"
+					}
+				}
+			}
+		},
+		"/api/v1/exercises/{exercise_id}/favourite": {
+			"post": {
+				"tags": ["exercises"],
+				"summary": "Add exercise to favourites",
+				"operationId": "add_favourite",
+				"parameters": [
+					{
+						"name": "exercise_id",
+						"in": "path",
+						"description": "Exercise ID",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Added to favourites"
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			},
+			"delete": {
+				"tags": ["exercises"],
+				"summary": "Remove exercise from favourites",
+				"operationId": "remove_favourite",
+				"parameters": [
+					{
+						"name": "exercise_id",
+						"in": "path",
+						"description": "Exercise ID",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Removed from favourites"
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			}
+		},
+		"/api/v1/exercises/{exercise_id}/profiles": {
+			"get": {
+				"tags": ["exercises"],
+				"summary": "Get user's profiles for an exercise",
+				"operationId": "get_profiles",
+				"parameters": [
+					{
+						"name": "exercise_id",
+						"in": "path",
+						"description": "Exercise ID",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/ExerciseProfile"
+									}
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			},
+			"post": {
+				"tags": ["exercises"],
+				"summary": "Create a new profile for an exercise",
+				"operationId": "create_profile",
+				"parameters": [
+					{
+						"name": "exercise_id",
+						"in": "path",
+						"description": "Exercise ID",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateProfileBody"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ExerciseProfile"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			}
+		},
+		"/api/v1/friends": {
+			"get": {
+				"tags": ["friends"],
+				"summary": "List accepted friends with activity status",
+				"operationId": "list_friends",
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/FriendWithStatus"
+									}
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			},
+			"post": {
+				"tags": ["friends"],
+				"summary": "Send a friend request",
+				"operationId": "send_request",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SendFriendRequestBody"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Friendship"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Cannot send request to self or already exists"
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			}
+		},
+		"/api/v1/friends/activity": {
+			"post": {
+				"tags": ["friends"],
+				"summary": "Update user activity (heartbeat)",
+				"description": "Call this periodically to update online status and current workout.\nShould be called every ~60 seconds when app is open.",
+				"operationId": "update_activity",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateActivityBody"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Activity updated"
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			}
+		},
+		"/api/v1/friends/feed": {
+			"get": {
+				"tags": ["friends"],
+				"summary": "Get friends' activity feed",
+				"operationId": "get_feed",
+				"parameters": [
+					{
+						"name": "limit",
+						"in": "query",
+						"description": "Number of items (default: 20)",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"format": "int64"
+						}
+					},
+					{
+						"name": "offset",
+						"in": "query",
+						"description": "Offset for pagination",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"format": "int64"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/FeedItem"
+									}
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			}
+		},
+		"/api/v1/friends/requests": {
+			"get": {
+				"tags": ["friends"],
+				"summary": "List pending friend requests (received)",
+				"operationId": "list_requests",
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/FriendWithProfile"
+									}
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			}
+		},
+		"/api/v1/friends/{friend_id}/workouts": {
+			"get": {
+				"tags": ["friends"],
+				"summary": "Get a friend's workout history",
+				"description": "Returns the friend's workouts if they have sharing enabled and you are friends.",
+				"operationId": "get_friend_workouts",
+				"parameters": [
+					{
+						"name": "friend_id",
+						"in": "path",
+						"description": "Friend's user ID",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"format": "int64"
+						}
+					},
+					{
+						"name": "offset",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"format": "int64"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FriendWorkoutsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					},
+					"403": {
+						"description": "Not friends or sharing disabled"
+					}
+				}
+			}
+		},
+		"/api/v1/friends/{friendship_id}": {
+			"put": {
+				"tags": ["friends"],
+				"summary": "Respond to a friend request (accept, decline, or block)",
+				"operationId": "respond_request",
+				"parameters": [
+					{
+						"name": "friendship_id",
+						"in": "path",
+						"description": "Friendship ID",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/RespondFriendRequestBody"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Friendship"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					},
+					"404": {
+						"description": "Request not found"
+					}
+				}
+			},
+			"delete": {
+				"tags": ["friends"],
+				"summary": "Remove a friend (unfriend)",
+				"operationId": "remove_friend",
+				"parameters": [
+					{
+						"name": "friendship_id",
+						"in": "path",
+						"description": "Friendship ID",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Friend removed"
+					},
+					"401": {
+						"description": "Not authenticated"
+					},
+					"404": {
+						"description": "Friendship not found"
+					}
+				}
+			}
+		},
+		"/api/v1/muscles/all": {
+			"get": {
+				"tags": ["muscles"],
+				"operationId": "get_all",
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/Muscle"
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/muscles/create": {
+			"post": {
+				"tags": ["muscles"],
+				"operationId": "create",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateMuscleBody"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/muscles/groups": {
+			"get": {
+				"tags": ["muscles"],
+				"operationId": "get_groups",
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/MuscleGroups"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/sets/workouts/{workout_id}/sets": {
+			"post": {
+				"tags": ["sets"],
+				"summary": "Add a set to a workout",
+				"operationId": "create_set",
+				"parameters": [
+					{
+						"name": "workout_id",
+						"in": "path",
+						"description": "Workout ID",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateSetBody"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserSet"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					},
+					"404": {
+						"description": "Workout not found"
+					}
+				}
+			}
+		},
+		"/api/v1/sets/{set_id}": {
+			"put": {
+				"tags": ["sets"],
+				"summary": "Update a set",
+				"operationId": "update_set",
+				"parameters": [
+					{
+						"name": "set_id",
+						"in": "path",
+						"description": "Set ID",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateSetBody"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserSet"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					},
+					"404": {
+						"description": "Set not found"
+					}
+				}
+			},
+			"delete": {
+				"tags": ["sets"],
+				"summary": "Delete a set",
+				"operationId": "delete_set",
+				"parameters": [
+					{
+						"name": "set_id",
+						"in": "path",
+						"description": "Set ID",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Set deleted"
+					},
+					"401": {
+						"description": "Not authenticated"
+					},
+					"404": {
+						"description": "Set not found"
+					}
+				}
+			}
+		},
+		"/api/v1/sync/workout": {
+			"post": {
+				"tags": ["sync"],
+				"summary": "Sync a completed workout from offline storage",
+				"operationId": "sync_workout",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SyncWorkoutRequest"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SyncWorkoutResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			}
+		},
+		"/api/v1/users/me": {
+			"get": {
+				"tags": ["users"],
+				"summary": "Get current user profile",
+				"operationId": "get_me",
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserProfile"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			},
+			"put": {
+				"tags": ["users"],
+				"summary": "Update current user profile",
+				"operationId": "update_me",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateProfileBody"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserProfile"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			},
+			"delete": {
+				"tags": ["users"],
+				"summary": "Delete current user account",
+				"operationId": "delete_me",
+				"responses": {
+					"200": {
+						"description": "Account deleted"
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			}
+		},
+		"/api/v1/users/me/settings": {
+			"get": {
+				"tags": ["users"],
+				"summary": "Get user settings",
+				"operationId": "get_settings",
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserSettings"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			},
+			"put": {
+				"tags": ["users"],
+				"summary": "Update user settings",
+				"operationId": "update_settings",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateSettingsBody"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserSettings"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			}
+		},
+		"/api/v1/users/search": {
+			"get": {
+				"tags": ["users"],
+				"summary": "Search users by username",
+				"operationId": "search_users",
+				"parameters": [
+					{
+						"name": "q",
+						"in": "query",
+						"description": "Search query",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/UserSearchResult"
+									}
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			}
+		},
+		"/api/v1/workouts": {
+			"get": {
+				"tags": ["workouts"],
+				"summary": "List user's workouts with pagination",
+				"operationId": "list_workouts",
+				"parameters": [
+					{
+						"name": "page",
+						"in": "query",
+						"description": "Page number (default: 1)",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"format": "int64"
+						}
+					},
+					{
+						"name": "per_page",
+						"in": "query",
+						"description": "Items per page (default: 20)",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"format": "int64"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/WorkoutListResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			},
+			"post": {
+				"tags": ["workouts"],
+				"summary": "Create a new workout",
+				"operationId": "create_workout",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateWorkoutBody"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Workout"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			}
+		},
+		"/api/v1/workouts/{workout_id}": {
+			"get": {
+				"tags": ["workouts"],
+				"summary": "Get a workout with all its sets grouped by exercise",
+				"operationId": "get_workout",
+				"parameters": [
+					{
+						"name": "workout_id",
+						"in": "path",
+						"description": "Workout ID",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/WorkoutWithSets"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					},
+					"404": {
+						"description": "Workout not found"
+					}
+				}
+			},
+			"put": {
+				"tags": ["workouts"],
+				"summary": "Update a workout",
+				"operationId": "update_workout",
+				"parameters": [
+					{
+						"name": "workout_id",
+						"in": "path",
+						"description": "Workout ID",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateWorkoutBody"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Workout"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					},
+					"404": {
+						"description": "Workout not found"
+					}
+				}
+			},
+			"delete": {
+				"tags": ["workouts"],
+				"summary": "Delete a workout and all its sets",
+				"operationId": "delete_workout",
+				"parameters": [
+					{
+						"name": "workout_id",
+						"in": "path",
+						"description": "Workout ID",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Workout deleted"
+					},
+					"401": {
+						"description": "Not authenticated"
+					},
+					"404": {
+						"description": "Workout not found"
+					}
+				}
+			}
+		},
+		"/api/v1/workouts/{workout_id}/summary": {
+			"get": {
+				"tags": ["workouts"],
+				"summary": "Get workout summary with computed stats",
+				"operationId": "workout_summary",
+				"parameters": [
+					{
+						"name": "workout_id",
+						"in": "path",
+						"description": "Workout ID",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/WorkoutSummary"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					},
+					"404": {
+						"description": "Workout not found"
+					}
+				}
+			}
+		}
+	},
+	"components": {
+		"schemas": {
+			"ChangePasswordBody": {
+				"type": "object",
+				"required": ["code", "new_password"],
+				"properties": {
+					"code": {
+						"type": "string"
+					},
+					"new_password": {
+						"type": "string"
+					}
+				}
+			},
+			"CreateExerciseBody": {
+				"type": "object",
+				"required": [
+					"name",
+					"exercise_type",
+					"description",
+					"body_parts",
+					"primary_muscles",
+					"secondary_muscles"
+				],
+				"properties": {
+					"body_parts": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"description": {
+						"type": "string"
+					},
+					"exercise_type": {
+						"$ref": "#/components/schemas/ExerciseType"
+					},
+					"name": {
+						"type": "string"
+					},
+					"primary_muscles": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"secondary_muscles": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					}
+				}
+			},
+			"CreateMuscleBody": {
+				"type": "object",
+				"required": ["name", "scientific_name", "major_group", "minor_group"],
+				"properties": {
+					"major_group": {
+						"type": "string"
+					},
+					"minor_group": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"scientific_name": {
+						"type": "string"
+					}
+				}
+			},
+			"CreateProfileBody": {
+				"type": "object",
+				"required": ["name"],
+				"properties": {
+					"name": {
+						"type": "string"
+					}
+				}
+			},
+			"CreateSetBody": {
+				"type": "object",
+				"required": ["exercise_id", "reps", "weight", "weight_unit"],
+				"properties": {
+					"exercise_id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"profile_id": {
+						"type": ["string", "null"],
+						"format": "uuid"
+					},
+					"reps": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"side": {
+						"type": ["string", "null"],
+						"description": "Side for unilateral exercises: \"L\" or \"R\""
+					},
+					"weight": {
+						"type": "string"
+					},
+					"weight_unit": {
+						"type": "string"
+					}
+				}
+			},
+			"CreateWorkoutBody": {
+				"type": "object",
+				"properties": {
+					"gym_location": {
+						"type": ["string", "null"]
+					},
+					"kind": {
+						"$ref": "#/components/schemas/WorkoutKind"
+					},
+					"name": {
+						"type": ["string", "null"]
+					},
+					"privacy": {
+						"type": ["string", "null"]
+					}
+				}
+			},
+			"Exercise": {
+				"type": "object",
+				"required": ["id", "name", "exercise_type", "official", "created_at"],
+				"properties": {
+					"author_id": {
+						"type": ["string", "null"],
+						"format": "uuid"
+					},
+					"created_at": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"description": {
+						"type": ["string", "null"]
+					},
+					"exercise_type": {
+						"$ref": "#/components/schemas/ExerciseType"
+					},
+					"id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"name": {
+						"type": "string"
+					},
+					"official": {
+						"type": "boolean"
+					}
+				}
+			},
+			"ExerciseListResponse": {
+				"type": "object",
+				"required": ["exercises", "total"],
+				"properties": {
+					"exercises": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/Exercise"
+						}
+					},
+					"total": {
+						"type": "integer",
+						"format": "int64"
+					}
+				}
+			},
+			"ExerciseProfile": {
+				"type": "object",
+				"required": ["id", "user_id", "exercise_id", "name", "created_at"],
+				"properties": {
+					"created_at": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"exercise_id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"name": {
+						"type": "string"
+					},
+					"user_id": {
+						"type": "string",
+						"format": "uuid"
+					}
+				}
+			},
+			"ExerciseType": {
+				"type": "string",
+				"enum": [
+					"Dumbbell",
+					"Barbell",
+					"Bodyweight",
+					"Machine",
+					"Kettlebell",
+					"ResistanceBand",
+					"Cable",
+					"MedicineBall",
+					"Plyometric",
+					"PlateLoadedMachine"
+				]
+			},
+			"ExerciseWithDetails": {
+				"allOf": [
+					{
+						"$ref": "#/components/schemas/Exercise"
+					},
+					{
+						"type": "object",
+						"required": [
+							"primary_muscles",
+							"secondary_muscles",
+							"is_favourite"
+						],
+						"properties": {
+							"is_favourite": {
+								"type": "boolean"
+							},
+							"personal_record": {
+								"oneOf": [
+									{
+										"type": "null"
+									},
+									{
+										"$ref": "#/components/schemas/PersonalRecord"
+									}
+								]
+							},
+							"primary_muscles": {
+								"type": "array",
+								"items": {
+									"type": "string"
+								}
+							},
+							"secondary_muscles": {
+								"type": "array",
+								"items": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				]
+			},
+			"FeedItem": {
+				"type": "object",
+				"description": "Feed item showing a friend's workout",
+				"required": [
+					"workout_id",
+					"user_id",
+					"username",
+					"real_name",
+					"start_time"
+				],
+				"properties": {
+					"avatar_url": {
+						"type": ["string", "null"]
+					},
+					"duration_minutes": {
+						"type": ["integer", "null"],
+						"format": "int64"
+					},
+					"end_time": {
+						"type": ["string", "null"],
+						"format": "date-time"
+					},
+					"gym_location": {
+						"type": ["string", "null"]
+					},
+					"real_name": {
+						"type": "string"
+					},
+					"start_time": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"total_sets": {
+						"type": ["integer", "null"],
+						"format": "int64"
+					},
+					"total_volume": {
+						"type": ["string", "null"]
+					},
+					"user_id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"username": {
+						"type": "string"
+					},
+					"workout_id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"workout_name": {
+						"type": ["string", "null"]
+					}
+				}
+			},
+			"FriendWithProfile": {
+				"type": "object",
+				"required": [
+					"friendship_id",
+					"user_id",
+					"username",
+					"real_name",
+					"status",
+					"created_at"
+				],
+				"properties": {
+					"avatar_url": {
+						"type": ["string", "null"]
+					},
+					"created_at": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"friendship_id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"real_name": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					},
+					"user_id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"username": {
+						"type": "string"
+					}
+				}
+			},
+			"FriendWithStatus": {
+				"type": "object",
+				"description": "Friend with activity status (online, in workout)",
+				"required": [
+					"friendship_id",
+					"user_id",
+					"username",
+					"real_name",
+					"status",
+					"created_at"
+				],
+				"properties": {
+					"avatar_url": {
+						"type": ["string", "null"]
+					},
+					"created_at": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"current_workout_name": {
+						"type": ["string", "null"]
+					},
+					"current_workout_started_at": {
+						"type": ["string", "null"],
+						"format": "date-time"
+					},
+					"friendship_id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"is_in_workout": {
+						"type": ["boolean", "null"]
+					},
+					"is_online": {
+						"type": ["boolean", "null"]
+					},
+					"real_name": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					},
+					"user_id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"username": {
+						"type": "string"
+					}
+				}
+			},
+			"FriendWorkoutsResponse": {
+				"type": "object",
+				"description": "Response for friend workouts including week summary",
+				"required": [
+					"workouts",
+					"this_week_count",
+					"this_week_volume",
+					"this_week_duration_minutes",
+					"can_view"
+				],
+				"properties": {
+					"can_view": {
+						"type": "boolean"
+					},
+					"this_week_count": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"this_week_duration_minutes": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"this_week_volume": {
+						"type": "string"
+					},
+					"workouts": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/WorkoutSummary"
+						}
+					}
+				}
+			},
+			"Friendship": {
+				"type": "object",
+				"required": ["id", "user_id", "friend_id", "status", "created_at"],
+				"properties": {
+					"created_at": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"friend_id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"status": {
+						"type": "string"
+					},
+					"user_id": {
+						"type": "string",
+						"format": "uuid"
+					}
+				}
+			},
+			"JSDate": {
+				"type": "string",
+				"format": "date-time",
+				"description": "A NaiveDateTime wrapper that deserializes from JavaScript ISO 8601 strings.\nJavaScript's toISOString() produces \"2026-01-16T07:57:30.097Z\" but NaiveDateTime\nexpects no timezone suffix. This type handles both formats."
+			},
+			"LoginBody": {
+				"type": "object",
+				"required": ["username", "password"],
+				"properties": {
+					"password": {
+						"type": "string"
+					},
+					"username": {
+						"type": "string"
+					}
+				}
+			},
+			"Muscle": {
+				"type": "object",
+				"required": ["id", "name", "minor_group"],
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"major_group": {
+						"type": ["string", "null"]
+					},
+					"minor_group": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"scientific_name": {
+						"type": ["string", "null"]
+					}
+				}
+			},
+			"MuscleGroups": {
+				"type": "object",
+				"required": ["major_groups", "minor_groups"],
+				"properties": {
+					"major_groups": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"minor_groups": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					}
+				}
+			},
+			"PersonalRecord": {
+				"type": "object",
+				"required": ["weight", "weight_unit", "reps", "date"],
+				"properties": {
+					"date": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"reps": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"weight": {
+						"type": "string"
+					},
+					"weight_unit": {
+						"type": "string"
+					}
+				}
+			},
+			"PreviousSet": {
+				"type": "object",
+				"required": ["reps", "weight", "weight_unit"],
+				"properties": {
+					"reps": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"side": {
+						"type": ["string", "null"],
+						"description": "Side for unilateral exercises: \"L\" or \"R\""
+					},
+					"weight": {
+						"type": "string"
+					},
+					"weight_unit": {
+						"type": "string"
+					}
+				}
+			},
+			"PreviousSetData": {
+				"type": "object",
+				"description": "Previous session data for an exercise+profile combination",
+				"required": ["exercise_id", "sets"],
+				"properties": {
+					"exercise_id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"profile_id": {
+						"type": ["string", "null"],
+						"format": "uuid"
+					},
+					"sets": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/PreviousSet"
+						}
+					}
+				}
+			},
+			"RespondFriendRequestBody": {
+				"type": "object",
+				"required": ["action"],
+				"properties": {
+					"action": {
+						"type": "string"
+					}
+				}
+			},
+			"SendFriendRequestBody": {
+				"type": "object",
+				"required": ["friend_id"],
+				"properties": {
+					"friend_id": {
+						"type": "string",
+						"format": "uuid"
+					}
+				}
+			},
+			"SignupBody": {
+				"type": "object",
+				"required": ["real_name", "username", "email", "password"],
+				"properties": {
+					"email": {
+						"type": "string"
+					},
+					"password": {
+						"type": "string"
+					},
+					"real_name": {
+						"type": "string"
+					},
+					"username": {
+						"type": "string"
+					}
+				}
+			},
+			"SyncExercise": {
+				"type": "object",
+				"required": ["exercise_id", "sets"],
+				"properties": {
+					"exercise_id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"profile_id": {
+						"type": ["string", "null"],
+						"format": "uuid"
+					},
+					"sets": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/SyncSet"
+						}
+					}
+				}
+			},
+			"SyncSet": {
+				"type": "object",
+				"required": ["reps", "weight", "weight_unit", "created_at"],
+				"properties": {
+					"created_at": {
+						"$ref": "#/components/schemas/JSDate"
+					},
+					"reps": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"side": {
+						"type": ["string", "null"],
+						"description": "Side for unilateral exercises: \"L\" or \"R\""
+					},
+					"weight": {
+						"type": "string"
+					},
+					"weight_unit": {
+						"type": "string"
+					}
+				}
+			},
+			"SyncWorkoutRequest": {
+				"type": "object",
+				"description": "Request to sync a completed workout from offline storage",
+				"required": ["start_time", "end_time", "privacy", "exercises"],
+				"properties": {
+					"end_time": {
+						"$ref": "#/components/schemas/JSDate"
+					},
+					"exercises": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/SyncExercise"
+						}
+					},
+					"gym_location": {
+						"type": ["string", "null"]
+					},
+					"kind": {
+						"$ref": "#/components/schemas/WorkoutKind"
+					},
+					"name": {
+						"type": ["string", "null"]
+					},
+					"privacy": {
+						"type": "string"
+					},
+					"start_time": {
+						"$ref": "#/components/schemas/JSDate"
+					}
+				}
+			},
+			"SyncWorkoutResponse": {
+				"type": "object",
+				"description": "Response after syncing a workout",
+				"required": ["workout_id", "previous_sets"],
+				"properties": {
+					"previous_sets": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/PreviousSetData"
+						},
+						"description": "Updated previous sets data for exercises used in this workout"
+					},
+					"workout_id": {
+						"type": "string",
+						"format": "uuid"
+					}
+				}
+			},
+			"UpdateActivityBody": {
+				"type": "object",
+				"description": "Request body for updating activity (heartbeat)",
+				"properties": {
+					"current_workout_id": {
+						"type": ["string", "null"],
+						"format": "uuid"
+					}
+				}
+			},
+			"UpdateProfileBody": {
+				"type": "object",
+				"properties": {
+					"avatar_url": {
+						"type": ["string", "null"]
+					},
+					"real_name": {
+						"type": ["string", "null"]
+					},
+					"username": {
+						"type": ["string", "null"]
+					}
+				}
+			},
+			"UpdateSetBody": {
+				"type": "object",
+				"properties": {
+					"reps": {
+						"type": ["integer", "null"],
+						"format": "int32"
+					},
+					"weight": {
+						"type": ["string", "null"]
+					},
+					"weight_unit": {
+						"type": ["string", "null"]
+					}
+				}
+			},
+			"UpdateSettingsBody": {
+				"type": "object",
+				"properties": {
+					"default_privacy": {
+						"type": ["string", "null"]
+					},
+					"default_rest_timer_seconds": {
+						"type": ["integer", "null"],
+						"format": "int32"
+					},
+					"display_unit": {
+						"type": ["string", "null"]
+					},
+					"max_workout_duration_minutes": {
+						"type": ["integer", "null"],
+						"format": "int32"
+					},
+					"share_gym_location": {
+						"type": ["boolean", "null"]
+					},
+					"share_online_status": {
+						"type": ["boolean", "null"]
+					},
+					"share_workout_history": {
+						"type": ["boolean", "null"]
+					},
+					"share_workout_status": {
+						"type": ["boolean", "null"]
+					}
+				}
+			},
+			"UpdateWorkoutBody": {
+				"type": "object",
+				"properties": {
+					"end_time": {
+						"type": ["string", "null"],
+						"format": "date-time"
+					},
+					"gym_location": {
+						"type": ["string", "null"]
+					},
+					"name": {
+						"type": ["string", "null"]
+					},
+					"privacy": {
+						"type": ["string", "null"]
+					}
+				}
+			},
+			"UserProfile": {
+				"type": "object",
+				"required": [
+					"id",
+					"username",
+					"real_name",
+					"email",
+					"email_verified",
+					"is_admin",
+					"created_at"
+				],
+				"properties": {
+					"avatar_url": {
+						"type": ["string", "null"]
+					},
+					"created_at": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"email": {
+						"type": "string"
+					},
+					"email_verified": {
+						"type": "boolean"
+					},
+					"id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"is_admin": {
+						"type": "boolean"
+					},
+					"real_name": {
+						"type": "string"
+					},
+					"username": {
+						"type": "string"
+					}
+				}
+			},
+			"UserSearchResult": {
+				"type": "object",
+				"required": ["id", "username", "real_name"],
+				"properties": {
+					"avatar_url": {
+						"type": ["string", "null"]
+					},
+					"id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"real_name": {
+						"type": "string"
+					},
+					"username": {
+						"type": "string"
+					}
+				}
+			},
+			"UserSet": {
+				"type": "object",
+				"required": [
+					"id",
+					"user_id",
+					"exercise_id",
+					"workout_id",
+					"reps",
+					"weight",
+					"weight_unit",
+					"created_at"
+				],
+				"properties": {
+					"created_at": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"exercise_id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"profile_id": {
+						"type": ["string", "null"],
+						"format": "uuid"
+					},
+					"reps": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"side": {
+						"type": ["string", "null"],
+						"description": "Side for unilateral exercises: \"L\" or \"R\""
+					},
+					"user_id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"weight": {
+						"type": "string"
+					},
+					"weight_unit": {
+						"type": "string"
+					},
+					"workout_id": {
+						"type": "string",
+						"format": "uuid"
+					}
+				}
+			},
+			"UserSettings": {
+				"type": "object",
+				"required": [
+					"user_id",
+					"max_workout_duration_minutes",
+					"default_rest_timer_seconds",
+					"default_privacy",
+					"share_gym_location",
+					"share_online_status",
+					"share_workout_status",
+					"share_workout_history"
+				],
+				"properties": {
+					"default_privacy": {
+						"type": "string"
+					},
+					"default_rest_timer_seconds": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"display_unit": {
+						"type": ["string", "null"]
+					},
+					"max_workout_duration_minutes": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"share_gym_location": {
+						"type": "boolean"
+					},
+					"share_online_status": {
+						"type": "boolean"
+					},
+					"share_workout_history": {
+						"type": "boolean"
+					},
+					"share_workout_status": {
+						"type": "boolean"
+					},
+					"user_id": {
+						"type": "string",
+						"format": "uuid"
+					}
+				}
+			},
+			"VerifyEmailBody": {
+				"type": "object",
+				"required": ["code"],
+				"properties": {
+					"code": {
+						"type": "string"
+					}
+				}
+			},
+			"Workout": {
+				"type": "object",
+				"required": ["id", "user_id", "start_time", "privacy", "kind"],
+				"properties": {
+					"end_time": {
+						"type": ["string", "null"],
+						"format": "date-time"
+					},
+					"gym_location": {
+						"type": ["string", "null"]
+					},
+					"id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"kind": {
+						"$ref": "#/components/schemas/WorkoutKind"
+					},
+					"name": {
+						"type": ["string", "null"]
+					},
+					"privacy": {
+						"type": "string"
+					},
+					"start_time": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"user_id": {
+						"type": "string",
+						"format": "uuid"
+					}
+				}
+			},
+			"WorkoutExerciseGroup": {
+				"type": "object",
+				"description": "A group of sets for a single exercise within a workout",
+				"required": ["exercise_id", "is_unilateral", "sets"],
+				"properties": {
+					"exercise_id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"is_unilateral": {
+						"type": "boolean",
+						"description": "Whether this exercise was performed unilaterally (sets have L/R sides)"
+					},
+					"profile_id": {
+						"type": ["string", "null"],
+						"format": "uuid"
+					},
+					"sets": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/UserSet"
+						}
+					}
+				}
+			},
+			"WorkoutKind": {
+				"type": "string",
+				"description": "The kind of workout entry",
+				"enum": ["workout", "rest"]
+			},
+			"WorkoutListResponse": {
+				"type": "object",
+				"required": ["workouts", "total", "page", "per_page"],
+				"properties": {
+					"page": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"per_page": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"total": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"workouts": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/Workout"
+						}
+					}
+				}
+			},
+			"WorkoutSummary": {
+				"type": "object",
+				"required": [
+					"id",
+					"start_time",
+					"duration_minutes",
+					"total_volume",
+					"total_sets",
+					"total_reps",
+					"exercises_count"
+				],
+				"properties": {
+					"duration_minutes": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"end_time": {
+						"type": ["string", "null"],
+						"format": "date-time"
+					},
+					"exercises_count": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"name": {
+						"type": ["string", "null"]
+					},
+					"start_time": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"total_reps": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"total_sets": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"total_volume": {
+						"type": "string"
+					}
+				}
+			},
+			"WorkoutWithSets": {
+				"allOf": [
+					{
+						"$ref": "#/components/schemas/Workout"
+					},
+					{
+						"type": "object",
+						"required": ["exercises"],
+						"properties": {
+							"exercises": {
+								"type": "array",
+								"items": {
+									"$ref": "#/components/schemas/WorkoutExerciseGroup"
+								}
+							}
+						}
+					}
+				]
+			}
+		}
+	},
+	"tags": [
+		{
+			"name": "auth",
+			"description": "Authentication API endpoints"
+		},
+		{
+			"name": "exercises",
+			"description": "Exercise API endpoints"
+		},
+		{
+			"name": "friends",
+			"description": "Friends API endpoints"
+		},
+		{
+			"name": "muscles",
+			"description": "Muscle API endpoints"
+		},
+		{
+			"name": "sets",
+			"description": "Set API endpoints"
+		},
+		{
+			"name": "sync",
+			"description": "Sync API endpoints"
+		},
+		{
+			"name": "users",
+			"description": "Users API endpoints"
+		},
+		{
+			"name": "workouts",
+			"description": "Workout API endpoints"
+		}
+	]
 }

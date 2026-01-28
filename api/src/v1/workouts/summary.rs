@@ -38,14 +38,14 @@ pub async fn workout_summary(
 
     let summary = sqlx::query!(
         r#"
-        SELECT 
+        SELECT
             w.id,
             w.name,
             w.start_time,
             w.end_time,
             COALESCE(EXTRACT(EPOCH FROM (COALESCE(w.end_time, NOW()) - w.start_time)) / 60, 0)::bigint as "duration_minutes!",
             COALESCE(SUM(s.weight * s.reps), 0) as "total_volume!",
-            COUNT(s.id) as "total_sets!",
+            COUNT(s.id) FILTER (WHERE s.side IS NULL OR s.side = 'R') as "total_sets!",
             COALESCE(SUM(s.reps), 0) as "total_reps!",
             COUNT(DISTINCT s.exercise_id) as "exercises_count!"
         FROM workouts w

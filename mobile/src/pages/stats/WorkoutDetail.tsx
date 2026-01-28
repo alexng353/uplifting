@@ -1,6 +1,6 @@
 import {
-	IonBackButton,
 	IonAlert,
+	IonBackButton,
 	IonButton,
 	IonButtons,
 	IonContent,
@@ -37,17 +37,11 @@ import { useSettings } from "../../hooks/useSettings";
 import { api } from "../../lib/api";
 import type {
 	Exercise,
-	UserSet,
+	WorkoutExerciseGroup,
 	WorkoutWithSets,
 } from "../../lib/api-openapi-gen/types.gen";
 import "../workout/Workout.css";
 import "./WorkoutDetail.css";
-
-interface ExerciseGroup {
-	exerciseId: string;
-	profileId: string | null;
-	sets: UserSet[];
-}
 
 export default function WorkoutDetail() {
 	const { workoutId } = useParams<{ workoutId: string }>();
@@ -92,25 +86,8 @@ export default function WorkoutDetail() {
 		return new Map(exercises.map((e) => [e.id, e]));
 	}, [exercises]);
 
-	// Group sets by exercise+profile
-	const exerciseGroups = useMemo(() => {
-		if (!workout?.sets) return [];
-		const groups = new Map<string, ExerciseGroup>();
-
-		for (const set of workout.sets) {
-			const key = `${set.exercise_id}_${set.profile_id ?? "default"}`;
-			if (!groups.has(key)) {
-				groups.set(key, {
-					exerciseId: set.exercise_id,
-					profileId: set.profile_id ?? null,
-					sets: [],
-				});
-			}
-			groups.get(key)?.sets.push(set);
-		}
-
-		return Array.from(groups.values());
-	}, [workout?.sets]);
+	// Use backend-grouped exercises directly
+	const exerciseGroups: WorkoutExerciseGroup[] = workout?.exercises ?? [];
 
 	// Mutations
 	const updateWorkoutMutation = useMutation({
@@ -274,13 +251,25 @@ export default function WorkoutDetail() {
 	};
 
 	const getTotalSets = (): number => {
-		return workout?.sets?.length ?? 0;
+		return exerciseGroups.reduce((total, group) => {
+			if (group.is_unilateral) {
+				// Count only one side for unilateral exercises
+				return (
+					total + group.sets.filter((s) => s.side === "R" || !s.side).length
+				);
+			}
+			return total + group.sets.length;
+		}, 0);
 	};
 
 	const getTotalVolume = (): number => {
-		if (!workout?.sets) return 0;
-		return workout.sets.reduce(
-			(sum, s) => sum + s.reps * Number.parseFloat(s.weight),
+		return exerciseGroups.reduce(
+			(total, group) =>
+				total +
+				group.sets.reduce(
+					(sum, s) => sum + s.reps * Number.parseFloat(s.weight),
+					0,
+				),
 			0,
 		);
 	};
@@ -396,11 +385,11 @@ export default function WorkoutDetail() {
 
 						{/* Exercise slides */}
 						{exerciseGroups.map((group) => (
-							<SwiperSlide key={`${group.exerciseId}_${group.profileId}`}>
+							<SwiperSlide key={`${group.exercise_id}_${group.profile_id}`}>
 								<div className="exercise-slide">
 									<div className="exercise-slide-header">
-										<h2>{getExerciseName(group.exerciseId)}</h2>
-										{group.profileId && <p>Profile: {group.profileId}</p>}
+										<h2>{getExerciseName(group.exercise_id)}</h2>
+										{group.profile_id && <p>Profile: {group.profile_id}</p>}
 									</div>
 
 									<div className="sets-container">
@@ -452,7 +441,10 @@ export default function WorkoutDetail() {
 										<IonButton
 											className="add-set-button"
 											onClick={() =>
-												handleAddSet(group.exerciseId, group.profileId)
+												handleAddSet(
+													group.exercise_id,
+													group.profile_id ?? null,
+												)
 											}
 										>
 											<IonIcon slot="start" icon={add} />
@@ -570,15 +562,15 @@ export default function WorkoutDetail() {
 						<h3>Exercises</h3>
 						{exerciseGroups.map((group) => (
 							<div
-								key={`${group.exerciseId}_${group.profileId}`}
+								key={`${group.exercise_id}_${group.profile_id}`}
 								className="workout-exercise-item"
 							>
 								<div className="workout-exercise-name">
-									{getExerciseName(group.exerciseId)}
-									{group.profileId && (
+									{getExerciseName(group.exercise_id)}
+									{group.profile_id && (
 										<span className="workout-exercise-profile">
 											{" "}
-											({group.profileId})
+											({group.profile_id})
 										</span>
 									)}
 								</div>

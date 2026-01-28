@@ -51,7 +51,7 @@ pub async fn get_feed(
             w.end_time,
             EXTRACT(EPOCH FROM (COALESCE(w.end_time, NOW()) - w.start_time))::bigint / 60 as duration_minutes,
             (SELECT SUM(s.weight * s.reps) FROM user_sets s WHERE s.workout_id = w.id) as total_volume,
-            (SELECT COUNT(*) FROM user_sets s WHERE s.workout_id = w.id) as total_sets,
+            (SELECT COUNT(*) FILTER (WHERE s.side IS NULL OR s.side = 'R') FROM user_sets s WHERE s.workout_id = w.id) as total_sets,
             w.gym_location
         FROM workouts w
         JOIN users u ON u.id = w.user_id

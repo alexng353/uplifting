@@ -131,7 +131,7 @@ pub async fn get_friend_workouts(
             w.end_time,
             EXTRACT(EPOCH FROM (COALESCE(w.end_time, NOW()) - w.start_time))::bigint / 60 as "duration_minutes!",
             COALESCE((SELECT SUM(s.weight * s.reps) FROM user_sets s WHERE s.workout_id = w.id), 0) as "total_volume!",
-            (SELECT COUNT(*) FROM user_sets s WHERE s.workout_id = w.id)::bigint as "total_sets!",
+            (SELECT COUNT(*) FILTER (WHERE s.side IS NULL OR s.side = 'R') FROM user_sets s WHERE s.workout_id = w.id)::bigint as "total_sets!",
             (SELECT COALESCE(SUM(s.reps), 0) FROM user_sets s WHERE s.workout_id = w.id)::bigint as "total_reps!",
             (SELECT COUNT(DISTINCT s.exercise_id) FROM user_sets s WHERE s.workout_id = w.id)::bigint as "exercises_count!"
         FROM workouts w
