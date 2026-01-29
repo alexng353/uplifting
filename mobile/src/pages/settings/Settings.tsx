@@ -21,7 +21,9 @@ import {
 	IonToggle,
 	IonToolbar,
 } from "@ionic/react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
+	cloudDownload,
 	eye,
 	lockClosed,
 	logOut,
@@ -43,11 +45,14 @@ export default function Settings() {
 	const { logout, isAuthenticated } = useAuth();
 	const { settings, updateSettings } = useSettings();
 	const { data: user, refetch: refetchUser } = useMe(isAuthenticated);
+	const queryClient = useQueryClient();
 
 	const [showEditUsername, setShowEditUsername] = useState(false);
 	const [newUsername, setNewUsername] = useState("");
 	const [isSaving, setIsSaving] = useState(false);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+	const [showWipeConfirm, setShowWipeConfirm] = useState(false);
+	const [isWiping, setIsWiping] = useState(false);
 
 	// Email verification state
 	const [showVerifyEmail, setShowVerifyEmail] = useState(false);
@@ -90,6 +95,19 @@ export default function Settings() {
 		await clearAllData();
 		logout();
 	}, [logout]);
+
+	const confirmWipeData = useCallback(async () => {
+		setIsWiping(true);
+		try {
+			await clearAllData();
+			await queryClient.invalidateQueries();
+			showMessage("Local data wiped and re-syncing from server");
+		} catch {
+			showMessage("Failed to wipe local data");
+		} finally {
+			setIsWiping(false);
+		}
+	}, [queryClient, showMessage]);
 
 	const handleEditUsername = useCallback(() => {
 		setNewUsername(user?.username ?? "");
@@ -375,6 +393,22 @@ export default function Settings() {
 						<IonIcon slot="start" icon={logOut} color="primary" />
 						<IonLabel color="primary">Log Out</IonLabel>
 					</IonItem>
+				</IonList>
+
+				<IonList inset>
+					<IonListHeader>Destructive</IonListHeader>
+
+					<IonItem
+						button
+						onClick={() => setShowWipeConfirm(true)}
+						disabled={isWiping}
+						detail={false}
+					>
+						<IonIcon slot="start" icon={cloudDownload} color="warning" />
+						<IonLabel color="warning">
+							{isWiping ? "Wiping..." : "Wipe Local Data"}
+						</IonLabel>
+					</IonItem>
 
 					<IonItem button onClick={handleDeleteAccount} detail={false}>
 						<IonIcon slot="start" icon={trash} color="danger" />
@@ -466,6 +500,24 @@ export default function Settings() {
 						</IonButton>
 					</IonContent>
 				</IonModal>
+
+				<IonAlert
+					isOpen={showWipeConfirm}
+					onDidDismiss={() => setShowWipeConfirm(false)}
+					header="Wipe Local Data"
+					message="This will clear all locally stored data including any in-progress workout. Your data will be re-downloaded from the server."
+					buttons={[
+						{
+							text: "Cancel",
+							role: "cancel",
+						},
+						{
+							text: "Wipe",
+							role: "destructive",
+							handler: confirmWipeData,
+						},
+					]}
+				/>
 
 				<IonAlert
 					isOpen={showDeleteConfirm}
