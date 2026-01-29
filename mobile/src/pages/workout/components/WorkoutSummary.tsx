@@ -10,6 +10,7 @@ import {
 	IonToolbar,
 } from "@ionic/react";
 import { useCallback, useState } from "react";
+import { useSettings } from "../../../hooks/useSettings";
 import type { StoredWorkout } from "../../../services/local-storage";
 
 interface WorkoutSummaryProps {
@@ -23,6 +24,7 @@ export default function WorkoutSummary({
 	onSave,
 	onCancel,
 }: WorkoutSummaryProps) {
+	const { formatWeight } = useSettings();
 	const [name, setName] = useState(workout.name ?? "");
 	const [gymLocation, setGymLocation] = useState(workout.gymLocation ?? "");
 
@@ -106,7 +108,7 @@ export default function WorkoutSummary({
 								<div className="summary-exercise-sets">
 									{exercise.sets.length} sets •{" "}
 									{exercise.sets
-										.map((s) => `${s.reps ?? 0}×${s.weight ?? 0}`)
+										.map((s) => `${s.reps ?? 0}×${formatWeight(s.weight ?? 0, s.weightUnit)}`)
 										.join(", ")}
 								</div>
 							</div>
