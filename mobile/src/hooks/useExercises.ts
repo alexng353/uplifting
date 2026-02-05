@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import Fuse, { type IFuseOptions } from "fuse.js";
+import { useEffect, useMemo } from "react";
 import { api } from "../lib/api";
 import type { Exercise } from "../lib/api-openapi-gen";
 import {
@@ -7,8 +8,16 @@ import {
 	setExercises as setCachedExercises,
 } from "../services/local-storage";
 
-// Cache key for all exercises (no search filter)
-const ALL_EXERCISES_KEY = ["exercises", ""] as const;
+// Cache key for all exercises
+const ALL_EXERCISES_KEY = ["exercises"] as const;
+
+// Fuse.js options for fuzzy search
+const fuseOptions: IFuseOptions<Exercise> = {
+	keys: ["name"],
+	threshold: 0.4, // Lower = stricter matching
+	ignoreLocation: true, // Match anywhere in the string
+	includeScore: true,
+};
 
 export function useExercises(search?: string) {
 	const queryClient = useQueryClient();
@@ -34,32 +43,52 @@ export function useExercises(search?: string) {
 		loadCached();
 	}, [queryClient]);
 
-	return useQuery({
-		queryKey: ["exercises", search ?? ""],
+	// Always fetch all exercises (no server-side search)
+	const allExercisesQuery = useQuery({
+		queryKey: ALL_EXERCISES_KEY,
 		queryFn: async () => {
 			const { data, error } = await api.listExercises({
-				query: { search: search || undefined, limit: 500 },
+				query: { limit: 500 },
 			});
 			if (error || !data) {
 				throw new Error("Failed to fetch exercises");
 			}
 
-			// Cache all exercises (when no search filter) to IndexedDB
-			if (!search) {
-				const toCache = data.exercises.map((e) => ({
-					id: e.id,
-					name: e.name,
-					exerciseType: e.exercise_type,
-					official: e.official,
-					primaryMuscles: [],
-					secondaryMuscles: [],
-				}));
-				setCachedExercises(toCache);
-			}
+			// Cache all exercises to IndexedDB
+			const toCache = data.exercises.map((e) => ({
+				id: e.id,
+				name: e.name,
+				exerciseType: e.exercise_type,
+				official: e.official,
+				primaryMuscles: [],
+				secondaryMuscles: [],
+			}));
+			setCachedExercises(toCache);
 
 			return data.exercises;
 		},
 		staleTime: 1000 * 60 * 60, // 1 hour - exercises don't change often
 		gcTime: 1000 * 60 * 60 * 24, // 24 hours in cache
 	});
+
+	// Create Fuse instance for fuzzy search
+	const fuse = useMemo(() => {
+		if (!allExercisesQuery.data) return null;
+		return new Fuse(allExercisesQuery.data, fuseOptions);
+	}, [allExercisesQuery.data]);
+
+	// Filter exercises client-side using fuzzy search
+	const filteredExercises = useMemo(() => {
+		if (!allExercisesQuery.data) return undefined;
+		if (!search?.trim()) return allExercisesQuery.data;
+		if (!fuse) return allExercisesQuery.data;
+
+		const results = fuse.search(search.trim());
+		return results.map((r) => r.item);
+	}, [allExercisesQuery.data, search, fuse]);
+
+	return {
+		...allExercisesQuery,
+		data: filteredExercises,
+	};
 }
