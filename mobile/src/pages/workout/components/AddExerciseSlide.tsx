@@ -260,7 +260,10 @@ export default function AddExerciseSlide({
 										? `Add (${profiles[0].name})`
 										: "Quick Add";
 									return (
-										<IonItemSliding key={exercise.id}>
+										<IonItemSliding
+											key={exercise.id}
+											data-exercise-id={exercise.id}
+										>
 											<IonItem
 												button
 												onClick={() => handleSelectExercise(exercise)}
@@ -299,16 +302,16 @@ export default function AddExerciseSlide({
 													<IonIcon slot="icon-only" icon={add} />
 												</IonButton>
 											</IonItem>
-											<IonItemOptions side="end">
-												<IonItemOption
-													color="success"
-													onClick={(e) => {
-														const sliding = (e.target as HTMLElement).closest(
-															"ion-item-sliding",
-														) as HTMLIonItemSlidingElement | null;
-														handleQuickAdd(exercise, sliding);
-													}}
-												>
+											<IonItemOptions
+												side="end"
+												onIonSwipe={() => {
+													const sliding = document.querySelector(
+														`ion-item-sliding[data-exercise-id="${exercise.id}"]`,
+													) as HTMLIonItemSlidingElement | null;
+													handleQuickAdd(exercise, sliding);
+												}}
+											>
+												<IonItemOption color="success" expandable>
 													{quickAddLabel}
 												</IonItemOption>
 											</IonItemOptions>
