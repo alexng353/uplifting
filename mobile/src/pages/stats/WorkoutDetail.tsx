@@ -37,6 +37,7 @@ import { useSettings } from "../../hooks/useSettings";
 import { api } from "../../lib/api";
 import type {
 	Exercise,
+	ExerciseProfile,
 	WorkoutExerciseGroup,
 	WorkoutWithSets,
 } from "../../lib/api-openapi-gen/types.gen";
@@ -85,6 +86,19 @@ export default function WorkoutDetail() {
 	const exerciseMap = useMemo(() => {
 		return new Map(exercises.map((e) => [e.id, e]));
 	}, [exercises]);
+
+	// Fetch profiles for names
+	const { data: profiles = [] } = useQuery({
+		queryKey: ["profiles"],
+		queryFn: async () => {
+			const { data } = await api.getAllProfiles();
+			return (data ?? []) as ExerciseProfile[];
+		},
+	});
+
+	const profileMap = useMemo(() => {
+		return new Map(profiles.map((p) => [p.id, p]));
+	}, [profiles]);
 
 	// Use backend-grouped exercises directly
 	const exerciseGroups: WorkoutExerciseGroup[] = workout?.exercises ?? [];
@@ -278,6 +292,13 @@ export default function WorkoutDetail() {
 		return exerciseMap.get(exerciseId)?.name ?? "Unknown Exercise";
 	};
 
+	const getProfileName = (
+		profileId: string | null | undefined,
+	): string | null => {
+		if (!profileId) return null;
+		return profileMap.get(profileId)?.name ?? profileId;
+	};
+
 	if (isLoading) {
 		return (
 			<IonPage>
@@ -389,7 +410,9 @@ export default function WorkoutDetail() {
 								<div className="exercise-slide">
 									<div className="exercise-slide-header">
 										<h2>{getExerciseName(group.exercise_id)}</h2>
-										{group.profile_id && <p>Profile: {group.profile_id}</p>}
+										{group.profile_id && (
+											<p>Profile: {getProfileName(group.profile_id)}</p>
+										)}
 									</div>
 
 									<div className="sets-container">
@@ -570,7 +593,7 @@ export default function WorkoutDetail() {
 									{group.profile_id && (
 										<span className="workout-exercise-profile">
 											{" "}
-											({group.profile_id})
+											({getProfileName(group.profile_id)})
 										</span>
 									)}
 								</div>
