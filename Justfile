@@ -41,6 +41,15 @@ test-mobile-unit:
 test-mobile-e2e:
     cd mobile && just test-e2e
 
+# ─── Check ───────────────────────────────────────────
+
+# Check all projects (lint + build)
+check: check-mobile
+
+# Check the mobile app (lint + build)
+check-mobile:
+    cd mobile && bun run lint && bun run build
+
 # ─── Lint & Format ───────────────────────────────────
 
 # Lint all projects
