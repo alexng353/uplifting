@@ -108,7 +108,10 @@ export default function WorkoutSummary({
 								<div className="summary-exercise-sets">
 									{exercise.sets.length} sets •{" "}
 									{exercise.sets
-										.map((s) => `${s.reps ?? 0}×${formatWeight(s.weight ?? 0, s.weightUnit)}`)
+										.map(
+											(s) =>
+												`${s.reps ?? 0}×${formatWeight(s.weight ?? 0, s.weightUnit)}`,
+										)
 										.join(", ")}
 								</div>
 							</div>
