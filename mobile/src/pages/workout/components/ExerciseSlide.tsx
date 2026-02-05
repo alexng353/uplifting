@@ -42,7 +42,7 @@ function SetRow({
 		setId: string,
 		updates: Partial<StoredSet>,
 	) => void;
-	onInputFocus: () => void;
+	onInputFocus: (e: CustomEvent) => void;
 	onInputBlur: () => void;
 }) {
 	const isUnilateral = !!sideLabel;
@@ -60,7 +60,7 @@ function SetRow({
 				inputMode="decimal"
 				value={set.reps}
 				placeholder={String(DEFAULT_REPS)}
-				onIonFocus={onInputFocus}
+				onIonFocus={(e) => onInputFocus(e)}
 				onIonBlur={onInputBlur}
 				onIonChange={(e) =>
 					updateSet(exerciseId, set.id, {
@@ -73,7 +73,7 @@ function SetRow({
 				inputMode="decimal"
 				value={set.weight}
 				placeholder={String(DEFAULT_WEIGHT)}
-				onIonFocus={onInputFocus}
+				onIonFocus={(e) => onInputFocus(e)}
 				onIonBlur={onInputBlur}
 				onIonChange={(e) =>
 					updateSet(exerciseId, set.id, {
@@ -102,7 +102,7 @@ function LeftSetRow({
 		setId: string,
 		updates: Partial<StoredSet>,
 	) => void;
-	onInputFocus: () => void;
+	onInputFocus: (e: CustomEvent) => void;
 	onInputBlur: () => void;
 }) {
 	return (
@@ -114,7 +114,7 @@ function LeftSetRow({
 				inputMode="decimal"
 				value={set.reps}
 				placeholder={String(DEFAULT_REPS)}
-				onIonFocus={onInputFocus}
+				onIonFocus={(e) => onInputFocus(e)}
 				onIonBlur={onInputBlur}
 				onIonChange={(e) =>
 					updateSet(exerciseId, set.id, {
@@ -127,7 +127,7 @@ function LeftSetRow({
 				inputMode="decimal"
 				value={set.weight}
 				placeholder={String(DEFAULT_WEIGHT)}
-				onIonFocus={onInputFocus}
+				onIonFocus={(e) => onInputFocus(e)}
 				onIonBlur={onInputBlur}
 				onIonChange={(e) =>
 					updateSet(exerciseId, set.id, {
@@ -182,9 +182,16 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 		setIsInputFocused(isElementWithinSetsContainer(activeElement));
 	}, [isElementWithinSetsContainer]);
 
-	const handleInputFocus = useCallback(() => {
-		syncInputFocusState();
-	}, [syncInputFocusState]);
+	const handleInputFocus = useCallback(
+		async (event: CustomEvent) => {
+			syncInputFocusState();
+			// Auto-select all text for easier mobile input
+			const ionInput = event.target as HTMLIonInputElement;
+			const nativeInput = await ionInput.getInputElement();
+			nativeInput.select();
+		},
+		[syncInputFocusState],
+	);
 
 	const handleInputBlur = useCallback(() => {
 		requestAnimationFrame(() => {
