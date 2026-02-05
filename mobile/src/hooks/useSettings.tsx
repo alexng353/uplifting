@@ -38,6 +38,7 @@ export function useSettings() {
 			shareOnlineStatus: serverSettings.share_online_status,
 			shareWorkoutStatus: serverSettings.share_workout_status,
 			shareWorkoutHistory: serverSettings.share_workout_history,
+			currentGymId: serverSettings.current_gym_id ?? null,
 		};
 		setSettingsState(newSettings);
 		saveSettings(newSettings);

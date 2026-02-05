@@ -15,6 +15,8 @@ pub struct UserSettings {
     pub share_online_status: bool,
     pub share_workout_status: bool,
     pub share_workout_history: bool,
+    // Current gym
+    pub current_gym_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -28,6 +30,8 @@ pub struct UpdateSettingsBody {
     pub share_online_status: Option<bool>,
     pub share_workout_status: Option<bool>,
     pub share_workout_history: Option<bool>,
+    // Current gym
+    pub current_gym_id: Option<Option<Uuid>>,
 }
 
 impl Default for UserSettings {
@@ -42,6 +46,7 @@ impl Default for UserSettings {
             share_online_status: true,
             share_workout_status: true,
             share_workout_history: true,
+            current_gym_id: None,
         }
     }
 }

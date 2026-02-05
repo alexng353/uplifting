@@ -1,6 +1,7 @@
 pub mod exercise_types;
 pub mod exercises;
 pub mod friends;
+pub mod gyms;
 pub mod profiles;
 pub mod serde_utils;
 pub mod sets;

@@ -10,8 +10,8 @@ use utoipa_swagger_ui::SwaggerUi;
 
 // tags
 use v1::{
-    auth::AUTH_TAG, exercises::EXERCISES_TAG, friends::FRIENDS_TAG, muscles::MUSCLES_TAG,
-    sets::SETS_TAG, sync::SYNC_TAG, users::USERS_TAG, workouts::WORKOUTS_TAG,
+    auth::AUTH_TAG, exercises::EXERCISES_TAG, friends::FRIENDS_TAG, gyms::GYMS_TAG,
+    muscles::MUSCLES_TAG, sets::SETS_TAG, sync::SYNC_TAG, users::USERS_TAG, workouts::WORKOUTS_TAG,
 };
 
 mod db;
@@ -24,6 +24,7 @@ mod v1;
 
 pub(crate) use anyhow::Context;
 pub(crate) use axum::extract::{Json, State};
+pub(crate) use axum::http::StatusCode;
 pub(crate) use error::{AppError, Errors};
 pub(crate) use serde::{Deserialize, Serialize};
 pub(crate) use state::AppState;
@@ -80,6 +81,7 @@ struct EnvConfig {
         (name = AUTH_TAG, description = "Authentication API endpoints"),
         (name = EXERCISES_TAG, description = "Exercise API endpoints"),
         (name = FRIENDS_TAG, description = "Friends API endpoints"),
+        (name = GYMS_TAG, description = "Gym locations API endpoints"),
         (name = MUSCLES_TAG, description = "Muscle API endpoints"),
         (name = SETS_TAG, description = "Set API endpoints"),
         (name = SYNC_TAG, description = "Sync API endpoints"),

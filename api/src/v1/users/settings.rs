@@ -22,9 +22,10 @@ pub async fn get_settings(
     let settings = query_as!(
         UserSettings,
         r#"
-        SELECT user_id, display_unit, max_workout_duration_minutes, 
+        SELECT user_id, display_unit, max_workout_duration_minutes,
                default_rest_timer_seconds, default_privacy, share_gym_location,
-               share_online_status, share_workout_status, share_workout_history
+               share_online_status, share_workout_status, share_workout_history,
+               current_gym_id
         FROM user_settings
         WHERE user_id = $1
         "#,
@@ -44,7 +45,8 @@ pub async fn get_settings(
                 VALUES ($1)
                 RETURNING user_id, display_unit, max_workout_duration_minutes,
                           default_rest_timer_seconds, default_privacy, share_gym_location,
-                          share_online_status, share_workout_status, share_workout_history
+                          share_online_status, share_workout_status, share_workout_history,
+                          current_gym_id
                 "#,
                 user_id
             )
@@ -71,17 +73,21 @@ pub async fn update_settings(
     UserId(user_id): UserId,
     Json(body): Json<UpdateSettingsBody>,
 ) -> Result<Json<UserSettings>, AppError> {
+    // Handle the nested Option for current_gym_id
+    let current_gym_id = body.current_gym_id.flatten();
+
     // Upsert settings
     let settings = query_as!(
         UserSettings,
         r#"
         INSERT INTO user_settings (user_id, display_unit, max_workout_duration_minutes,
                                    default_rest_timer_seconds, default_privacy, share_gym_location,
-                                   share_online_status, share_workout_status, share_workout_history)
+                                   share_online_status, share_workout_status, share_workout_history,
+                                   current_gym_id)
         VALUES ($1, $2, COALESCE($3, 120), COALESCE($4, 90), COALESCE($5, 'friends'), COALESCE($6, true),
-                COALESCE($7, true), COALESCE($8, true), COALESCE($9, true))
+                COALESCE($7, true), COALESCE($8, true), COALESCE($9, true), $10)
         ON CONFLICT (user_id) DO UPDATE
-        SET 
+        SET
             display_unit = COALESCE($2, user_settings.display_unit),
             max_workout_duration_minutes = COALESCE($3, user_settings.max_workout_duration_minutes),
             default_rest_timer_seconds = COALESCE($4, user_settings.default_rest_timer_seconds),
@@ -89,10 +95,12 @@ pub async fn update_settings(
             share_gym_location = COALESCE($6, user_settings.share_gym_location),
             share_online_status = COALESCE($7, user_settings.share_online_status),
             share_workout_status = COALESCE($8, user_settings.share_workout_status),
-            share_workout_history = COALESCE($9, user_settings.share_workout_history)
+            share_workout_history = COALESCE($9, user_settings.share_workout_history),
+            current_gym_id = CASE WHEN $10 IS NULL AND $11 THEN NULL ELSE COALESCE($10, user_settings.current_gym_id) END
         RETURNING user_id, display_unit, max_workout_duration_minutes,
                   default_rest_timer_seconds, default_privacy, share_gym_location,
-                  share_online_status, share_workout_status, share_workout_history
+                  share_online_status, share_workout_status, share_workout_history,
+                  current_gym_id
         "#,
         user_id,
         body.display_unit,
@@ -102,7 +110,9 @@ pub async fn update_settings(
         body.share_gym_location,
         body.share_online_status,
         body.share_workout_status,
-        body.share_workout_history
+        body.share_workout_history,
+        current_gym_id,
+        body.current_gym_id.is_some() // Flag to indicate if current_gym_id was explicitly set
     )
     .fetch_one(&*state.db)
     .await?;

@@ -23,6 +23,7 @@ import {
 } from "@ionic/react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+	business,
 	cloudDownload,
 	eye,
 	lockClosed,
@@ -36,16 +37,21 @@ import {
 import { useCallback, useState } from "react";
 import "./Settings.css";
 import { useAuth } from "../../hooks/useAuth";
+import { useCurrentGym } from "../../hooks/useCurrentGym";
+import { useGyms } from "../../hooks/useGyms";
 import { useMe } from "../../hooks/useMe";
 import { useSettings } from "../../hooks/useSettings";
 import { api } from "../../lib/api";
 import { clearAllData } from "../../services/local-storage";
+import GymManagerModal from "./components/GymManagerModal";
 
 export default function Settings() {
 	const { logout, isAuthenticated } = useAuth();
 	const { settings, updateSettings } = useSettings();
 	const { data: user, refetch: refetchUser } = useMe(isAuthenticated);
 	const queryClient = useQueryClient();
+	const { gyms, addGym, updateGym, deleteGym } = useGyms();
+	const { currentGymId, setCurrentGymId, refreshCurrentGym } = useCurrentGym();
 
 	const [showEditUsername, setShowEditUsername] = useState(false);
 	const [newUsername, setNewUsername] = useState("");
@@ -53,6 +59,7 @@ export default function Settings() {
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [showWipeConfirm, setShowWipeConfirm] = useState(false);
 	const [isWiping, setIsWiping] = useState(false);
+	const [showGymManager, setShowGymManager] = useState(false);
 
 	// Email verification state
 	const [showVerifyEmail, setShowVerifyEmail] = useState(false);
@@ -337,6 +344,33 @@ export default function Settings() {
 								updateSettings({ shareGymLocation: e.detail.checked })
 							}
 						/>
+					</IonItem>
+				</IonList>
+
+				<IonList inset>
+					<IonListHeader>Gym Locations</IonListHeader>
+
+					<IonItem>
+						<IonLabel>Current Gym</IonLabel>
+						<IonSelect
+							value={currentGymId}
+							onIonChange={(e) => setCurrentGymId(e.detail.value)}
+							interface="popover"
+							placeholder="None"
+						>
+							<IonSelectOption value={null}>None</IonSelectOption>
+							{gyms.map((gym) => (
+								<IonSelectOption key={gym.id} value={gym.id}>
+									{gym.name}
+								</IonSelectOption>
+							))}
+						</IonSelect>
+					</IonItem>
+
+					<IonItem button onClick={() => setShowGymManager(true)} detail>
+						<IonIcon slot="start" icon={business} />
+						<IonLabel>Manage Gyms</IonLabel>
+						<IonBadge slot="end">{gyms.length}</IonBadge>
 					</IonItem>
 				</IonList>
 
@@ -698,6 +732,18 @@ export default function Settings() {
 					message={toastMessage}
 					duration={3000}
 					position="bottom"
+				/>
+
+				<GymManagerModal
+					isOpen={showGymManager}
+					onDismiss={() => {
+						setShowGymManager(false);
+						refreshCurrentGym();
+					}}
+					gyms={gyms}
+					onAddGym={addGym}
+					onUpdateGym={updateGym}
+					onDeleteGym={deleteGym}
 				/>
 			</IonContent>
 		</IonPage>

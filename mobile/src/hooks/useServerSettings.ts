@@ -20,7 +20,7 @@ export function useUpdateSettings() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: async (settings: StoredSettings) => {
+		mutationFn: async (settings: Partial<StoredSettings>) => {
 			const { error } = await api.updateSettings({
 				body: {
 					display_unit: settings.displayUnit,
@@ -31,6 +31,7 @@ export function useUpdateSettings() {
 					share_online_status: settings.shareOnlineStatus,
 					share_workout_status: settings.shareWorkoutStatus,
 					share_workout_history: settings.shareWorkoutHistory,
+					current_gym_id: settings.currentGymId,
 				},
 			});
 			if (error) {

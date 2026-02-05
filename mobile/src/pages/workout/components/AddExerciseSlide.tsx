@@ -24,6 +24,7 @@ import {
 	useFavouriteExercises,
 	useToggleFavourite,
 } from "../../../hooks/useFavouriteExercises";
+import { useGymProfileSuggestion } from "../../../hooks/useGymProfileSuggestion";
 import { useWorkout } from "../../../hooks/useWorkout";
 import type { Exercise } from "../../../lib/api-openapi-gen";
 
@@ -52,6 +53,8 @@ export default function AddExerciseSlide({
 		selectedExercise?.id ?? "",
 	);
 	const createProfile = useCreateExerciseProfile(selectedExercise?.id ?? "");
+	const { getSuggestedProfile, recordProfileUsage, currentGymId } =
+		useGymProfileSuggestion();
 
 	const handleToggleFavourite = useCallback(
 		(e: React.MouseEvent, exerciseId: string) => {
@@ -86,12 +89,18 @@ export default function AddExerciseSlide({
 				? `${selectedExercise.name} (${profileName})`
 				: selectedExercise.name;
 			addExercise(selectedExercise.id, displayName, profileId);
+
+			// Record profile usage for gym-based suggestions
+			if (profileId) {
+				recordProfileUsage(selectedExercise.id, profileId);
+			}
+
 			setShowProfileSheet(false);
 			setSelectedExercise(null);
 			setSearchText(""); // Clear search when exercise is added
 			onExerciseAdded();
 		},
-		[selectedExercise, addExercise, onExerciseAdded],
+		[selectedExercise, addExercise, onExerciseAdded, recordProfileUsage],
 	);
 
 	const handleCreateProfile = useCallback(
@@ -103,33 +112,53 @@ export default function AddExerciseSlide({
 		[createProfile, handleAddWithProfile],
 	);
 
-	// Quick add with no profile (or last used profile if available)
+	// Quick add with no profile (or last used profile at current gym if available)
 	const handleQuickAdd = useCallback(
 		(exercise: Exercise, slidingRef: HTMLIonItemSlidingElement | null) => {
-			// Get profiles for this exercise to check for last used
 			const profiles = allProfiles?.get(exercise.id);
-			// Use first profile if available, otherwise no profile
-			const lastProfile = profiles?.[0];
 
-			const displayName = lastProfile
-				? `${exercise.name} (${lastProfile.name})`
+			// Check for gym-specific suggested profile first
+			const suggestedProfileId = getSuggestedProfile(exercise.id);
+			const profileToUse = suggestedProfileId
+				? profiles?.find((p) => p.id === suggestedProfileId)
+				: profiles?.[0];
+
+			const displayName = profileToUse
+				? `${exercise.name} (${profileToUse.name})`
 				: exercise.name;
-			addExercise(exercise.id, displayName, lastProfile?.id);
+			addExercise(exercise.id, displayName, profileToUse?.id);
+
+			// Record profile usage for gym-based suggestions
+			if (profileToUse?.id) {
+				recordProfileUsage(exercise.id, profileToUse.id);
+			}
+
 			setSearchText(""); // Clear search when exercise is added
 			slidingRef?.close();
 			onExerciseAdded();
 		},
-		[allProfiles, addExercise, onExerciseAdded],
+		[
+			allProfiles,
+			addExercise,
+			onExerciseAdded,
+			getSuggestedProfile,
+			recordProfileUsage,
+		],
 	);
 
-	const profileActions = useMemo(
-		() => [
+	const profileActions = useMemo(() => {
+		const suggestedProfileId = getSuggestedProfile(selectedExercise?.id ?? "");
+
+		return [
 			{
 				text: "Default (no profile)",
 				handler: () => handleAddWithProfile(),
 			},
 			...selectedProfiles.map((p) => ({
-				text: p.name,
+				text:
+					p.id === suggestedProfileId && currentGymId
+						? `${p.name} (last used here)`
+						: p.name,
 				handler: () => handleAddWithProfile(p.id, p.name),
 			})),
 			{
@@ -148,9 +177,14 @@ export default function AddExerciseSlide({
 					setSelectedExercise(null);
 				},
 			},
-		],
-		[selectedProfiles, handleAddWithProfile],
-	);
+		];
+	}, [
+		selectedProfiles,
+		handleAddWithProfile,
+		getSuggestedProfile,
+		selectedExercise?.id,
+		currentGymId,
+	]);
 
 	// Sort exercises: favourites first, then alphabetically
 	const sortedExercises = useMemo(() => {

@@ -10,6 +10,9 @@ export const STORAGE_KEYS = {
 	LAST_SYNC: "last_sync",
 	PENDING_WORKOUT: "pending_workout",
 	WORKOUT_LAST_SLIDE: "workout_last_slide",
+	GYMS: "gyms",
+	CURRENT_GYM: "current_gym",
+	GYM_PROFILE_MAP: "gym_profile_map",
 } as const;
 
 // Workout kind type
@@ -58,6 +61,8 @@ export interface StoredSettings {
 	shareOnlineStatus: boolean;
 	shareWorkoutStatus: boolean;
 	shareWorkoutHistory: boolean;
+	// Current gym
+	currentGymId: string | null;
 }
 
 export interface StoredPreviousSets {
@@ -79,6 +84,16 @@ export interface StoredExercise {
 	secondaryMuscles: string[];
 }
 
+export interface StoredGym {
+	id: string;
+	name: string;
+	createdAt: string;
+}
+
+export interface GymProfileMapping {
+	[key: string]: string; // key: `${exerciseId}_${gymId}`, value: profileId
+}
+
 // Default settings
 export const DEFAULT_SETTINGS: StoredSettings = {
 	displayUnit: null,
@@ -89,6 +104,7 @@ export const DEFAULT_SETTINGS: StoredSettings = {
 	shareOnlineStatus: true,
 	shareWorkoutStatus: true,
 	shareWorkoutHistory: true,
+	currentGymId: null,
 };
 
 // Storage operations
@@ -212,4 +228,84 @@ export function convertWeight(
 		return Math.round((weight / 2.20462) * 10) / 10;
 	}
 	return weight;
+}
+
+// Gym operations
+export async function getGyms(): Promise<StoredGym[]> {
+	return (await get<StoredGym[]>(STORAGE_KEYS.GYMS)) ?? [];
+}
+
+export async function setGyms(gyms: StoredGym[]): Promise<void> {
+	await set(STORAGE_KEYS.GYMS, gyms);
+}
+
+export async function addGym(name: string): Promise<StoredGym> {
+	const gyms = await getGyms();
+	const newGym: StoredGym = {
+		id: generateId(),
+		name,
+		createdAt: new Date().toISOString(),
+	};
+	gyms.push(newGym);
+	await setGyms(gyms);
+	return newGym;
+}
+
+export async function updateGym(id: string, name: string): Promise<void> {
+	const gyms = await getGyms();
+	const index = gyms.findIndex((g) => g.id === id);
+	if (index !== -1) {
+		gyms[index].name = name;
+		await setGyms(gyms);
+	}
+}
+
+export async function deleteGym(id: string): Promise<void> {
+	const gyms = await getGyms();
+	const filtered = gyms.filter((g) => g.id !== id);
+	await setGyms(filtered);
+
+	// Clear current gym if it was deleted
+	const currentGymId = await getCurrentGymId();
+	if (currentGymId === id) {
+		await setCurrentGymId(null);
+	}
+}
+
+// Current gym operations
+export async function getCurrentGymId(): Promise<string | null> {
+	return (await get<string>(STORAGE_KEYS.CURRENT_GYM)) ?? null;
+}
+
+export async function setCurrentGymId(gymId: string | null): Promise<void> {
+	if (gymId === null) {
+		await del(STORAGE_KEYS.CURRENT_GYM);
+	} else {
+		await set(STORAGE_KEYS.CURRENT_GYM, gymId);
+	}
+}
+
+// Gym profile mapping operations
+export async function getGymProfileMap(): Promise<GymProfileMapping> {
+	return (await get<GymProfileMapping>(STORAGE_KEYS.GYM_PROFILE_MAP)) ?? {};
+}
+
+export async function setGymProfileForExercise(
+	exerciseId: string,
+	gymId: string,
+	profileId: string,
+): Promise<void> {
+	const map = await getGymProfileMap();
+	const key = `${exerciseId}_${gymId}`;
+	map[key] = profileId;
+	await set(STORAGE_KEYS.GYM_PROFILE_MAP, map);
+}
+
+export async function getLastProfileForExerciseAtGym(
+	exerciseId: string,
+	gymId: string,
+): Promise<string | null> {
+	const map = await getGymProfileMap();
+	const key = `${exerciseId}_${gymId}`;
+	return map[key] ?? null;
 }
