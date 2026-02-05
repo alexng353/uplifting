@@ -1,3 +1,4 @@
+import { Keyboard } from "@capacitor/keyboard";
 import { IonButton, IonIcon, IonInput, IonList, IonToggle } from "@ionic/react";
 import { add, close, syncOutline, trash } from "ionicons/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -7,6 +8,7 @@ import type {
 	StoredSet,
 	StoredWorkoutExercise,
 } from "../../../services/local-storage";
+import KeyboardAccessoryBar from "./KeyboardAccessoryBar";
 import RestTimer from "./RestTimer";
 
 interface ExerciseSlideProps {
@@ -31,6 +33,8 @@ function SetRow({
 	updateSet,
 	onInputFocus,
 	onInputBlur,
+	repsRef,
+	weightRef,
 }: {
 	set: StoredSet;
 	setNumber: number;
@@ -44,6 +48,8 @@ function SetRow({
 	) => void;
 	onInputFocus: (e: CustomEvent) => void;
 	onInputBlur: () => void;
+	repsRef?: (el: HTMLIonInputElement | null) => void;
+	weightRef?: (el: HTMLIonInputElement | null) => void;
 }) {
 	const isUnilateral = !!sideLabel;
 
@@ -56,6 +62,7 @@ function SetRow({
 				</div>
 			)}
 			<IonInput
+				ref={repsRef}
 				type="number"
 				inputMode="decimal"
 				value={set.reps}
@@ -69,6 +76,7 @@ function SetRow({
 				}
 			/>
 			<IonInput
+				ref={weightRef}
 				type="number"
 				inputMode="decimal"
 				value={set.weight}
@@ -93,6 +101,8 @@ function LeftSetRow({
 	updateSet,
 	onInputFocus,
 	onInputBlur,
+	repsRef,
+	weightRef,
 }: {
 	set: StoredSet;
 	exerciseId: string;
@@ -104,12 +114,15 @@ function LeftSetRow({
 	) => void;
 	onInputFocus: (e: CustomEvent) => void;
 	onInputBlur: () => void;
+	repsRef?: (el: HTMLIonInputElement | null) => void;
+	weightRef?: (el: HTMLIonInputElement | null) => void;
 }) {
 	return (
 		<div className="set-row unilateral-row left-row">
 			<div className="set-number" />
 			<div className="side-label left">L</div>
 			<IonInput
+				ref={repsRef}
 				type="number"
 				inputMode="decimal"
 				value={set.reps}
@@ -123,6 +136,7 @@ function LeftSetRow({
 				}
 			/>
 			<IonInput
+				ref={weightRef}
 				type="number"
 				inputMode="decimal"
 				value={set.weight}
@@ -153,6 +167,12 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 	const { getDisplayUnit } = useSettings();
 	const setsContainerRef = useRef<HTMLDivElement>(null);
 	const [isInputFocused, setIsInputFocused] = useState(false);
+	const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+
+	// Create refs for all inputs
+	// For normal mode: [set0-reps, set0-weight, set1-reps, set1-weight, ...]
+	// For unilateral: [set0-R-reps, set0-R-weight, set0-L-reps, set0-L-weight, ...]
+	const inputRefsMap = useRef<Map<string, HTMLIonInputElement>>(new Map());
 
 	const displayUnit = getDisplayUnit();
 
@@ -177,6 +197,71 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 		[],
 	);
 
+	// Group sets into pairs for unilateral mode
+	const setGroups = useMemo((): SetPair[] => {
+		if (!exercise.isUnilateral) {
+			return exercise.sets.map((set, index) => ({
+				setNumber: index + 1,
+				rightSet: set,
+			}));
+		}
+
+		const pairs: SetPair[] = [];
+		const rightSets = exercise.sets.filter((s) => s.side === "R");
+		const leftSets = exercise.sets.filter((s) => s.side === "L");
+		const maxLen = Math.max(rightSets.length, leftSets.length);
+
+		for (let i = 0; i < maxLen; i++) {
+			pairs.push({
+				setNumber: i + 1,
+				rightSet: rightSets[i],
+				leftSet: leftSets[i],
+			});
+		}
+
+		return pairs;
+	}, [exercise.sets, exercise.isUnilateral]);
+
+	// Build ordered list of input keys for navigation
+	// Normal mode: set0-reps, set0-weight, set1-reps, set1-weight, ...
+	// Unilateral: set0-R-reps, set0-R-weight, set0-L-reps, set0-L-weight, ...
+	const orderedInputKeys = useMemo(() => {
+		const keys: string[] = [];
+		if (exercise.isUnilateral) {
+			for (const group of setGroups) {
+				if (group.rightSet) {
+					keys.push(`${group.rightSet.id}-reps`);
+					keys.push(`${group.rightSet.id}-weight`);
+				}
+				if (group.leftSet) {
+					keys.push(`${group.leftSet.id}-reps`);
+					keys.push(`${group.leftSet.id}-weight`);
+				}
+			}
+		} else {
+			for (const set of exercise.sets) {
+				keys.push(`${set.id}-reps`);
+				keys.push(`${set.id}-weight`);
+			}
+		}
+		return keys;
+	}, [exercise.sets, exercise.isUnilateral, setGroups]);
+
+	// Track which input is focused by finding it in orderedInputKeys
+	const updateFocusedIndex = useCallback(
+		(ionInput: HTMLIonInputElement) => {
+			for (const [key, ref] of inputRefsMap.current.entries()) {
+				if (ref === ionInput) {
+					const index = orderedInputKeys.indexOf(key);
+					setFocusedIndex(index >= 0 ? index : null);
+					return;
+				}
+			}
+			setFocusedIndex(null);
+		},
+		[orderedInputKeys],
+	);
+
 	const syncInputFocusState = useCallback(() => {
 		const activeElement = document.activeElement;
 		setIsInputFocused(isElementWithinSetsContainer(activeElement));
@@ -185,19 +270,25 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 	const handleInputFocus = useCallback(
 		async (event: CustomEvent) => {
 			syncInputFocusState();
-			// Auto-select all text for easier mobile input
+			// Track which input is focused for keyboard navigation
 			const ionInput = event.target as HTMLIonInputElement;
+			updateFocusedIndex(ionInput);
+			// Auto-select all text for easier mobile input
 			const nativeInput = await ionInput.getInputElement();
 			nativeInput.select();
 		},
-		[syncInputFocusState],
+		[syncInputFocusState, updateFocusedIndex],
 	);
 
 	const handleInputBlur = useCallback(() => {
 		requestAnimationFrame(() => {
 			syncInputFocusState();
+			// Only clear focused index if no input is focused
+			if (!isElementWithinSetsContainer(document.activeElement)) {
+				setFocusedIndex(null);
+			}
 		});
-	}, [syncInputFocusState]);
+	}, [syncInputFocusState, isElementWithinSetsContainer]);
 
 	useEffect(() => {
 		if (!isInputFocused) {
@@ -224,31 +315,6 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 			});
 		}
 	}, [setsLength]);
-
-	// Group sets into pairs for unilateral mode
-	const setGroups = useMemo((): SetPair[] => {
-		if (!exercise.isUnilateral) {
-			return exercise.sets.map((set, index) => ({
-				setNumber: index + 1,
-				rightSet: set,
-			}));
-		}
-
-		const pairs: SetPair[] = [];
-		const rightSets = exercise.sets.filter((s) => s.side === "R");
-		const leftSets = exercise.sets.filter((s) => s.side === "L");
-		const maxLen = Math.max(rightSets.length, leftSets.length);
-
-		for (let i = 0; i < maxLen; i++) {
-			pairs.push({
-				setNumber: i + 1,
-				rightSet: rightSets[i],
-				leftSet: leftSets[i],
-			});
-		}
-
-		return pairs;
-	}, [exercise.sets, exercise.isUnilateral]);
 
 	// Get the last set's values for duplicating
 	const lastSet = exercise.sets[exercise.sets.length - 1];
@@ -314,6 +380,47 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 		void removeExercise(exercise.exerciseId);
 	}, [exercise.exerciseId, removeExercise]);
 
+	// Helper to create ref callbacks for inputs
+	const createRefCallback = useCallback(
+		(key: string) => (el: HTMLIonInputElement | null) => {
+			if (el) {
+				inputRefsMap.current.set(key, el);
+			} else {
+				inputRefsMap.current.delete(key);
+			}
+		},
+		[],
+	);
+
+	// Handle Next button - focus next input
+	const handleNext = useCallback(async () => {
+		if (focusedIndex === null) return;
+		const nextIndex = focusedIndex + 1;
+		if (nextIndex < orderedInputKeys.length) {
+			const nextKey = orderedInputKeys[nextIndex];
+			const nextInput = inputRefsMap.current.get(nextKey);
+			if (nextInput) {
+				const native = await nextInput.getInputElement();
+				native.focus();
+			}
+		}
+	}, [focusedIndex, orderedInputKeys]);
+
+	// Handle Done button - dismiss keyboard
+	const handleDone = useCallback(() => {
+		if (document.activeElement instanceof HTMLElement) {
+			document.activeElement.blur();
+		}
+		// Also try Capacitor Keyboard plugin
+		Keyboard.hide().catch(() => {
+			// Ignore errors on web
+		});
+	}, []);
+
+	// Whether we're on the last input
+	const isLastInput =
+		focusedIndex !== null && focusedIndex === orderedInputKeys.length - 1;
+
 	// Can only remove if more than 1 set (or more than 1 pair in unilateral mode)
 	const canRemove = exercise.isUnilateral
 		? setGroups.length > 1
@@ -367,6 +474,8 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 										updateSet={updateSet}
 										onInputFocus={handleInputFocus}
 										onInputBlur={handleInputBlur}
+										repsRef={createRefCallback(`${group.rightSet.id}-reps`)}
+										weightRef={createRefCallback(`${group.rightSet.id}-weight`)}
 									/>
 								)}
 								{/* Left side row */}
@@ -378,6 +487,8 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 										updateSet={updateSet}
 										onInputFocus={handleInputFocus}
 										onInputBlur={handleInputBlur}
+										repsRef={createRefCallback(`${group.leftSet.id}-reps`)}
+										weightRef={createRefCallback(`${group.leftSet.id}-weight`)}
 									/>
 								)}
 							</div>
@@ -416,6 +527,13 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 						<IonIcon slot="icon-only" icon={close} />
 					</IonButton>
 				</div>
+
+				<KeyboardAccessoryBar
+					isVisible={isInputFocused}
+					onNext={handleNext}
+					onDone={handleDone}
+					showNext={!isLastInput}
+				/>
 			</div>
 		);
 	}
@@ -463,6 +581,8 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 							updateSet={updateSet}
 							onInputFocus={handleInputFocus}
 							onInputBlur={handleInputBlur}
+							repsRef={createRefCallback(`${set.id}-reps`)}
+							weightRef={createRefCallback(`${set.id}-weight`)}
 						/>
 					))}
 				</IonList>
@@ -497,6 +617,13 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 					<IonIcon slot="icon-only" icon={close} />
 				</IonButton>
 			</div>
+
+			<KeyboardAccessoryBar
+				isVisible={isInputFocused}
+				onNext={handleNext}
+				onDone={handleDone}
+				showNext={!isLastInput}
+			/>
 		</div>
 	);
 }
