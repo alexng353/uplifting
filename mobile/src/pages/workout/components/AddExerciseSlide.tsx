@@ -4,6 +4,9 @@ import {
 	IonButton,
 	IonIcon,
 	IonItem,
+	IonItemOption,
+	IonItemOptions,
+	IonItemSliding,
 	IonLabel,
 	IonList,
 	IonSearchbar,
@@ -98,6 +101,25 @@ export default function AddExerciseSlide({
 			handleAddWithProfile(profile.id, profile.name);
 		},
 		[createProfile, handleAddWithProfile],
+	);
+
+	// Quick add with no profile (or last used profile if available)
+	const handleQuickAdd = useCallback(
+		(exercise: Exercise, slidingRef: HTMLIonItemSlidingElement | null) => {
+			// Get profiles for this exercise to check for last used
+			const profiles = allProfiles?.get(exercise.id);
+			// Use first profile if available, otherwise no profile
+			const lastProfile = profiles?.[0];
+
+			const displayName = lastProfile
+				? `${exercise.name} (${lastProfile.name})`
+				: exercise.name;
+			addExercise(exercise.id, displayName, lastProfile?.id);
+			setSearchText(""); // Clear search when exercise is added
+			slidingRef?.close();
+			onExerciseAdded();
+		},
+		[allProfiles, addExercise, onExerciseAdded],
 	);
 
 	const profileActions = useMemo(
@@ -199,46 +221,64 @@ export default function AddExerciseSlide({
 								{groupedExercises[letter].map((exercise) => {
 									const profilesLabel = getProfilesLabel(exercise.id);
 									const isFavourite = favourites?.has(exercise.id) ?? false;
+									const profiles = allProfiles?.get(exercise.id);
+									const quickAddLabel = profiles?.[0]
+										? `Add (${profiles[0].name})`
+										: "Quick Add";
 									return (
-										<IonItem
-											key={exercise.id}
-											button
-											onClick={() => handleSelectExercise(exercise)}
-										>
-											<IonButton
-												slot="start"
-												fill="clear"
-												className="favourite-button"
-												onClick={(e) => handleToggleFavourite(e, exercise.id)}
+										<IonItemSliding key={exercise.id}>
+											<IonItem
+												button
+												onClick={() => handleSelectExercise(exercise)}
 											>
-												<IonIcon
-													slot="icon-only"
-													icon={isFavourite ? star : starOutline}
-													color={isFavourite ? "warning" : "medium"}
-												/>
-											</IonButton>
-											<IonLabel>
-												<h3>{exercise.name}</h3>
-												<div className="exercise-meta">
-													<span>{exercise.exercise_type}</span>
-													{profilesLabel && (
-														<span className="profiles-label">
-															({profilesLabel})
-														</span>
-													)}
-												</div>
-											</IonLabel>
-											<IonButton
-												slot="end"
-												fill="clear"
-												onClick={(e) => {
-													e.stopPropagation();
-													handleSelectExercise(exercise);
-												}}
-											>
-												<IonIcon slot="icon-only" icon={add} />
-											</IonButton>
-										</IonItem>
+												<IonButton
+													slot="start"
+													fill="clear"
+													className="favourite-button"
+													onClick={(e) => handleToggleFavourite(e, exercise.id)}
+												>
+													<IonIcon
+														slot="icon-only"
+														icon={isFavourite ? star : starOutline}
+														color={isFavourite ? "warning" : "medium"}
+													/>
+												</IonButton>
+												<IonLabel>
+													<h3>{exercise.name}</h3>
+													<div className="exercise-meta">
+														<span>{exercise.exercise_type}</span>
+														{profilesLabel && (
+															<span className="profiles-label">
+																({profilesLabel})
+															</span>
+														)}
+													</div>
+												</IonLabel>
+												<IonButton
+													slot="end"
+													fill="clear"
+													onClick={(e) => {
+														e.stopPropagation();
+														handleSelectExercise(exercise);
+													}}
+												>
+													<IonIcon slot="icon-only" icon={add} />
+												</IonButton>
+											</IonItem>
+											<IonItemOptions side="end">
+												<IonItemOption
+													color="success"
+													onClick={(e) => {
+														const sliding = (e.target as HTMLElement).closest(
+															"ion-item-sliding",
+														) as HTMLIonItemSlidingElement | null;
+														handleQuickAdd(exercise, sliding);
+													}}
+												>
+													{quickAddLabel}
+												</IonItemOption>
+											</IonItemOptions>
+										</IonItemSliding>
 									);
 								})}
 							</IonList>
