@@ -2,6 +2,7 @@ import { Keyboard } from "@capacitor/keyboard";
 import { IonButton, IonIcon, IonInput, IonList, IonToggle } from "@ionic/react";
 import { add, close, syncOutline, trash } from "ionicons/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePreviousSets } from "../../../hooks/usePreviousSets";
 import { useSettings } from "../../../hooks/useSettings";
 import { useWorkout } from "../../../hooks/useWorkout";
 import type {
@@ -35,6 +36,8 @@ function SetRow({
 	onInputBlur,
 	repsRef,
 	weightRef,
+	suggestedReps,
+	suggestedWeight,
 }: {
 	set: StoredSet;
 	setNumber: number;
@@ -50,6 +53,8 @@ function SetRow({
 	onInputBlur: () => void;
 	repsRef?: (el: HTMLIonInputElement | null) => void;
 	weightRef?: (el: HTMLIonInputElement | null) => void;
+	suggestedReps: number;
+	suggestedWeight: number;
 }) {
 	const isUnilateral = !!sideLabel;
 
@@ -66,7 +71,7 @@ function SetRow({
 				type="number"
 				inputMode="decimal"
 				value={set.reps}
-				placeholder={String(DEFAULT_REPS)}
+				placeholder={String(suggestedReps)}
 				onIonFocus={(e) => onInputFocus(e)}
 				onIonBlur={onInputBlur}
 				onIonChange={(e) =>
@@ -80,7 +85,7 @@ function SetRow({
 				type="number"
 				inputMode="decimal"
 				value={set.weight}
-				placeholder={String(DEFAULT_WEIGHT)}
+				placeholder={String(suggestedWeight)}
 				onIonFocus={(e) => onInputFocus(e)}
 				onIonBlur={onInputBlur}
 				onIonChange={(e) =>
@@ -103,6 +108,8 @@ function LeftSetRow({
 	onInputBlur,
 	repsRef,
 	weightRef,
+	suggestedReps,
+	suggestedWeight,
 }: {
 	set: StoredSet;
 	exerciseId: string;
@@ -116,6 +123,8 @@ function LeftSetRow({
 	onInputBlur: () => void;
 	repsRef?: (el: HTMLIonInputElement | null) => void;
 	weightRef?: (el: HTMLIonInputElement | null) => void;
+	suggestedReps: number;
+	suggestedWeight: number;
 }) {
 	return (
 		<div className="set-row unilateral-row left-row">
@@ -126,7 +135,7 @@ function LeftSetRow({
 				type="number"
 				inputMode="decimal"
 				value={set.reps}
-				placeholder={String(DEFAULT_REPS)}
+				placeholder={String(suggestedReps)}
 				onIonFocus={(e) => onInputFocus(e)}
 				onIonBlur={onInputBlur}
 				onIonChange={(e) =>
@@ -140,7 +149,7 @@ function LeftSetRow({
 				type="number"
 				inputMode="decimal"
 				value={set.weight}
-				placeholder={String(DEFAULT_WEIGHT)}
+				placeholder={String(suggestedWeight)}
 				onIonFocus={(e) => onInputFocus(e)}
 				onIonBlur={onInputBlur}
 				onIonChange={(e) =>
@@ -165,6 +174,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 		removeExercise,
 	} = useWorkout();
 	const { getDisplayUnit } = useSettings();
+	const { getSuggestion } = usePreviousSets();
 	const setsContainerRef = useRef<HTMLDivElement>(null);
 	const [isInputFocused, setIsInputFocused] = useState(false);
 	const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
@@ -461,38 +471,60 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 					</div>
 
 					<IonList>
-						{setGroups.map((group) => (
-							<div key={group.setNumber} className="unilateral-group">
-								{/* Right side row */}
-								{group.rightSet && (
-									<SetRow
-										set={group.rightSet}
-										setNumber={group.setNumber}
-										sideLabel="R"
-										exerciseId={exercise.exerciseId}
-										displayUnit={displayUnit}
-										updateSet={updateSet}
-										onInputFocus={handleInputFocus}
-										onInputBlur={handleInputBlur}
-										repsRef={createRefCallback(`${group.rightSet.id}-reps`)}
-										weightRef={createRefCallback(`${group.rightSet.id}-weight`)}
-									/>
-								)}
-								{/* Left side row */}
-								{group.leftSet && (
-									<LeftSetRow
-										set={group.leftSet}
-										exerciseId={exercise.exerciseId}
-										displayUnit={displayUnit}
-										updateSet={updateSet}
-										onInputFocus={handleInputFocus}
-										onInputBlur={handleInputBlur}
-										repsRef={createRefCallback(`${group.leftSet.id}-reps`)}
-										weightRef={createRefCallback(`${group.leftSet.id}-weight`)}
-									/>
-								)}
-							</div>
-						))}
+						{setGroups.map((group) => {
+							const rightSuggestion = getSuggestion(
+								exercise.exerciseId,
+								exercise.profileId,
+								group.setNumber,
+								"R",
+							);
+							const leftSuggestion = getSuggestion(
+								exercise.exerciseId,
+								exercise.profileId,
+								group.setNumber,
+								"L",
+							);
+							return (
+								<div key={group.setNumber} className="unilateral-group">
+									{/* Right side row */}
+									{group.rightSet && (
+										<SetRow
+											set={group.rightSet}
+											setNumber={group.setNumber}
+											sideLabel="R"
+											exerciseId={exercise.exerciseId}
+											displayUnit={displayUnit}
+											updateSet={updateSet}
+											onInputFocus={handleInputFocus}
+											onInputBlur={handleInputBlur}
+											repsRef={createRefCallback(`${group.rightSet.id}-reps`)}
+											weightRef={createRefCallback(
+												`${group.rightSet.id}-weight`,
+											)}
+											suggestedReps={rightSuggestion.reps ?? DEFAULT_REPS}
+											suggestedWeight={rightSuggestion.weight ?? DEFAULT_WEIGHT}
+										/>
+									)}
+									{/* Left side row */}
+									{group.leftSet && (
+										<LeftSetRow
+											set={group.leftSet}
+											exerciseId={exercise.exerciseId}
+											displayUnit={displayUnit}
+											updateSet={updateSet}
+											onInputFocus={handleInputFocus}
+											onInputBlur={handleInputBlur}
+											repsRef={createRefCallback(`${group.leftSet.id}-reps`)}
+											weightRef={createRefCallback(
+												`${group.leftSet.id}-weight`,
+											)}
+											suggestedReps={leftSuggestion.reps ?? DEFAULT_REPS}
+											suggestedWeight={leftSuggestion.weight ?? DEFAULT_WEIGHT}
+										/>
+									)}
+								</div>
+							);
+						})}
 					</IonList>
 				</div>
 
@@ -571,20 +603,29 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 				</div>
 
 				<IonList>
-					{exercise.sets.map((set, index) => (
-						<SetRow
-							key={set.id}
-							set={set}
-							setNumber={index + 1}
-							exerciseId={exercise.exerciseId}
-							displayUnit={displayUnit}
-							updateSet={updateSet}
-							onInputFocus={handleInputFocus}
-							onInputBlur={handleInputBlur}
-							repsRef={createRefCallback(`${set.id}-reps`)}
-							weightRef={createRefCallback(`${set.id}-weight`)}
-						/>
-					))}
+					{exercise.sets.map((set, index) => {
+						const suggestion = getSuggestion(
+							exercise.exerciseId,
+							exercise.profileId,
+							index + 1,
+						);
+						return (
+							<SetRow
+								key={set.id}
+								set={set}
+								setNumber={index + 1}
+								exerciseId={exercise.exerciseId}
+								displayUnit={displayUnit}
+								updateSet={updateSet}
+								onInputFocus={handleInputFocus}
+								onInputBlur={handleInputBlur}
+								repsRef={createRefCallback(`${set.id}-reps`)}
+								weightRef={createRefCallback(`${set.id}-weight`)}
+								suggestedReps={suggestion.reps ?? DEFAULT_REPS}
+								suggestedWeight={suggestion.weight ?? DEFAULT_WEIGHT}
+							/>
+						);
+					})}
 				</IonList>
 			</div>
 
