@@ -4,18 +4,21 @@ _default:
     just --list
 
 migrate:
-    sqlx migrate run
+    envx run sqlx migrate run
     just prepare
 
 # Generate sqlx offline query data for building without a live database
 prepare:
-    cargo sqlx prepare
+    envx run cargo sqlx prepare
 
 build:
-    cargo build --release
+    envx run cargo build --release
 
 run:
-    cargo run
+    envx run cargo run
 
 dev:
-    cargo watch -x run -i "openapi.json"
+    envx run cargo watch -x run -i "openapi.json"
+
+spec:
+    envx run cargo run -- --generate-spec
