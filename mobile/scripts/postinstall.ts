@@ -9,16 +9,12 @@ function boolFlag(args: string[], ...flags: string[]): boolean {
 const force = boolFlag(process.argv, "--force", "-f");
 const isVercel = !!process.env.VERCEL;
 
-// On Vercel, use remote URL directly since the symlink won't resolve
+// On Vercel, use the committed openapi.json from the repo since the symlink won't resolve
 if (isVercel) {
-	const apiUrl = process.env.VITE_API_URL;
-	if (!apiUrl) {
-		throw new Error("VITE_API_URL is not set");
-	}
-	const remoteUrl = `${apiUrl}/docs/openapi.json`;
-	console.log(`Running on Vercel, using remote openapi.json from ${remoteUrl}`);
+	const specPath = "../api/openapi.json";
+	console.log(`Running on Vercel, using repo openapi.json from ${specPath}`);
 	await createClient({
-		input: remoteUrl,
+		input: specPath,
 		output: "./src/lib/api-openapi-gen",
 		plugins: ["@hey-api/client-fetch"],
 	});
