@@ -1,8 +1,12 @@
+use std::collections::HashMap;
+
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use super::gyms::Gym;
+use super::profiles::ExerciseProfile;
 use super::serde_utils::JSDate;
 use super::sets::PreviousSetData;
 use super::workouts::WorkoutKind;
@@ -43,4 +47,31 @@ pub struct SyncWorkoutResponse {
     pub workout_id: Uuid,
     /// Updated previous sets data for exercises used in this workout
     pub previous_sets: Vec<PreviousSetData>,
+}
+
+/// Response containing all user data for initial bootstrap
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct BootstrapResponse {
+    pub gyms: Vec<Gym>,
+    pub profiles: Vec<ExerciseProfile>,
+    pub gym_profile_mappings: Vec<BootstrapGymProfileMapping>,
+    /// Previous sets keyed by "{exercise_id}_{profile_id}" or "{exercise_id}_default"
+    pub previous_sets: HashMap<String, Vec<BootstrapPreviousSet>>,
+}
+
+/// Gym profile mapping for bootstrap (includes gym_id)
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct BootstrapGymProfileMapping {
+    pub gym_id: Uuid,
+    pub exercise_id: Uuid,
+    pub profile_id: Uuid,
+}
+
+/// Previous set data for bootstrap
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct BootstrapPreviousSet {
+    pub reps: i32,
+    pub weight: Decimal,
+    pub weight_unit: String,
+    pub side: Option<String>,
 }

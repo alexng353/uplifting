@@ -533,6 +533,215 @@
 				}
 			}
 		},
+		"/api/v1/gyms": {
+			"get": {
+				"tags": ["gyms"],
+				"summary": "List all gyms for the current user",
+				"operationId": "list_gyms",
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/Gym"
+									}
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			},
+			"post": {
+				"tags": ["gyms"],
+				"summary": "Create a new gym",
+				"operationId": "create_gym",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateGymBody"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Gym"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			}
+		},
+		"/api/v1/gyms/{gym_id}": {
+			"put": {
+				"tags": ["gyms"],
+				"summary": "Update a gym",
+				"operationId": "update_gym",
+				"parameters": [
+					{
+						"name": "gym_id",
+						"in": "path",
+						"description": "Gym ID",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateGymBody"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Gym"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					},
+					"404": {
+						"description": "Gym not found"
+					}
+				}
+			},
+			"delete": {
+				"tags": ["gyms"],
+				"summary": "Delete a gym",
+				"operationId": "delete_gym",
+				"parameters": [
+					{
+						"name": "gym_id",
+						"in": "path",
+						"description": "Gym ID",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"204": {
+						"description": "Gym deleted"
+					},
+					"401": {
+						"description": "Not authenticated"
+					},
+					"404": {
+						"description": "Gym not found"
+					}
+				}
+			}
+		},
+		"/api/v1/gyms/{gym_id}/profile-mappings": {
+			"get": {
+				"tags": ["gyms"],
+				"summary": "Get profile mappings for a gym",
+				"operationId": "get_profile_mappings",
+				"parameters": [
+					{
+						"name": "gym_id",
+						"in": "path",
+						"description": "Gym ID",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/GymProfileMappingResponse"
+									}
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			},
+			"put": {
+				"tags": ["gyms"],
+				"summary": "Set profile mapping for an exercise at a gym",
+				"operationId": "set_profile_mapping",
+				"parameters": [
+					{
+						"name": "gym_id",
+						"in": "path",
+						"description": "Gym ID",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SetGymProfileMappingBody"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GymProfileMappingResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			}
+		},
 		"/api/v1/friends": {
 			"get": {
 				"tags": ["friends"],
@@ -1009,6 +1218,29 @@
 				}
 			}
 		},
+		"/api/v1/sync/bootstrap": {
+			"get": {
+				"tags": ["sync"],
+				"summary": "Get all user data for initial app bootstrap",
+				"description": "Returns gyms, profiles, gym profile mappings, and previous sets for populating local storage on app startup.",
+				"operationId": "get_bootstrap",
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BootstrapResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Not authenticated"
+					}
+				}
+			}
+		},
 		"/api/v1/sync/workout": {
 			"post": {
 				"tags": ["sync"],
@@ -1418,6 +1650,86 @@
 	},
 	"components": {
 		"schemas": {
+			"BootstrapGymProfileMapping": {
+				"type": "object",
+				"description": "Gym profile mapping for bootstrap (includes gym_id)",
+				"required": ["gym_id", "exercise_id", "profile_id"],
+				"properties": {
+					"gym_id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"exercise_id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"profile_id": {
+						"type": "string",
+						"format": "uuid"
+					}
+				}
+			},
+			"BootstrapPreviousSet": {
+				"type": "object",
+				"description": "Previous set data for bootstrap",
+				"required": ["reps", "weight", "weight_unit"],
+				"properties": {
+					"reps": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"weight": {
+						"type": "string"
+					},
+					"weight_unit": {
+						"type": "string"
+					},
+					"side": {
+						"type": ["string", "null"],
+						"description": "Side for unilateral exercises: \"L\" or \"R\""
+					}
+				}
+			},
+			"BootstrapResponse": {
+				"type": "object",
+				"description": "Response containing all user data for initial bootstrap",
+				"required": [
+					"gyms",
+					"profiles",
+					"gym_profile_mappings",
+					"previous_sets"
+				],
+				"properties": {
+					"gyms": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/Gym"
+						}
+					},
+					"profiles": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/ExerciseProfile"
+						}
+					},
+					"gym_profile_mappings": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/BootstrapGymProfileMapping"
+						}
+					},
+					"previous_sets": {
+						"type": "object",
+						"description": "Previous sets keyed by \"{exercise_id}_{profile_id}\" or \"{exercise_id}_default\"",
+						"additionalProperties": {
+							"type": "array",
+							"items": {
+								"$ref": "#/components/schemas/BootstrapPreviousSet"
+							}
+						}
+					}
+				}
+			},
 			"ChangePasswordBody": {
 				"type": "object",
 				"required": ["code", "new_password"],
@@ -1813,6 +2125,73 @@
 					}
 				}
 			},
+			"CreateGymBody": {
+				"type": "object",
+				"required": ["name"],
+				"properties": {
+					"name": {
+						"type": "string"
+					}
+				}
+			},
+			"Gym": {
+				"type": "object",
+				"required": ["id", "user_id", "name", "created_at"],
+				"properties": {
+					"id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"user_id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"name": {
+						"type": "string"
+					},
+					"created_at": {
+						"type": "string",
+						"format": "date-time"
+					}
+				}
+			},
+			"GymProfileMappingResponse": {
+				"type": "object",
+				"required": ["exercise_id", "profile_id"],
+				"properties": {
+					"exercise_id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"profile_id": {
+						"type": "string",
+						"format": "uuid"
+					}
+				}
+			},
+			"SetGymProfileMappingBody": {
+				"type": "object",
+				"required": ["exercise_id", "profile_id"],
+				"properties": {
+					"exercise_id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"profile_id": {
+						"type": "string",
+						"format": "uuid"
+					}
+				}
+			},
+			"UpdateGymBody": {
+				"type": "object",
+				"required": ["name"],
+				"properties": {
+					"name": {
+						"type": "string"
+					}
+				}
+			},
 			"FriendWorkoutsResponse": {
 				"type": "object",
 				"description": "Response for friend workouts including week summary",
@@ -2159,6 +2538,10 @@
 			"UpdateSettingsBody": {
 				"type": "object",
 				"properties": {
+					"current_gym_id": {
+						"type": ["string", "null"],
+						"format": "uuid"
+					},
 					"default_privacy": {
 						"type": ["string", "null"]
 					},
@@ -2330,6 +2713,10 @@
 					"share_workout_history"
 				],
 				"properties": {
+					"current_gym_id": {
+						"type": ["string", "null"],
+						"format": "uuid"
+					},
 					"default_privacy": {
 						"type": "string"
 					},
@@ -2540,6 +2927,10 @@
 		{
 			"name": "friends",
 			"description": "Friends API endpoints"
+		},
+		{
+			"name": "gyms",
+			"description": "Gym API endpoints"
 		},
 		{
 			"name": "muscles",

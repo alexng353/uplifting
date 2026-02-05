@@ -6,51 +6,30 @@ import {
 	setGymProfileForExercise,
 } from "../services/local-storage";
 import { useAuth } from "./useAuth";
-import {
-	useServerGymProfileMappings,
-	useSetServerGymProfileMapping,
-} from "./useServerGyms";
+import { useSetServerGymProfileMapping } from "./useServerGyms";
 
 export function useGymProfileSuggestion() {
 	const { isAuthenticated } = useAuth();
-	const [currentGymId, setCurrentGymId] = useState<string | null>(null);
+	const [currentGymId, setCurrentGymIdState] = useState<string | null>(null);
 	const [profileMap, setProfileMap] = useState<GymProfileMapping>({});
 
-	const { data: serverMappings } = useServerGymProfileMappings(
-		currentGymId,
-		isAuthenticated,
-	);
 	const setServerMapping = useSetServerGymProfileMapping();
 
-	// Load from local storage on mount
+	// Load from local storage on mount (bootstrap has already populated this)
 	useEffect(() => {
 		Promise.all([getCurrentGymId(), getGymProfileMap()]).then(
 			([gymId, map]) => {
-				setCurrentGymId(gymId);
+				setCurrentGymIdState(gymId);
 				setProfileMap(map);
 			},
 		);
 	}, []);
 
-	// Sync with server mappings when authenticated
-	useEffect(() => {
-		if (!serverMappings || !currentGymId) return;
-		setProfileMap((prevMap) => {
-			const newMap: GymProfileMapping = { ...prevMap };
-			for (const mapping of serverMappings) {
-				const key = `${mapping.exercise_id}_${currentGymId}`;
-				newMap[key] = mapping.profile_id;
-			}
-			return newMap;
-		});
-	}, [serverMappings, currentGymId]);
-
-	// Re-fetch current gym id when it might have changed
-	useEffect(() => {
-		const interval = setInterval(() => {
-			getCurrentGymId().then(setCurrentGymId);
-		}, 1000);
-		return () => clearInterval(interval);
+	// Refresh gym ID when called (instead of polling)
+	const refreshCurrentGymId = useCallback(async () => {
+		const gymId = await getCurrentGymId();
+		setCurrentGymIdState(gymId);
+		return gymId;
 	}, []);
 
 	const getSuggestedProfile = useCallback(
@@ -92,5 +71,6 @@ export function useGymProfileSuggestion() {
 		currentGymId,
 		getSuggestedProfile,
 		recordProfileUsage,
+		refreshCurrentGymId,
 	};
 }
