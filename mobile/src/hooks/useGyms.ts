@@ -39,6 +39,8 @@ export function useGyms() {
 		const newGyms: StoredGym[] = serverGyms.map((g) => ({
 			id: g.id,
 			name: g.name,
+			latitude: g.latitude ?? null,
+			longitude: g.longitude ?? null,
 			createdAt: g.created_at,
 		}));
 		setGyms(newGyms);
@@ -46,23 +48,37 @@ export function useGyms() {
 	}, [serverGyms]);
 
 	const addGym = useCallback(
-		async (name: string): Promise<StoredGym> => {
+		async (
+			name: string,
+			latitude?: number | null,
+			longitude?: number | null,
+		): Promise<StoredGym> => {
 			// Create locally first
-			const newGym = await addGymStorage(name);
+			const newGym = await addGymStorage(name, latitude, longitude);
 			setGyms((prev) => [...prev, newGym]);
 
 			// Sync to server if authenticated
 			if (isAuthenticated) {
 				try {
-					const serverGym = await createServerGym.mutateAsync(name);
+					const serverGym = await createServerGym.mutateAsync({
+						name,
+						latitude: latitude ?? undefined,
+						longitude: longitude ?? undefined,
+					});
 					// Update local with server ID
 					const updatedGym: StoredGym = {
 						id: serverGym.id,
 						name: serverGym.name,
+						latitude: serverGym.latitude ?? null,
+						longitude: serverGym.longitude ?? null,
 						createdAt: serverGym.created_at,
 					};
 					await deleteGymStorage(newGym.id);
-					await addGymStorage(updatedGym.name);
+					await addGymStorage(
+						updatedGym.name,
+						updatedGym.latitude,
+						updatedGym.longitude,
+					);
 					// Re-sync will happen via serverGyms effect
 					return updatedGym;
 				} catch {

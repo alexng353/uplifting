@@ -1904,6 +1904,20 @@
           "name"
         ],
         "properties": {
+          "latitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "longitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
           "name": {
             "type": "string"
           }
@@ -2420,6 +2434,20 @@
             "type": "string",
             "format": "uuid"
           },
+          "latitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "longitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
           "name": {
             "type": "string"
           },
@@ -2799,6 +2827,20 @@
           "name"
         ],
         "properties": {
+          "latitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "longitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
           "name": {
             "type": "string"
           }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { applyBootstrapData, fetchBootstrapData } from "../services/bootstrap";
+import { detectAndSetNearbyGym } from "../services/geolocation";
 
 interface BootstrapState {
 	isBootstrapped: boolean;
@@ -30,6 +31,9 @@ export function useBootstrap() {
 					isLoading: false,
 					error: null,
 				});
+
+				// Auto-detect nearby gym (fire-and-forget)
+				detectAndSetNearbyGym().catch(() => {});
 			} catch (err) {
 				if (cancelled) return;
 

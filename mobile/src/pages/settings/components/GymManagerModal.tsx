@@ -18,13 +18,18 @@ import {
 } from "@ionic/react";
 import { add, pencil, trash } from "ionicons/icons";
 import { useState } from "react";
+import { getCurrentPosition } from "../../../services/geolocation";
 import type { StoredGym } from "../../../services/local-storage";
 
 interface GymManagerModalProps {
 	isOpen: boolean;
 	onDismiss: () => void;
 	gyms: StoredGym[];
-	onAddGym: (name: string) => Promise<StoredGym>;
+	onAddGym: (
+		name: string,
+		latitude?: number | null,
+		longitude?: number | null,
+	) => Promise<StoredGym>;
 	onUpdateGym: (id: string, name: string) => Promise<void>;
 	onDeleteGym: (id: string) => Promise<void>;
 }
@@ -44,7 +49,8 @@ export default function GymManagerModal({
 
 	const handleAdd = async (name: string) => {
 		if (!name.trim()) return;
-		await onAddGym(name.trim());
+		const position = await getCurrentPosition();
+		await onAddGym(name.trim(), position?.latitude, position?.longitude);
 	};
 
 	const handleEdit = (gym: StoredGym) => {

@@ -6,6 +6,7 @@ import {
 	useEffect,
 	useState,
 } from "react";
+import { detectAndSetNearbyGym } from "../services/geolocation";
 import {
 	generateId,
 	getCurrentWorkout,
@@ -113,6 +114,9 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 			kind: "workout",
 		};
 		await saveWorkout(newWorkout);
+
+		// Auto-detect nearby gym (fire-and-forget)
+		detectAndSetNearbyGym().catch(() => {});
 	}, [saveWorkout]);
 
 	const logRestDay = useCallback(async (): Promise<StoredWorkout> => {

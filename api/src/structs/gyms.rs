@@ -9,17 +9,23 @@ pub struct Gym {
     pub id: Uuid,
     pub user_id: Uuid,
     pub name: String,
+    pub latitude: Option<f64>,
+    pub longitude: Option<f64>,
     pub created_at: NaiveDateTime,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateGymBody {
     pub name: String,
+    pub latitude: Option<f64>,
+    pub longitude: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UpdateGymBody {
     pub name: String,
+    pub latitude: Option<f64>,
+    pub longitude: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]

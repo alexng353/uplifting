@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO user_gym_profile_mappings (user_id, gym_id, exercise_id, profile_id)\n        VALUES ($1, $2, $3, $4)\n        ON CONFLICT (user_id, gym_id, exercise_id) DO UPDATE\n        SET profile_id = $4, updated_at = NOW()\n        RETURNING exercise_id, profile_id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "exercise_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "profile_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "61a391f9217b6e6a05db5831d7f92db2d7f60ace35856cfe33a24c659a06fa06"
+}

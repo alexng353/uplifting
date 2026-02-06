@@ -29,7 +29,7 @@ pub async fn get_bootstrap(
     let gyms = query_as!(
         Gym,
         r#"
-        SELECT id, user_id, name, created_at
+        SELECT id, user_id, name, latitude, longitude, created_at
         FROM user_gyms
         WHERE user_id = $1
         ORDER BY created_at ASC

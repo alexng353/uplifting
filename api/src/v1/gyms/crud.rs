@@ -23,7 +23,7 @@ pub async fn list_gyms(
     let gyms = query_as!(
         Gym,
         r#"
-        SELECT id, user_id, name, created_at
+        SELECT id, user_id, name, latitude, longitude, created_at
         FROM user_gyms
         WHERE user_id = $1
         ORDER BY created_at ASC
@@ -55,12 +55,14 @@ pub async fn create_gym(
     let gym = query_as!(
         Gym,
         r#"
-        INSERT INTO user_gyms (user_id, name)
-        VALUES ($1, $2)
-        RETURNING id, user_id, name, created_at
+        INSERT INTO user_gyms (user_id, name, latitude, longitude)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id, user_id, name, latitude, longitude, created_at
         "#,
         user_id,
-        body.name
+        body.name,
+        body.latitude,
+        body.longitude
     )
     .fetch_one(&*state.db)
     .await?;
@@ -93,13 +95,15 @@ pub async fn update_gym(
         Gym,
         r#"
         UPDATE user_gyms
-        SET name = $3
+        SET name = $3, latitude = $4, longitude = $5
         WHERE id = $1 AND user_id = $2
-        RETURNING id, user_id, name, created_at
+        RETURNING id, user_id, name, latitude, longitude, created_at
         "#,
         gym_id,
         user_id,
-        body.name
+        body.name,
+        body.latitude,
+        body.longitude
     )
     .fetch_optional(&*state.db)
     .await?;

@@ -87,6 +87,8 @@ export interface StoredExercise {
 export interface StoredGym {
 	id: string;
 	name: string;
+	latitude?: number | null;
+	longitude?: number | null;
 	createdAt: string;
 }
 
@@ -239,11 +241,17 @@ export async function setGyms(gyms: StoredGym[]): Promise<void> {
 	await set(STORAGE_KEYS.GYMS, gyms);
 }
 
-export async function addGym(name: string): Promise<StoredGym> {
+export async function addGym(
+	name: string,
+	latitude?: number | null,
+	longitude?: number | null,
+): Promise<StoredGym> {
 	const gyms = await getGyms();
 	const newGym: StoredGym = {
 		id: generateId(),
 		name,
+		latitude: latitude ?? null,
+		longitude: longitude ?? null,
 		createdAt: new Date().toISOString(),
 	};
 	gyms.push(newGym);

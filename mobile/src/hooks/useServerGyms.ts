@@ -19,9 +19,13 @@ export function useCreateServerGym() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: async (name: string) => {
+		mutationFn: async (body: {
+			name: string;
+			latitude?: number;
+			longitude?: number;
+		}) => {
 			const { data, error } = await api.createGym({
-				body: { name },
+				body,
 			});
 			if (error || !data) {
 				throw new Error("Failed to create gym");

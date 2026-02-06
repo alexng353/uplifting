@@ -30,6 +30,8 @@ export async function fetchBootstrapData(): Promise<BootstrapData> {
 	const gyms: StoredGym[] = data.gyms.map((gym) => ({
 		id: gym.id,
 		name: gym.name,
+		latitude: gym.latitude ?? null,
+		longitude: gym.longitude ?? null,
 		createdAt: gym.created_at,
 	}));
 

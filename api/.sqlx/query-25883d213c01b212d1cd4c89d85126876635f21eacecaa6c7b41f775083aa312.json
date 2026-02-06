@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT user_id, display_unit, max_workout_duration_minutes, \n               default_rest_timer_seconds, default_privacy, share_gym_location,\n               share_online_status, share_workout_status, share_workout_history\n        FROM user_settings\n        WHERE user_id = $1\n        ",
+  "query": "\n                INSERT INTO user_settings (user_id)\n                VALUES ($1)\n                RETURNING user_id, display_unit, max_workout_duration_minutes,\n                          default_rest_timer_seconds, default_privacy, share_gym_location,\n                          share_online_status, share_workout_status, share_workout_history,\n                          current_gym_id\n                ",
   "describe": {
     "columns": [
       {
@@ -47,6 +47,11 @@
         "ordinal": 8,
         "name": "share_workout_history",
         "type_info": "Bool"
+      },
+      {
+        "ordinal": 9,
+        "name": "current_gym_id",
+        "type_info": "Uuid"
       }
     ],
     "parameters": {
@@ -63,8 +68,9 @@
       false,
       false,
       false,
-      false
+      false,
+      true
     ]
   },
-  "hash": "67847bd44b64572b474a26231fab2b738e77b8cec64b873f39a13fe2b5798921"
+  "hash": "25883d213c01b212d1cd4c89d85126876635f21eacecaa6c7b41f775083aa312"
 }
