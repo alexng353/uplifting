@@ -1,0 +1,7 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+watchPatterns = ["src/**", "migrations/**", "Cargo.toml", "Cargo.lock", "Dockerfile"]
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
