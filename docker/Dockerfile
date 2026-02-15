@@ -4,7 +4,7 @@ FROM rust:1.83-bookworm AS builder
 WORKDIR /app
 
 # Copy manifests first for dependency caching
-COPY Cargo.toml Cargo.lock ./
+COPY api/Cargo.toml api/Cargo.lock ./
 
 # Create a dummy main.rs to build dependencies
 RUN mkdir src && echo "fn main() {}" > src/main.rs
@@ -12,9 +12,9 @@ RUN cargo build --release
 RUN rm -rf src
 
 # Copy the actual source code and SQLx cache
-COPY src ./src
-COPY migrations ./migrations
-COPY .sqlx ./.sqlx
+COPY api/src ./src
+COPY api/migrations ./migrations
+COPY api/.sqlx ./.sqlx
 
 # Touch main.rs to invalidate the dummy build
 RUN touch src/main.rs
@@ -38,7 +38,7 @@ RUN apt-get update && apt-get install -y \
 COPY --from=builder /app/target/release/api /app/api
 
 # Copy migrations (embedded in binary via sqlx::migrate!, but kept for reference)
-COPY migrations ./migrations
+COPY api/migrations ./migrations
 
 ENV PORT=8080
 EXPOSE 8080
