@@ -54,6 +54,11 @@ interface WorkoutContextValue {
 	removeLastSet: (exerciseId: string) => Promise<void>;
 	removeLastUnilateralPair: (exerciseId: string) => Promise<void>;
 	toggleUnilateral: (exerciseId: string) => Promise<void>;
+	changeExerciseProfile: (
+		exerciseId: string,
+		profileId: string | undefined,
+		exerciseName: string,
+	) => Promise<void>;
 	finishWorkout: (
 		name?: string,
 		gymLocation?: string,
@@ -336,6 +341,27 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 		[workout, saveWorkout],
 	);
 
+	const changeExerciseProfile = useCallback(
+		async (
+			exerciseId: string,
+			profileId: string | undefined,
+			exerciseName: string,
+		) => {
+			if (!workout) return;
+
+			const updated = {
+				...workout,
+				exercises: workout.exercises.map((e) =>
+					e.exerciseId === exerciseId
+						? { ...e, profileId, exerciseName }
+						: e,
+				),
+			};
+			await saveWorkout(updated);
+		},
+		[workout, saveWorkout],
+	);
+
 	const updateSet = useCallback(
 		async (exerciseId: string, setId: string, updates: Partial<StoredSet>) => {
 			if (!workout) return;
@@ -474,6 +500,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 				removeLastSet,
 				removeLastUnilateralPair,
 				toggleUnilateral,
+				changeExerciseProfile,
 				finishWorkout,
 				cancelWorkout,
 				hasPendingWorkout,

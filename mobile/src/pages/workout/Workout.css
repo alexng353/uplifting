@@ -56,6 +56,13 @@
 	margin: 0 0 0.5rem 0;
 }
 
+.exercise-slide-header h2.tappable-name {
+	text-decoration: underline;
+	text-decoration-style: dotted;
+	text-underline-offset: 4px;
+	cursor: pointer;
+}
+
 .exercise-slide-header p {
 	margin: 0;
 	color: var(--ion-color-medium);

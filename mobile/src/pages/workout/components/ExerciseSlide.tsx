@@ -1,7 +1,16 @@
 import { Keyboard } from "@capacitor/keyboard";
-import { IonButton, IonIcon, IonInput, IonList, IonToggle } from "@ionic/react";
+import {
+	IonActionSheet,
+	IonButton,
+	IonIcon,
+	IonInput,
+	IonList,
+	IonToggle,
+} from "@ionic/react";
 import { add, close, syncOutline, trash } from "ionicons/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useExerciseProfiles } from "../../../hooks/useExerciseProfiles";
+import { useGymProfileSuggestion } from "../../../hooks/useGymProfileSuggestion";
 import { usePreviousSets } from "../../../hooks/usePreviousSets";
 import { useSettings } from "../../../hooks/useSettings";
 import { useWorkout } from "../../../hooks/useWorkout";
@@ -172,12 +181,17 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 		removeLastSet,
 		removeLastUnilateralPair,
 		removeExercise,
+		changeExerciseProfile,
 	} = useWorkout();
 	const { getDisplayUnit } = useSettings();
 	const { getSuggestion } = usePreviousSets();
+	const { data: profiles = [] } = useExerciseProfiles(exercise.exerciseId);
+	const { getSuggestedProfile, recordProfileUsage, currentGymId } =
+		useGymProfileSuggestion();
 	const setsContainerRef = useRef<HTMLDivElement>(null);
 	const [isInputFocused, setIsInputFocused] = useState(false);
 	const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+	const [showProfileSheet, setShowProfileSheet] = useState(false);
 
 	// Create refs for all inputs
 	// For normal mode: [set0-reps, set0-weight, set1-reps, set1-weight, ...]
@@ -390,6 +404,74 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 		void removeExercise(exercise.exerciseId);
 	}, [exercise.exerciseId, removeExercise]);
 
+	// Extract base exercise name (without profile suffix)
+	const baseName = useMemo(() => {
+		if (exercise.profileId) {
+			return exercise.exerciseName.replace(/\s*\([^)]+\)$/, "");
+		}
+		return exercise.exerciseName;
+	}, [exercise.exerciseName, exercise.profileId]);
+
+	const handleChangeProfile = useCallback(
+		(profileId?: string, profileName?: string) => {
+			const displayName = profileName
+				? `${baseName} (${profileName})`
+				: baseName;
+			changeExerciseProfile(exercise.exerciseId, profileId, displayName);
+
+			if (profileId) {
+				recordProfileUsage(exercise.exerciseId, profileId);
+			}
+
+			setShowProfileSheet(false);
+		},
+		[
+			exercise.exerciseId,
+			baseName,
+			changeExerciseProfile,
+			recordProfileUsage,
+		],
+	);
+
+	const profileActions = useMemo(() => {
+		if (profiles.length === 0) return [];
+
+		const suggestedProfileId = getSuggestedProfile(exercise.exerciseId);
+
+		return [
+			{
+				text: exercise.profileId
+					? "Default (no profile)"
+					: "Default (no profile) ✓",
+				handler: () => handleChangeProfile(),
+			},
+			...profiles.map((p) => {
+				const isCurrent = p.id === exercise.profileId;
+				const isSuggested = p.id === suggestedProfileId && currentGymId;
+				let text = p.name;
+				if (isSuggested) text += " (last used here)";
+				if (isCurrent) text += " ✓";
+				return {
+					text,
+					handler: () => handleChangeProfile(p.id, p.name),
+				};
+			}),
+			{
+				text: "Cancel",
+				role: "cancel" as const,
+			},
+		];
+	}, [
+		profiles,
+		exercise.exerciseId,
+		exercise.profileId,
+		getSuggestedProfile,
+		currentGymId,
+		handleChangeProfile,
+	]);
+
+	const hasProfiles = profiles.length > 0;
+
 	// Helper to create ref callbacks for inputs
 	const createRefCallback = useCallback(
 		(key: string) => (el: HTMLIonInputElement | null) => {
@@ -441,7 +523,12 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 		return (
 			<div className="exercise-slide">
 				<div className="exercise-slide-header">
-					<h2>{exercise.exerciseName}</h2>
+					<h2
+						className={hasProfiles ? "tappable-name" : undefined}
+						onClick={hasProfiles ? () => setShowProfileSheet(true) : undefined}
+					>
+						{exercise.exerciseName}
+					</h2>
 					<div className="exercise-slide-controls">
 						<IonToggle
 							checked={exercise.isUnilateral}
@@ -566,6 +653,14 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 					onDone={handleDone}
 					showNext={!isLastInput}
 				/>
+
+				<IonActionSheet
+					isOpen={showProfileSheet}
+					onDidDismiss={() => setShowProfileSheet(false)}
+					header={`Change profile for ${baseName}`}
+					subHeader="Select a profile"
+					buttons={profileActions}
+				/>
 			</div>
 		);
 	}
@@ -574,7 +669,12 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 	return (
 		<div className="exercise-slide">
 			<div className="exercise-slide-header">
-				<h2>{exercise.exerciseName}</h2>
+				<h2
+					className={hasProfiles ? "tappable-name" : undefined}
+					onClick={hasProfiles ? () => setShowProfileSheet(true) : undefined}
+				>
+					{exercise.exerciseName}
+				</h2>
 				<div className="exercise-slide-controls">
 					<IonToggle
 						checked={exercise.isUnilateral ?? false}
@@ -664,6 +764,14 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 				onNext={handleNext}
 				onDone={handleDone}
 				showNext={!isLastInput}
+			/>
+
+			<IonActionSheet
+				isOpen={showProfileSheet}
+				onDidDismiss={() => setShowProfileSheet(false)}
+				header={`Change profile for ${baseName}`}
+				subHeader="Select a profile"
+				buttons={profileActions}
 			/>
 		</div>
 	);
