@@ -337,13 +337,14 @@ export default function Settings() {
 					</IonItem>
 
 					<IonItem>
-						<IonLabel>Share Gym Location</IonLabel>
 						<IonToggle
 							checked={settings.shareGymLocation}
 							onIonChange={(e) =>
 								updateSettings({ shareGymLocation: e.detail.checked })
 							}
-						/>
+						>
+							Share Gym Location
+						</IonToggle>
 					</IonItem>
 				</IonList>
 
@@ -381,42 +382,36 @@ export default function Settings() {
 					</IonListHeader>
 
 					<IonItem>
-						<IonLabel>
-							<h3>Show Online Status</h3>
-							<p>Let friends see when you're active in the app</p>
-						</IonLabel>
 						<IonToggle
 							checked={settings.shareOnlineStatus}
 							onIonChange={(e) =>
 								updateSettings({ shareOnlineStatus: e.detail.checked })
 							}
-						/>
+						>
+							Show Online Status
+						</IonToggle>
 					</IonItem>
 
 					<IonItem>
-						<IonLabel>
-							<h3>Show Workout Status</h3>
-							<p>Let friends see when you're working out</p>
-						</IonLabel>
 						<IonToggle
 							checked={settings.shareWorkoutStatus}
 							onIonChange={(e) =>
 								updateSettings({ shareWorkoutStatus: e.detail.checked })
 							}
-						/>
+						>
+							Show Workout Status
+						</IonToggle>
 					</IonItem>
 
 					<IonItem>
-						<IonLabel>
-							<h3>Share Workout History</h3>
-							<p>Let friends view your past workouts</p>
-						</IonLabel>
 						<IonToggle
 							checked={settings.shareWorkoutHistory}
 							onIonChange={(e) =>
 								updateSettings({ shareWorkoutHistory: e.detail.checked })
 							}
-						/>
+						>
+							Share Workout History
+						</IonToggle>
 					</IonItem>
 				</IonList>
 
