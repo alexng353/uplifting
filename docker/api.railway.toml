@@ -6,7 +6,7 @@ watchPatterns = [
   "api/migrations/**",
   "api/Cargo.toml",
   "api/Cargo.lock",
-  "docker/api.Dockerfile"
+  "docker/api.Dockerfile",
   "docker/api.railway.toml"
 ]
 
