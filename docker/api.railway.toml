@@ -1,6 +1,6 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "docker/Dockerfile"
+dockerfilePath = "docker/api.Dockerfile"
 watchPatterns = [
   "api/src/**",
   "api/migrations/**",
