@@ -119,12 +119,15 @@ pub async fn get_bootstrap(
                 .map(|id| id.to_string())
                 .unwrap_or_else(|| "default".to_string())
         );
-        previous_sets.entry(key).or_default().push(BootstrapPreviousSet {
-            reps: row.reps,
-            weight: row.weight,
-            weight_unit: row.weight_unit,
-            side: row.side,
-        });
+        previous_sets
+            .entry(key)
+            .or_default()
+            .push(BootstrapPreviousSet {
+                reps: row.reps,
+                weight: row.weight,
+                weight_unit: row.weight_unit,
+                side: row.side,
+            });
     }
 
     Ok(Json(BootstrapResponse {
