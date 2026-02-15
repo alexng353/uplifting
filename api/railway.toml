@@ -1,7 +1,7 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
-watchPatterns = ["src/**", "migrations/**", "Cargo.toml", "Cargo.lock", "Dockerfile"]
+dockerfilePath = "api/Dockerfile"
+watchPatterns = ["api/src/**", "api/migrations/**", "api/Cargo.toml", "api/Cargo.lock", "api/Dockerfile"]
 
 [deploy]
 restartPolicyType = "ON_FAILURE"
