@@ -451,10 +451,15 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 		async (name?: string, gymLocation?: string): Promise<StoredWorkout> => {
 			if (!workout) throw new Error("No active workout");
 
+			// Remove empty sets (no reps and no weight) before saving
 			const finishedWorkout: StoredWorkout = {
 				...workout,
 				name,
 				gymLocation,
+				exercises: workout.exercises.map((e) => ({
+					...e,
+					sets: e.sets.filter((s) => s.reps != null || s.weight != null),
+				})),
 			};
 
 			// Save previous sets for each exercise

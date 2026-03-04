@@ -64,6 +64,8 @@ export interface StoredSettings {
 	shareWorkoutHistory: boolean;
 	// Current gym
 	currentGymId: string | null;
+	// Workout behavior
+	autoAddSet: boolean;
 }
 
 export interface StoredPreviousSets {
@@ -114,6 +116,7 @@ export const DEFAULT_SETTINGS: StoredSettings = {
 	shareWorkoutStatus: true,
 	shareWorkoutHistory: true,
 	currentGymId: null,
+	autoAddSet: true,
 };
 
 // Storage operations

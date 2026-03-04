@@ -417,6 +417,17 @@ export default function Settings() {
 							Share Gym Location
 						</IonToggle>
 					</IonItem>
+
+					<IonItem>
+						<IonToggle
+							checked={settings.autoAddSet}
+							onIonChange={(e) =>
+								updateSettings({ autoAddSet: e.detail.checked })
+							}
+						>
+							Auto Add Set
+						</IonToggle>
+					</IonItem>
 				</IonList>
 
 				<IonList inset>

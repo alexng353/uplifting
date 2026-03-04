@@ -10,7 +10,14 @@ import {
 	IonTitle,
 	IonToolbar,
 } from "@ionic/react";
-import { bed, checkmark, close, construct, reorderFour } from "ionicons/icons";
+import {
+	bed,
+	checkmark,
+	close,
+	construct,
+	reorderFour,
+	trashOutline,
+} from "ionicons/icons";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Swiper as SwiperType } from "swiper";
 import { Pagination } from "swiper/modules";
@@ -37,6 +44,7 @@ function WorkoutContent() {
 		isActive,
 		startWorkout,
 		logRestDay,
+		removeExercise,
 		finishWorkout,
 		cancelWorkout,
 	} = useWorkout();
@@ -49,6 +57,7 @@ function WorkoutContent() {
 	const swiperRef = useRef<SwiperType | null>(null);
 	const [isSwiperReady, setIsSwiperReady] = useState(false);
 	const [lastSlideIndex, setLastSlideIndex] = useState<number | null>(null);
+	const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 	const hasRestoredSlideRef = useRef(false);
 	const hasUserInteractedRef = useRef(false);
 	const workoutId = workout?.id;
@@ -112,11 +121,23 @@ function WorkoutContent() {
 				hasRestoredSlideRef.current = true;
 			}
 
+			setActiveSlideIndex(nextIndex);
 			setLastSlideIndex(nextIndex);
 			void setWorkoutLastSlide(workoutId, nextIndex);
 		},
 		[workoutId],
 	);
+
+	const isOnExerciseSlide =
+		workout !== null && activeSlideIndex < workout.exercises.length;
+
+	const handleRemoveCurrentExercise = useCallback(() => {
+		if (!workout) return;
+		const exercise = workout.exercises[activeSlideIndex];
+		if (exercise) {
+			removeExercise(exercise.exerciseId);
+		}
+	}, [workout, activeSlideIndex, removeExercise]);
 
 	useEffect(() => {
 		let isCancelled = false;
@@ -235,6 +256,15 @@ function WorkoutContent() {
 						<IonButton onClick={() => setShowReorder(true)}>
 							<IonIcon slot="icon-only" icon={reorderFour} />
 						</IonButton>
+						{isOnExerciseSlide && (
+							<IonButton
+								onClick={handleRemoveCurrentExercise}
+								color="danger"
+								size="small"
+							>
+								<IonIcon slot="icon-only" icon={trashOutline} />
+							</IonButton>
+						)}
 					</IonButtons>
 					<IonButtons slot="end">
 						{adminExerciseButton}
