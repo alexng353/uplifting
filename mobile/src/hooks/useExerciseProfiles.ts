@@ -58,3 +58,36 @@ export function useCreateExerciseProfile(exerciseId: string) {
 		},
 	});
 }
+
+export function useRenameExerciseProfile() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({
+			exerciseId,
+			profileId,
+			name,
+		}: {
+			exerciseId: string;
+			profileId: string;
+			name: string;
+		}) => {
+			const { data, error } = await api.renameProfile({
+				path: { exercise_id: exerciseId, profile_id: profileId },
+				body: { name },
+			});
+			if (error || !data) {
+				throw new Error("Failed to rename exercise profile");
+			}
+			return data;
+		},
+		onSuccess: (_data, variables) => {
+			queryClient.invalidateQueries({
+				queryKey: ["exerciseProfiles", variables.exerciseId],
+			});
+			queryClient.invalidateQueries({
+				queryKey: ["exerciseProfiles"],
+			});
+		},
+	});
+}

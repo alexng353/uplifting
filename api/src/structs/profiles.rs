@@ -17,3 +17,8 @@ pub struct ExerciseProfile {
 pub struct CreateProfileBody {
     pub name: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct RenameProfileBody {
+    pub name: String,
+}

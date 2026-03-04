@@ -23,6 +23,7 @@ import {
 } from "@ionic/react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+	barbell,
 	business,
 	cloudDownload,
 	eye,
@@ -38,6 +39,11 @@ import { useCallback, useState } from "react";
 import "./Settings.css";
 import { useAuth } from "../../hooks/useAuth";
 import { useCurrentGym } from "../../hooks/useCurrentGym";
+import {
+	useAllExerciseProfiles,
+	useRenameExerciseProfile,
+} from "../../hooks/useExerciseProfiles";
+import { useExercises } from "../../hooks/useExercises";
 import { useGyms } from "../../hooks/useGyms";
 import { useMe } from "../../hooks/useMe";
 import { useSettings } from "../../hooks/useSettings";
@@ -52,6 +58,9 @@ export default function Settings() {
 	const queryClient = useQueryClient();
 	const { gyms, addGym, updateGym, deleteGym } = useGyms();
 	const { currentGymId, setCurrentGymId, refreshCurrentGym } = useCurrentGym();
+	const { data: allProfiles } = useAllExerciseProfiles();
+	const { data: exercises } = useExercises();
+	const renameProfileMutation = useRenameExerciseProfile();
 
 	const [showEditUsername, setShowEditUsername] = useState(false);
 	const [newUsername, setNewUsername] = useState("");
@@ -60,6 +69,15 @@ export default function Settings() {
 	const [showWipeConfirm, setShowWipeConfirm] = useState(false);
 	const [isWiping, setIsWiping] = useState(false);
 	const [showGymManager, setShowGymManager] = useState(false);
+
+	// Rename profile state
+	const [showRenameProfile, setShowRenameProfile] = useState(false);
+	const [renameProfileData, setRenameProfileData] = useState<{
+		exerciseId: string;
+		profileId: string;
+		currentName: string;
+	} | null>(null);
+	const [newProfileName, setNewProfileName] = useState("");
 
 	// Email verification state
 	const [showVerifyEmail, setShowVerifyEmail] = useState(false);
@@ -115,6 +133,30 @@ export default function Settings() {
 			setIsWiping(false);
 		}
 	}, [queryClient, showMessage]);
+
+	const handleOpenRenameProfile = useCallback(
+		(exerciseId: string, profileId: string, currentName: string) => {
+			setRenameProfileData({ exerciseId, profileId, currentName });
+			setNewProfileName(currentName);
+			setShowRenameProfile(true);
+		},
+		[],
+	);
+
+	const handleSaveProfileName = useCallback(async () => {
+		if (!renameProfileData || !newProfileName.trim()) return;
+		try {
+			await renameProfileMutation.mutateAsync({
+				exerciseId: renameProfileData.exerciseId,
+				profileId: renameProfileData.profileId,
+				name: newProfileName.trim(),
+			});
+			setShowRenameProfile(false);
+			showMessage("Profile renamed");
+		} catch {
+			showMessage("Failed to rename profile");
+		}
+	}, [renameProfileData, newProfileName, renameProfileMutation, showMessage]);
 
 	const handleEditUsername = useCallback(() => {
 		setNewUsername(user?.username ?? "");
@@ -264,6 +306,35 @@ export default function Settings() {
 						<IonLabel>Change Password</IonLabel>
 					</IonItem>
 				</IonList>
+
+				{allProfiles && allProfiles.size > 0 && (
+					<IonList inset>
+						<IonListHeader>Exercise Profiles</IonListHeader>
+						{Array.from(allProfiles.entries()).map(([exerciseId, profiles]) => {
+							const exercise = exercises?.find((e) => e.id === exerciseId);
+							return profiles.map((profile) => (
+								<IonItem
+									key={profile.id}
+									button
+									onClick={() =>
+										handleOpenRenameProfile(
+											exerciseId,
+											profile.id,
+											profile.name,
+										)
+									}
+									detail
+								>
+									<IonIcon slot="start" icon={barbell} />
+									<IonLabel>
+										<h3>{profile.name}</h3>
+										<p>{exercise?.name ?? "Unknown exercise"}</p>
+									</IonLabel>
+								</IonItem>
+							));
+						})}
+					</IonList>
+				)}
 
 				<IonList inset>
 					<IonListHeader>Preferences</IonListHeader>
@@ -718,6 +789,40 @@ export default function Settings() {
 								</IonButton>
 							</>
 						)}
+					</IonContent>
+				</IonModal>
+
+				<IonModal
+					isOpen={showRenameProfile}
+					onDidDismiss={() => setShowRenameProfile(false)}
+				>
+					<IonHeader>
+						<IonToolbar>
+							<IonTitle>Rename Profile</IonTitle>
+							<IonButtons slot="end">
+								<IonButton onClick={() => setShowRenameProfile(false)}>
+									Cancel
+								</IonButton>
+							</IonButtons>
+						</IonToolbar>
+					</IonHeader>
+					<IonContent className="ion-padding">
+						<IonInput
+							label="Profile Name"
+							labelPlacement="stacked"
+							value={newProfileName}
+							onIonInput={(e) => setNewProfileName(e.detail.value ?? "")}
+						/>
+						<IonButton
+							expand="block"
+							onClick={handleSaveProfileName}
+							disabled={
+								renameProfileMutation.isPending || !newProfileName.trim()
+							}
+							className="ion-margin-top"
+						>
+							{renameProfileMutation.isPending ? "Saving..." : "Save"}
+						</IonButton>
 					</IonContent>
 				</IonModal>
 
