@@ -1,4 +1,3 @@
-import { Keyboard } from "@capacitor/keyboard";
 import {
 	IonActionSheet,
 	IonButton,
@@ -7,7 +6,7 @@ import {
 	IonList,
 	IonToggle,
 } from "@ionic/react";
-import { add, close, syncOutline, trash } from "ionicons/icons";
+import { add, close, syncOutline } from "ionicons/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useExerciseProfiles } from "../../../hooks/useExerciseProfiles";
 import { useGymProfileSuggestion } from "../../../hooks/useGymProfileSuggestion";
@@ -18,7 +17,6 @@ import type {
 	StoredSet,
 	StoredWorkoutExercise,
 } from "../../../services/local-storage";
-import KeyboardAccessoryBar from "./KeyboardAccessoryBar";
 import RestTimer from "./RestTimer";
 
 interface ExerciseSlideProps {
@@ -43,8 +41,6 @@ function SetRow({
 	updateSet,
 	onInputFocus,
 	onInputBlur,
-	repsRef,
-	weightRef,
 	suggestedReps,
 	suggestedWeight,
 }: {
@@ -58,10 +54,8 @@ function SetRow({
 		setId: string,
 		updates: Partial<StoredSet>,
 	) => void;
-	onInputFocus: (e: CustomEvent) => void;
+	onInputFocus: (e: CustomEvent, setId: string) => void;
 	onInputBlur: () => void;
-	repsRef?: (el: HTMLIonInputElement | null) => void;
-	weightRef?: (el: HTMLIonInputElement | null) => void;
 	suggestedReps: number;
 	suggestedWeight: number;
 }) {
@@ -76,12 +70,11 @@ function SetRow({
 				</div>
 			)}
 			<IonInput
-				ref={repsRef}
 				type="number"
 				inputMode="decimal"
 				value={set.reps}
 				placeholder={String(suggestedReps)}
-				onIonFocus={(e) => onInputFocus(e)}
+				onIonFocus={(e) => onInputFocus(e, set.id)}
 				onIonBlur={onInputBlur}
 				onIonChange={(e) =>
 					updateSet(exerciseId, set.id, {
@@ -90,12 +83,11 @@ function SetRow({
 				}
 			/>
 			<IonInput
-				ref={weightRef}
 				type="number"
 				inputMode="decimal"
 				value={set.weight}
 				placeholder={String(suggestedWeight)}
-				onIonFocus={(e) => onInputFocus(e)}
+				onIonFocus={(e) => onInputFocus(e, set.id)}
 				onIonBlur={onInputBlur}
 				onIonChange={(e) =>
 					updateSet(exerciseId, set.id, {
@@ -115,8 +107,6 @@ function LeftSetRow({
 	updateSet,
 	onInputFocus,
 	onInputBlur,
-	repsRef,
-	weightRef,
 	suggestedReps,
 	suggestedWeight,
 }: {
@@ -128,10 +118,8 @@ function LeftSetRow({
 		setId: string,
 		updates: Partial<StoredSet>,
 	) => void;
-	onInputFocus: (e: CustomEvent) => void;
+	onInputFocus: (e: CustomEvent, setId: string) => void;
 	onInputBlur: () => void;
-	repsRef?: (el: HTMLIonInputElement | null) => void;
-	weightRef?: (el: HTMLIonInputElement | null) => void;
 	suggestedReps: number;
 	suggestedWeight: number;
 }) {
@@ -140,12 +128,11 @@ function LeftSetRow({
 			<div className="set-number" />
 			<div className="side-label left">L</div>
 			<IonInput
-				ref={repsRef}
 				type="number"
 				inputMode="decimal"
 				value={set.reps}
 				placeholder={String(suggestedReps)}
-				onIonFocus={(e) => onInputFocus(e)}
+				onIonFocus={(e) => onInputFocus(e, set.id)}
 				onIonBlur={onInputBlur}
 				onIonChange={(e) =>
 					updateSet(exerciseId, set.id, {
@@ -154,12 +141,11 @@ function LeftSetRow({
 				}
 			/>
 			<IonInput
-				ref={weightRef}
 				type="number"
 				inputMode="decimal"
 				value={set.weight}
 				placeholder={String(suggestedWeight)}
-				onIonFocus={(e) => onInputFocus(e)}
+				onIonFocus={(e) => onInputFocus(e, set.id)}
 				onIonBlur={onInputBlur}
 				onIonChange={(e) =>
 					updateSet(exerciseId, set.id, {
@@ -180,23 +166,16 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 		toggleUnilateral,
 		removeLastSet,
 		removeLastUnilateralPair,
-		removeExercise,
 		changeExerciseProfile,
 	} = useWorkout();
-	const { getDisplayUnit } = useSettings();
+	const { settings, getDisplayUnit } = useSettings();
 	const { getSuggestion } = usePreviousSets();
 	const { data: profiles = [] } = useExerciseProfiles(exercise.exerciseId);
 	const { getSuggestedProfile, recordProfileUsage, currentGymId } =
 		useGymProfileSuggestion();
 	const setsContainerRef = useRef<HTMLDivElement>(null);
 	const [isInputFocused, setIsInputFocused] = useState(false);
-	const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 	const [showProfileSheet, setShowProfileSheet] = useState(false);
-
-	// Create refs for all inputs
-	// For normal mode: [set0-reps, set0-weight, set1-reps, set1-weight, ...]
-	// For unilateral: [set0-R-reps, set0-R-weight, set0-L-reps, set0-L-weight, ...]
-	const inputRefsMap = useRef<Map<string, HTMLIonInputElement>>(new Map());
 
 	const displayUnit = getDisplayUnit();
 
@@ -246,73 +225,54 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 		return pairs;
 	}, [exercise.sets, exercise.isUnilateral]);
 
-	// Build ordered list of input keys for navigation
-	// Normal mode: set0-reps, set0-weight, set1-reps, set1-weight, ...
-	// Unilateral: set0-R-reps, set0-R-weight, set0-L-reps, set0-L-weight, ...
-	const orderedInputKeys = useMemo(() => {
-		const keys: string[] = [];
-		if (exercise.isUnilateral) {
-			for (const group of setGroups) {
-				if (group.rightSet) {
-					keys.push(`${group.rightSet.id}-reps`);
-					keys.push(`${group.rightSet.id}-weight`);
-				}
-				if (group.leftSet) {
-					keys.push(`${group.leftSet.id}-reps`);
-					keys.push(`${group.leftSet.id}-weight`);
-				}
-			}
-		} else {
-			for (const set of exercise.sets) {
-				keys.push(`${set.id}-reps`);
-				keys.push(`${set.id}-weight`);
-			}
-		}
-		return keys;
-	}, [exercise.sets, exercise.isUnilateral, setGroups]);
-
-	// Track which input is focused by finding it in orderedInputKeys
-	const updateFocusedIndex = useCallback(
-		(ionInput: HTMLIonInputElement) => {
-			for (const [key, ref] of inputRefsMap.current.entries()) {
-				if (ref === ionInput) {
-					const index = orderedInputKeys.indexOf(key);
-					setFocusedIndex(index >= 0 ? index : null);
-					return;
-				}
-			}
-			setFocusedIndex(null);
-		},
-		[orderedInputKeys],
-	);
-
 	const syncInputFocusState = useCallback(() => {
 		const activeElement = document.activeElement;
 		setIsInputFocused(isElementWithinSetsContainer(activeElement));
 	}, [isElementWithinSetsContainer]);
 
 	const handleInputFocus = useCallback(
-		async (event: CustomEvent) => {
+		async (event: CustomEvent, setId: string) => {
 			syncInputFocusState();
-			// Track which input is focused for keyboard navigation
-			const ionInput = event.target as HTMLIonInputElement;
-			updateFocusedIndex(ionInput);
 			// Auto-select all text for easier mobile input
+			const ionInput = event.target as HTMLIonInputElement;
 			const nativeInput = await ionInput.getInputElement();
 			nativeInput.select();
+
+			// Auto-add set when focusing on the last set
+			if (settings.autoAddSet) {
+				if (exercise.isUnilateral) {
+					const rightSets = exercise.sets.filter((s) => s.side === "R");
+					const leftSets = exercise.sets.filter((s) => s.side === "L");
+					const lastRight = rightSets[rightSets.length - 1];
+					const lastLeft = leftSets[leftSets.length - 1];
+					if (setId === lastRight?.id || setId === lastLeft?.id) {
+						addUnilateralPair(exercise.exerciseId, displayUnit);
+					}
+				} else {
+					const lastSet = exercise.sets[exercise.sets.length - 1];
+					if (lastSet && setId === lastSet.id) {
+						addSet(exercise.exerciseId, displayUnit);
+					}
+				}
+			}
 		},
-		[syncInputFocusState, updateFocusedIndex],
+		[
+			syncInputFocusState,
+			settings.autoAddSet,
+			exercise.sets,
+			exercise.isUnilateral,
+			exercise.exerciseId,
+			addSet,
+			addUnilateralPair,
+			displayUnit,
+		],
 	);
 
 	const handleInputBlur = useCallback(() => {
 		requestAnimationFrame(() => {
 			syncInputFocusState();
-			// Only clear focused index if no input is focused
-			if (!isElementWithinSetsContainer(document.activeElement)) {
-				setFocusedIndex(null);
-			}
 		});
-	}, [syncInputFocusState, isElementWithinSetsContainer]);
+	}, [syncInputFocusState]);
 
 	useEffect(() => {
 		if (!isInputFocused) {
@@ -400,10 +360,6 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 		toggleUnilateral(exercise.exerciseId);
 	}, [exercise.exerciseId, toggleUnilateral]);
 
-	const handleRemoveExercise = useCallback(() => {
-		void removeExercise(exercise.exerciseId);
-	}, [exercise.exerciseId, removeExercise]);
-
 	// Extract base exercise name (without profile suffix)
 	const baseName = useMemo(() => {
 		if (exercise.profileId) {
@@ -425,12 +381,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 
 			setShowProfileSheet(false);
 		},
-		[
-			exercise.exerciseId,
-			baseName,
-			changeExerciseProfile,
-			recordProfileUsage,
-		],
+		[exercise.exerciseId, baseName, changeExerciseProfile, recordProfileUsage],
 	);
 
 	const profileActions = useMemo(() => {
@@ -472,47 +423,6 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 
 	const hasProfiles = profiles.length > 0;
 
-	// Helper to create ref callbacks for inputs
-	const createRefCallback = useCallback(
-		(key: string) => (el: HTMLIonInputElement | null) => {
-			if (el) {
-				inputRefsMap.current.set(key, el);
-			} else {
-				inputRefsMap.current.delete(key);
-			}
-		},
-		[],
-	);
-
-	// Handle Next button - focus next input
-	const handleNext = useCallback(async () => {
-		if (focusedIndex === null) return;
-		const nextIndex = focusedIndex + 1;
-		if (nextIndex < orderedInputKeys.length) {
-			const nextKey = orderedInputKeys[nextIndex];
-			const nextInput = inputRefsMap.current.get(nextKey);
-			if (nextInput) {
-				const native = await nextInput.getInputElement();
-				native.focus();
-			}
-		}
-	}, [focusedIndex, orderedInputKeys]);
-
-	// Handle Done button - dismiss keyboard
-	const handleDone = useCallback(() => {
-		if (document.activeElement instanceof HTMLElement) {
-			document.activeElement.blur();
-		}
-		// Also try Capacitor Keyboard plugin
-		Keyboard.hide().catch(() => {
-			// Ignore errors on web
-		});
-	}, []);
-
-	// Whether we're on the last input
-	const isLastInput =
-		focusedIndex !== null && focusedIndex === orderedInputKeys.length - 1;
-
 	// Can only remove if more than 1 set (or more than 1 pair in unilateral mode)
 	const canRemove = exercise.isUnilateral
 		? setGroups.length > 1
@@ -537,14 +447,6 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 						>
 							Unilateral
 						</IonToggle>
-						<IonButton
-							className="exercise-remove-button"
-							color="danger"
-							onClick={handleRemoveExercise}
-						>
-							<IonIcon slot="start" icon={trash} />
-							Remove Exercise
-						</IonButton>
 					</div>
 				</div>
 
@@ -584,10 +486,6 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 											updateSet={updateSet}
 											onInputFocus={handleInputFocus}
 											onInputBlur={handleInputBlur}
-											repsRef={createRefCallback(`${group.rightSet.id}-reps`)}
-											weightRef={createRefCallback(
-												`${group.rightSet.id}-weight`,
-											)}
 											suggestedReps={rightSuggestion.reps ?? DEFAULT_REPS}
 											suggestedWeight={rightSuggestion.weight ?? DEFAULT_WEIGHT}
 										/>
@@ -601,10 +499,6 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 											updateSet={updateSet}
 											onInputFocus={handleInputFocus}
 											onInputBlur={handleInputBlur}
-											repsRef={createRefCallback(`${group.leftSet.id}-reps`)}
-											weightRef={createRefCallback(
-												`${group.leftSet.id}-weight`,
-											)}
 											suggestedReps={leftSuggestion.reps ?? DEFAULT_REPS}
 											suggestedWeight={leftSuggestion.weight ?? DEFAULT_WEIGHT}
 										/>
@@ -647,13 +541,6 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 					</IonButton>
 				</div>
 
-				<KeyboardAccessoryBar
-					isVisible={isInputFocused}
-					onNext={handleNext}
-					onDone={handleDone}
-					showNext={!isLastInput}
-				/>
-
 				<IonActionSheet
 					isOpen={showProfileSheet}
 					onDidDismiss={() => setShowProfileSheet(false)}
@@ -683,14 +570,6 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 					>
 						Unilateral
 					</IonToggle>
-					<IonButton
-						className="exercise-remove-button"
-						color="danger"
-						onClick={handleRemoveExercise}
-					>
-						<IonIcon slot="start" icon={trash} />
-						Remove Exercise
-					</IonButton>
 				</div>
 			</div>
 
@@ -719,8 +598,6 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 								updateSet={updateSet}
 								onInputFocus={handleInputFocus}
 								onInputBlur={handleInputBlur}
-								repsRef={createRefCallback(`${set.id}-reps`)}
-								weightRef={createRefCallback(`${set.id}-weight`)}
 								suggestedReps={suggestion.reps ?? DEFAULT_REPS}
 								suggestedWeight={suggestion.weight ?? DEFAULT_WEIGHT}
 							/>
@@ -758,13 +635,6 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 					<IonIcon slot="icon-only" icon={close} />
 				</IonButton>
 			</div>
-
-			<KeyboardAccessoryBar
-				isVisible={isInputFocused}
-				onNext={handleNext}
-				onDone={handleDone}
-				showNext={!isLastInput}
-			/>
 
 			<IonActionSheet
 				isOpen={showProfileSheet}

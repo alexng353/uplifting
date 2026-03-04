@@ -29,19 +29,22 @@ export function useSettings() {
 	// Sync with server when authenticated
 	useEffect(() => {
 		if (!serverSettings) return;
-		const newSettings: StoredSettings = {
-			displayUnit: serverSettings.display_unit as "kg" | "lbs" | null,
-			maxWorkoutDurationMinutes: serverSettings.max_workout_duration_minutes,
-			defaultRestTimerSeconds: serverSettings.default_rest_timer_seconds,
-			defaultPrivacy: serverSettings.default_privacy,
-			shareGymLocation: serverSettings.share_gym_location,
-			shareOnlineStatus: serverSettings.share_online_status,
-			shareWorkoutStatus: serverSettings.share_workout_status,
-			shareWorkoutHistory: serverSettings.share_workout_history,
-			currentGymId: serverSettings.current_gym_id ?? null,
-		};
-		setSettingsState(newSettings);
-		saveSettings(newSettings);
+		setSettingsState((prev) => {
+			const newSettings: StoredSettings = {
+				displayUnit: serverSettings.display_unit as "kg" | "lbs" | null,
+				maxWorkoutDurationMinutes: serverSettings.max_workout_duration_minutes,
+				defaultRestTimerSeconds: serverSettings.default_rest_timer_seconds,
+				defaultPrivacy: serverSettings.default_privacy,
+				shareGymLocation: serverSettings.share_gym_location,
+				shareOnlineStatus: serverSettings.share_online_status,
+				shareWorkoutStatus: serverSettings.share_workout_status,
+				shareWorkoutHistory: serverSettings.share_workout_history,
+				currentGymId: serverSettings.current_gym_id ?? null,
+				autoAddSet: prev.autoAddSet,
+			};
+			saveSettings(newSettings);
+			return newSettings;
+		});
 	}, [serverSettings]);
 
 	const updateSettings = useCallback(
