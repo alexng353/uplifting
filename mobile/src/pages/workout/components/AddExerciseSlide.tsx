@@ -19,6 +19,7 @@ import {
 	useCreateExerciseProfile,
 	useExerciseProfiles,
 } from "../../../hooks/useExerciseProfiles";
+import { useExerciseSuggestions } from "../../../hooks/useExerciseSuggestions";
 import { useExercises } from "../../../hooks/useExercises";
 import {
 	useFavouriteExercises,
@@ -55,6 +56,7 @@ export default function AddExerciseSlide({
 	const createProfile = useCreateExerciseProfile(selectedExercise?.id ?? "");
 	const { getSuggestedProfile, recordProfileUsage, currentGymId } =
 		useGymProfileSuggestion();
+	const suggestedExerciseIds = useExerciseSuggestions();
 
 	const handleToggleFavourite = useCallback(
 		(e: React.MouseEvent, exerciseId: string) => {
@@ -198,7 +200,16 @@ export default function AddExerciseSlide({
 		});
 	}, [exercises, favourites]);
 
-	// Group exercises by first letter (with favourites section)
+	// Build a lookup map for suggested exercises
+	const suggestedExercises = useMemo(() => {
+		if (!exercises || suggestedExerciseIds.length === 0) return [];
+		const exerciseMap = new Map(exercises.map((e) => [e.id, e]));
+		return suggestedExerciseIds
+			.map((id) => exerciseMap.get(id))
+			.filter((e): e is Exercise => e !== undefined);
+	}, [exercises, suggestedExerciseIds]);
+
+	// Group exercises by first letter (with suggested and favourites sections)
 	const { groupedExercises, sortedLetters } = useMemo(() => {
 		const grouped: Record<string, Exercise[]> = {};
 		const favs: Exercise[] = [];
@@ -216,13 +227,19 @@ export default function AddExerciseSlide({
 		}
 
 		const letters = Object.keys(grouped).sort();
+
 		if (favs.length > 0) {
 			grouped["★"] = favs;
 			letters.unshift("★");
 		}
 
+		if (suggestedExercises.length > 0 && !searchText) {
+			grouped["⚡"] = suggestedExercises;
+			letters.unshift("⚡");
+		}
+
 		return { groupedExercises: grouped, sortedLetters: letters };
-	}, [sortedExercises, favourites]);
+	}, [sortedExercises, favourites, suggestedExercises, searchText]);
 
 	return (
 		<div className="add-exercise-slide">
@@ -249,7 +266,11 @@ export default function AddExerciseSlide({
 					sortedLetters.map((letter) => (
 						<div key={letter}>
 							<h3 className="ion-padding-start">
-								{letter === "★" ? "★ Favourites" : letter}
+								{letter === "⚡"
+									? "⚡ Suggested"
+									: letter === "★"
+										? "★ Favourites"
+										: letter}
 							</h3>
 							<IonList>
 								{groupedExercises[letter].map((exercise) => {

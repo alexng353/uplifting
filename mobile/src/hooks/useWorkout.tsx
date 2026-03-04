@@ -8,6 +8,7 @@ import {
 } from "react";
 import { detectAndSetNearbyGym } from "../services/geolocation";
 import {
+	addExerciseSequence,
 	generateId,
 	getCurrentWorkout,
 	getPendingWorkout,
@@ -464,6 +465,10 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 					exercise.sets,
 				);
 			}
+
+			// Save exercise sequence for heuristic sorting suggestions
+			const sequence = finishedWorkout.exercises.map((e) => e.exerciseId);
+			await addExerciseSequence(sequence);
 
 			// Mark as pending sync
 			await setPendingWorkout(finishedWorkout);

@@ -1,0 +1,40 @@
+name: Mobile Tests
+
+on:
+  push:
+    branches: [main]
+    paths: [mobile/**]
+  pull_request:
+    paths: [mobile/**]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: mobile/node_modules
+          key: bun-${{ runner.os }}-${{ hashFiles('mobile/bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: bun install --frozen-lockfile
+
+      - name: Type check
+        working-directory: mobile
+        run: bun run check
+
+      - name: Unit & integration tests
+        working-directory: mobile
+        env:
+          VITE_API_URL: http://localhost:8080
+        run: bun run test.unit -- --run
