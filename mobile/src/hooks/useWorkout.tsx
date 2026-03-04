@@ -352,9 +352,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 			const updated = {
 				...workout,
 				exercises: workout.exercises.map((e) =>
-					e.exerciseId === exerciseId
-						? { ...e, profileId, exerciseName }
-						: e,
+					e.exerciseId === exerciseId ? { ...e, profileId, exerciseName } : e,
 				),
 			};
 			await saveWorkout(updated);

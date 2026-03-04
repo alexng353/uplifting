@@ -20,6 +20,7 @@ pub(super) fn router(state: AppState) -> OpenApiRouter {
         .routes(routes!(profiles::get_all_profiles))
         .routes(routes!(profiles::get_profiles))
         .routes(routes!(profiles::create_profile))
+        .routes(routes!(profiles::rename_profile))
         .routes(routes!(favourite::list_favourites))
         .routes(routes!(favourite::add_favourite))
         .routes(routes!(favourite::remove_favourite))

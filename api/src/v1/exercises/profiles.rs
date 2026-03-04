@@ -3,7 +3,7 @@ use sqlx::query_as;
 use uuid::Uuid;
 
 use crate::extractors::users::UserId;
-use crate::structs::profiles::{CreateProfileBody, ExerciseProfile};
+use crate::structs::profiles::{CreateProfileBody, ExerciseProfile, RenameProfileBody};
 use crate::*;
 
 /// Get all profiles for the current user
@@ -104,6 +104,48 @@ pub async fn create_profile(
     )
     .fetch_one(&*state.db)
     .await?;
+
+    Ok(Json(profile))
+}
+
+/// Rename an exercise profile
+#[utoipa::path(
+    put,
+    path = "/{exercise_id}/profiles/{profile_id}",
+    params(
+        ("exercise_id" = Uuid, Path, description = "Exercise ID"),
+        ("profile_id" = Uuid, Path, description = "Profile ID")
+    ),
+    request_body = RenameProfileBody,
+    responses(
+        (status = OK, body = ExerciseProfile),
+        (status = NOT_FOUND, description = "Profile not found"),
+        (status = UNAUTHORIZED, description = "Not authenticated")
+    ),
+    tag = super::EXERCISES_TAG
+)]
+pub async fn rename_profile(
+    State(state): State<AppState>,
+    UserId(user_id): UserId,
+    Path((exercise_id, profile_id)): Path<(Uuid, Uuid)>,
+    Json(body): Json<RenameProfileBody>,
+) -> Result<Json<ExerciseProfile>, AppError> {
+    let profile = query_as!(
+        ExerciseProfile,
+        r#"
+        UPDATE exercise_profiles
+        SET name = $1
+        WHERE id = $2 AND user_id = $3 AND exercise_id = $4
+        RETURNING id, user_id, exercise_id, name, created_at
+        "#,
+        body.name,
+        profile_id,
+        user_id,
+        exercise_id
+    )
+    .fetch_optional(&*state.db)
+    .await?
+    .ok_or(AppError::Error(Errors::Unauthorized))?;
 
     Ok(Json(profile))
 }

@@ -565,6 +565,65 @@
         }
       }
     },
+    "/api/v1/exercises/{exercise_id}/profiles/{profile_id}": {
+      "put": {
+        "tags": [
+          "exercises"
+        ],
+        "summary": "Rename an exercise profile",
+        "operationId": "rename_profile",
+        "parameters": [
+          {
+            "name": "exercise_id",
+            "in": "path",
+            "description": "Exercise ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "profile_id",
+            "in": "path",
+            "description": "Profile ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameProfileBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseProfile"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "Profile not found"
+          }
+        }
+      }
+    },
     "/api/v1/friends": {
       "get": {
         "tags": [
@@ -2622,6 +2681,17 @@
             "items": {
               "$ref": "#/components/schemas/PreviousSet"
             }
+          }
+        }
+      },
+      "RenameProfileBody": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
           }
         }
       },
