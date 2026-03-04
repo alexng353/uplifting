@@ -27,4 +27,6 @@ jobs:
 
       - name: Unit & integration tests
         working-directory: mobile
+        env:
+          VITE_API_URL: http://localhost:8080
         run: bun run test.unit -- --run
