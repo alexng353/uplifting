@@ -55,6 +55,7 @@
 		"@vitejs/plugin-legacy": "^5.4.3",
 		"@vitejs/plugin-react": "^4.7.0",
 		"cypress": "^13.17.0",
+		"fake-indexeddb": "^6.2.5",
 		"globals": "^15.15.0",
 		"jsdom": "^22.1.0",
 		"terser": "^5.46.0",

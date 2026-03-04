@@ -24,60 +24,73 @@ export function useExerciseSuggestions(maxSuggestions = 5): string[] {
 		getExerciseSequences().then(setSequences);
 	}, []);
 
-	return useMemo(() => {
-		if (sequences.length === 0) return [];
+	const currentExerciseIds = useMemo(
+		() => workout?.exercises.map((e) => e.exerciseId) ?? [],
+		[workout?.exercises],
+	);
 
-		const currentExerciseIds = new Set(
-			workout?.exercises.map((e) => e.exerciseId) ?? [],
-		);
+	return useMemo(
+		() => rankExercises(sequences, currentExerciseIds, maxSuggestions),
+		[sequences, currentExerciseIds, maxSuggestions],
+	);
+}
 
-		// Score each candidate exercise based on how often it follows
-		// the current exercises in past workout sequences
-		const scores = new Map<string, number>();
+/**
+ * Pure scoring function: given historical sequences and current exercise IDs,
+ * return ranked suggested exercise IDs.
+ */
+export function rankExercises(
+	sequences: StoredExerciseSequences,
+	currentExerciseIds: string[],
+	maxSuggestions = 5,
+): string[] {
+	if (sequences.length === 0) return [];
 
-		for (let i = 0; i < sequences.length; i++) {
-			const sequence = sequences[i];
-			// Recency weight: most recent workout = 1.0, decays by 0.85 per older workout
-			const recencyWeight = 0.85 ** i;
+	const currentSet = new Set(currentExerciseIds);
+	const scores = new Map<string, number>();
 
-			if (currentExerciseIds.size === 0) {
-				// No exercises yet — suggest based on what exercises commonly start workouts
-				const firstExercise = sequence[0];
-				if (firstExercise) {
-					scores.set(
-						firstExercise,
-						(scores.get(firstExercise) ?? 0) + recencyWeight,
-					);
-				}
-				continue;
+	for (let i = 0; i < sequences.length; i++) {
+		const sequence = sequences[i];
+		// Recency weight: most recent workout = 1.0, decays by 0.85 per older workout
+		const recencyWeight = 0.85 ** i;
+
+		if (currentSet.size === 0) {
+			// No exercises yet — suggest based on what exercises commonly start workouts
+			const firstExercise = sequence[0];
+			if (firstExercise) {
+				scores.set(
+					firstExercise,
+					(scores.get(firstExercise) ?? 0) + recencyWeight,
+				);
 			}
-
-			// Find the best matching position in this historical sequence
-			// Strategy: find where the current exercises overlap in this sequence,
-			// then suggest what comes next
-			const lastCurrentIdx = findLastMatchIndex(sequence, currentExerciseIds);
-
-			if (lastCurrentIdx === -1) continue;
-
-			// Suggest exercises that follow the matched position
-			for (let j = lastCurrentIdx + 1; j < sequence.length; j++) {
-				const candidateId = sequence[j];
-				if (currentExerciseIds.has(candidateId)) continue;
-
-				// Position weight: immediately next exercise scores highest
-				const positionWeight = 1 / (j - lastCurrentIdx);
-				const totalWeight = recencyWeight * positionWeight;
-
-				scores.set(candidateId, (scores.get(candidateId) ?? 0) + totalWeight);
-			}
+			continue;
 		}
 
-		// Sort by score descending and return top N
-		return [...scores.entries()]
-			.sort((a, b) => b[1] - a[1])
-			.slice(0, maxSuggestions)
-			.map(([id]) => id);
-	}, [sequences, workout?.exercises, maxSuggestions]);
+		// Find the best matching position in this historical sequence
+		// Strategy: find where the current exercises overlap in this sequence,
+		// then suggest what comes next
+		const lastCurrentIdx = findLastMatchIndex(sequence, currentSet);
+
+		if (lastCurrentIdx === -1) continue;
+
+		// Suggest exercises that follow the matched position
+		for (let j = lastCurrentIdx + 1; j < sequence.length; j++) {
+			const candidateId = sequence[j];
+			if (currentSet.has(candidateId)) continue;
+
+			// Position weight: immediately next exercise scores highest
+			const positionWeight = 1 / (j - lastCurrentIdx);
+			const totalWeight = recencyWeight * positionWeight;
+
+			scores.set(candidateId, (scores.get(candidateId) ?? 0) + totalWeight);
+		}
+	}
+
+	// Sort by score descending and return top N
+	return [...scores.entries()]
+		.sort((a, b) => b[1] - a[1])
+		.slice(0, maxSuggestions)
+		.map(([id]) => id);
 }
 
 /**
