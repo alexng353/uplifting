@@ -13,6 +13,7 @@ export const STORAGE_KEYS = {
 	GYMS: "gyms",
 	CURRENT_GYM: "current_gym",
 	GYM_PROFILE_MAP: "gym_profile_map",
+	EXERCISE_SEQUENCES: "exercise_sequences",
 } as const;
 
 // Workout kind type
@@ -95,6 +96,12 @@ export interface StoredGym {
 export interface GymProfileMapping {
 	[key: string]: string; // key: `${exerciseId}_${gymId}`, value: profileId
 }
+
+// Exercise sequence from a past workout (ordered list of exercise IDs)
+export type ExerciseSequence = string[];
+
+// Stored exercise sequences from recent workouts (most recent first, max 20)
+export type StoredExerciseSequences = ExerciseSequence[];
 
 // Default settings
 export const DEFAULT_SETTINGS: StoredSettings = {
@@ -307,6 +314,28 @@ export async function setGymProfileForExercise(
 	const key = `${exerciseId}_${gymId}`;
 	map[key] = profileId;
 	await set(STORAGE_KEYS.GYM_PROFILE_MAP, map);
+}
+
+// Exercise sequence operations
+const MAX_EXERCISE_SEQUENCES = 20;
+
+export async function getExerciseSequences(): Promise<StoredExerciseSequences> {
+	return (
+		(await get<StoredExerciseSequences>(STORAGE_KEYS.EXERCISE_SEQUENCES)) ?? []
+	);
+}
+
+export async function addExerciseSequence(
+	sequence: ExerciseSequence,
+): Promise<void> {
+	if (sequence.length === 0) return;
+	const sequences = await getExerciseSequences();
+	sequences.unshift(sequence);
+	// Keep only the most recent N sequences
+	if (sequences.length > MAX_EXERCISE_SEQUENCES) {
+		sequences.length = MAX_EXERCISE_SEQUENCES;
+	}
+	await set(STORAGE_KEYS.EXERCISE_SEQUENCES, sequences);
 }
 
 export async function getLastProfileForExerciseAtGym(

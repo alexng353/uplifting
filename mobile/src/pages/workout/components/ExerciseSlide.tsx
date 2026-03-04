@@ -425,12 +425,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 
 			setShowProfileSheet(false);
 		},
-		[
-			exercise.exerciseId,
-			baseName,
-			changeExerciseProfile,
-			recordProfileUsage,
-		],
+		[exercise.exerciseId, baseName, changeExerciseProfile, recordProfileUsage],
 	);
 
 	const profileActions = useMemo(() => {
