@@ -458,7 +458,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 				gymLocation,
 				exercises: workout.exercises.map((e) => ({
 					...e,
-					sets: e.sets.filter((s) => s.reps != null || s.weight != null),
+					sets: e.sets.filter((s) => s.reps != null && s.reps > 0),
 				})),
 			};
 
