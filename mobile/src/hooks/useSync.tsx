@@ -39,13 +39,15 @@ export function useSync() {
 			exercises: local.exercises.map((e) => ({
 				exercise_id: e.exerciseId,
 				profile_id: e.profileId,
-				sets: e.sets.map((s) => ({
-					reps: s.reps ?? 1,
-					weight: String(s.weight ?? 0),
-					weight_unit: s.weightUnit,
-					created_at: s.createdAt,
-					side: s.side,
-				})),
+				sets: e.sets
+					.filter((s) => s.reps != null && s.reps > 0)
+					.map((s) => ({
+						reps: s.reps ?? 1,
+						weight: String(s.weight ?? 0),
+						weight_unit: s.weightUnit,
+						created_at: s.createdAt,
+						side: s.side,
+					})),
 			})),
 		}),
 		[],
