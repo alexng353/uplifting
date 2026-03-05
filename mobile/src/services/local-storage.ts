@@ -23,6 +23,7 @@ export type WorkoutKind = "workout" | "rest";
 export interface StoredWorkout {
 	id: string;
 	startTime: string;
+	endTime?: string;
 	exercises: StoredWorkoutExercise[];
 	name?: string;
 	privacy: string;

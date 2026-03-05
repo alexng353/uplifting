@@ -32,7 +32,7 @@ export function useSync() {
 		(local: StoredWorkout): SyncWorkoutRequest & { kind?: string } => ({
 			name: local.name,
 			start_time: local.startTime,
-			end_time: new Date().toISOString(),
+			end_time: local.endTime ?? new Date().toISOString(),
 			privacy: local.privacy,
 			gym_location: local.gymLocation,
 			kind: local.kind,

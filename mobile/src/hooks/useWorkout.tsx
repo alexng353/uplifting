@@ -85,15 +85,21 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 			setHasPendingWorkout(pending !== null);
 
 			if (current) {
-				// Check if workout is too old (> 24 hours)
+				const settings = await getSettings();
 				const startTime = new Date(current.startTime);
 				const now = new Date();
-				const hoursDiff =
-					(now.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+				const minutesDiff = (now.getTime() - startTime.getTime()) / (1000 * 60);
 
-				if (hoursDiff > 24) {
-					// Auto-cap the workout - move to pending for sync
-					const cappedWorkout = { ...current };
+				if (minutesDiff > settings.maxWorkoutDurationMinutes) {
+					// Auto-cap the workout - set endTime to start + max duration
+					const cappedEndTime = new Date(
+						startTime.getTime() +
+							settings.maxWorkoutDurationMinutes * 60 * 1000,
+					);
+					const cappedWorkout = {
+						...current,
+						endTime: cappedEndTime.toISOString(),
+					};
 					await setPendingWorkout(cappedWorkout);
 					await setCurrentWorkout(null);
 					setHasPendingWorkout(true);
@@ -456,6 +462,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 				...workout,
 				name,
 				gymLocation,
+				endTime: new Date().toISOString(),
 				exercises: workout.exercises.map((e) => ({
 					...e,
 					sets: e.sets.filter((s) => s.reps != null && s.reps > 0),
