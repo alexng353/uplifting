@@ -13,8 +13,8 @@
       "Left": [
         "Uuid",
         "Varchar",
-        "Timestamp",
-        "Timestamp",
+        "Timestamptz",
+        "Timestamptz",
         "Varchar",
         "Varchar",
         "Varchar"

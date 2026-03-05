@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use extractors::users::UserId;
 use sqlx::query;
 use structs::exercise_types::ExerciseType;
@@ -25,7 +25,7 @@ pub struct Exercise {
     pub description: String,
     pub author_id: Uuid,
     pub official: bool,
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

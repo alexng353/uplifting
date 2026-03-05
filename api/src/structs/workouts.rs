@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -49,8 +49,8 @@ pub struct Workout {
     pub id: Uuid,
     pub user_id: Uuid,
     pub name: Option<String>,
-    pub start_time: NaiveDateTime,
-    pub end_time: Option<NaiveDateTime>,
+    pub start_time: DateTime<Utc>,
+    pub end_time: Option<DateTime<Utc>>,
     pub privacy: String,
     pub gym_location: Option<String>,
     #[sqlx(try_from = "String")]
@@ -68,8 +68,8 @@ pub struct WorkoutWithSets {
 pub struct WorkoutSummary {
     pub id: Uuid,
     pub name: Option<String>,
-    pub start_time: NaiveDateTime,
-    pub end_time: Option<NaiveDateTime>,
+    pub start_time: DateTime<Utc>,
+    pub end_time: Option<DateTime<Utc>>,
     pub duration_minutes: i64,
     pub total_volume: Decimal,
     pub total_sets: i64,
@@ -91,7 +91,7 @@ pub struct UpdateWorkoutBody {
     pub name: Option<String>,
     pub privacy: Option<String>,
     pub gym_location: Option<String>,
-    pub end_time: Option<NaiveDateTime>,
+    pub end_time: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

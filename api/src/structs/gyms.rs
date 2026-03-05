@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -11,7 +11,7 @@ pub struct Gym {
     pub name: String,
     pub latitude: Option<f64>,
     pub longitude: Option<f64>,
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -35,7 +35,7 @@ pub struct GymProfileMapping {
     pub gym_id: Uuid,
     pub exercise_id: Uuid,
     pub profile_id: Uuid,
-    pub updated_at: NaiveDateTime,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

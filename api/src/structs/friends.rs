@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -41,7 +41,7 @@ pub struct Friendship {
     pub user_id: Uuid,
     pub friend_id: Uuid,
     pub status: String,
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -52,7 +52,7 @@ pub struct FriendWithProfile {
     pub real_name: String,
     pub avatar_url: Option<String>,
     pub status: String,
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
 }
 
 /// Friend with activity status (online, in workout)
@@ -64,21 +64,21 @@ pub struct FriendWithStatus {
     pub real_name: String,
     pub avatar_url: Option<String>,
     pub status: String,
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
     // Activity status (null if sharing is disabled)
     pub is_online: Option<bool>,
     pub is_in_workout: Option<bool>,
     pub current_workout_name: Option<String>,
-    pub current_workout_started_at: Option<NaiveDateTime>,
+    pub current_workout_started_at: Option<DateTime<Utc>>,
 }
 
 /// User activity tracking
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct UserActivity {
     pub user_id: Uuid,
-    pub last_seen_at: NaiveDateTime,
+    pub last_seen_at: DateTime<Utc>,
     pub current_workout_id: Option<Uuid>,
-    pub current_workout_started_at: Option<NaiveDateTime>,
+    pub current_workout_started_at: Option<DateTime<Utc>>,
 }
 
 /// Request body for updating activity (heartbeat)
@@ -106,8 +106,8 @@ pub struct FeedItem {
     pub real_name: String,
     pub avatar_url: Option<String>,
     pub workout_name: Option<String>,
-    pub start_time: NaiveDateTime,
-    pub end_time: Option<NaiveDateTime>,
+    pub start_time: DateTime<Utc>,
+    pub end_time: Option<DateTime<Utc>>,
     pub duration_minutes: Option<i64>,
     pub total_volume: Option<rust_decimal::Decimal>,
     pub total_sets: Option<i64>,

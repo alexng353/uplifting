@@ -36,12 +36,12 @@
       {
         "ordinal": 6,
         "name": "start_time",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 7,
         "name": "end_time",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 8,

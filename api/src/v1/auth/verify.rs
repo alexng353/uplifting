@@ -41,7 +41,7 @@ pub async fn send_verification(
 
     // Generate verification code
     let code = generate_verification_code();
-    let expires_at = Utc::now().naive_utc() + Duration::minutes(30);
+    let expires_at = Utc::now() + Duration::minutes(30);
 
     // Store the token
     query!(

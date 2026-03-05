@@ -1,24 +1,22 @@
 use std::ops::Deref;
 
-use chrono::NaiveDateTime;
+use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use utoipa::ToSchema;
 
-/// A NaiveDateTime wrapper that round-trips JavaScript ISO 8601 strings.
-/// All timestamps are treated as UTC by convention.
+/// A DateTime<Utc> wrapper that round-trips JavaScript ISO 8601 strings.
 ///
 /// Deserialize: accepts "2026-01-16T07:57:30.097Z" or "2026-01-16T07:57:30.097"
-/// Serialize: always appends 'Z' so the frontend knows the value is UTC.
+/// Serialize: always produces ISO 8601 with 'Z' suffix.
 #[derive(Debug, Clone, Copy, ToSchema)]
-pub struct JSDate(pub NaiveDateTime);
+pub struct JSDate(pub DateTime<Utc>);
 
 impl Serialize for JSDate {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let s = format!("{}Z", self.0.format("%Y-%m-%dT%H:%M:%S%.f"));
-        serializer.serialize_str(&s)
+        serializer.serialize_str(&self.0.to_rfc3339_opts(chrono::SecondsFormat::Millis, true))
     }
 }
 
@@ -28,24 +26,28 @@ impl<'de> Deserialize<'de> for JSDate {
         D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        // Strip trailing 'Z' if present — we store as NaiveDateTime (UTC by convention)
-        let s = s.strip_suffix('Z').unwrap_or(&s);
-        NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%S%.f")
-            .or_else(|_| NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%S"))
-            .map(JSDate)
+        // Try parsing as RFC 3339 first (has timezone info like 'Z' or '+00:00')
+        if let Ok(dt) = DateTime::parse_from_rfc3339(&s) {
+            return Ok(JSDate(dt.with_timezone(&Utc)));
+        }
+        // Fall back to naive parsing (assume UTC)
+        let s_stripped = s.strip_suffix('Z').unwrap_or(&s);
+        NaiveDateTime::parse_from_str(s_stripped, "%Y-%m-%dT%H:%M:%S%.f")
+            .or_else(|_| NaiveDateTime::parse_from_str(s_stripped, "%Y-%m-%dT%H:%M:%S"))
+            .map(|naive| JSDate(naive.and_utc()))
             .map_err(serde::de::Error::custom)
     }
 }
 
 impl Deref for JSDate {
-    type Target = NaiveDateTime;
+    type Target = DateTime<Utc>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl From<JSDate> for NaiveDateTime {
+impl From<JSDate> for DateTime<Utc> {
     fn from(val: JSDate) -> Self {
         val.0
     }

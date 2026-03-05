@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -15,7 +15,7 @@ pub struct Exercise {
     pub official: bool,
     pub author_id: Option<Uuid>,
     pub description: Option<String>,
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -33,7 +33,7 @@ pub struct PersonalRecord {
     pub weight: Decimal,
     pub weight_unit: String,
     pub reps: i32,
-    pub date: NaiveDateTime,
+    pub date: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

@@ -12,7 +12,7 @@
         "Int4",
         "Numeric",
         "Varchar",
-        "Timestamp",
+        "Timestamptz",
         "Varchar"
       ]
     },

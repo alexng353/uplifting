@@ -7,7 +7,7 @@
       "Left": [
         "Uuid",
         "Varchar",
-        "Timestamp"
+        "Timestamptz"
       ]
     },
     "nullable": []

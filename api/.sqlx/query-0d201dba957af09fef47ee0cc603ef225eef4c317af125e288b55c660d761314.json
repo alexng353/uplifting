@@ -36,12 +36,12 @@
       {
         "ordinal": 6,
         "name": "created_at!",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 7,
         "name": "last_seen_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 8,
@@ -51,7 +51,7 @@
       {
         "ordinal": 9,
         "name": "current_workout_started_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 10,

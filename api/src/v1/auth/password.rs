@@ -46,7 +46,7 @@ pub async fn request_password_change(
 
     // Generate verification code
     let code = generate_verification_code();
-    let expires_at = Utc::now().naive_utc() + Duration::minutes(15);
+    let expires_at = Utc::now() + Duration::minutes(15);
 
     // Store the token
     query!(

@@ -53,7 +53,7 @@ pub async fn respond_request(
                 user_id: Uuid::nil(),
                 friend_id: user_id,
                 status: "declined".to_string(),
-                created_at: chrono::Utc::now().naive_utc(),
+                created_at: chrono::Utc::now(),
             }));
         }
         "block" => "blocked",

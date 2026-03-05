@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -15,7 +15,7 @@ pub struct UserSet {
     pub reps: i32,
     pub weight: Decimal,
     pub weight_unit: String,
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
     /// Side for unilateral exercises: "L" or "R"
     pub side: Option<String>,
 }

@@ -1,4 +1,4 @@
-use chrono::{NaiveDateTime, Utc};
+use chrono::{DateTime, Utc};
 use sqlx::{query_as, FromRow};
 
 use crate::extractors::users::UserId;
@@ -14,11 +14,11 @@ struct FriendRow {
     real_name: String,
     avatar_url: Option<String>,
     status: String,
-    created_at: NaiveDateTime,
+    created_at: DateTime<Utc>,
     // Activity data
-    last_seen_at: Option<NaiveDateTime>,
+    last_seen_at: Option<DateTime<Utc>>,
     current_workout_id: Option<uuid::Uuid>,
-    current_workout_started_at: Option<NaiveDateTime>,
+    current_workout_started_at: Option<DateTime<Utc>>,
     current_workout_name: Option<String>,
     // Settings
     share_online_status: Option<bool>,
@@ -95,7 +95,7 @@ pub async fn list_friends(
     .fetch_all(&*state.db)
     .await?;
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
     let online_threshold = chrono::Duration::minutes(5);
 
     let friends: Vec<FriendWithStatus> = rows
