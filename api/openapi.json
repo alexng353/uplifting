@@ -2536,7 +2536,7 @@
       "JSDate": {
         "type": "string",
         "format": "date-time",
-        "description": "A NaiveDateTime wrapper that deserializes from JavaScript ISO 8601 strings.\nJavaScript's toISOString() produces \"2026-01-16T07:57:30.097Z\" but NaiveDateTime\nexpects no timezone suffix. This type handles both formats."
+        "description": "A DateTime<Utc> wrapper that round-trips JavaScript ISO 8601 strings.\n\nDeserialize: accepts \"2026-01-16T07:57:30.097Z\" or \"2026-01-16T07:57:30.097\"\nSerialize: always produces ISO 8601 with 'Z' suffix."
       },
       "LoginBody": {
         "type": "object",
