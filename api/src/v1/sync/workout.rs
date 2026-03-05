@@ -42,9 +42,9 @@ pub async fn sync_workout(
     .fetch_one(&mut *tx)
     .await?;
 
-    // Insert all sets
+    // Insert all sets, skipping any with 0 reps (violates DB constraint)
     for exercise in &body.exercises {
-        for set in &exercise.sets {
+        for set in exercise.sets.iter().filter(|s| s.reps > 0) {
             sqlx::query!(
                 r#"
                 INSERT INTO user_sets (user_id, exercise_id, workout_id, profile_id, reps, weight, weight_unit, created_at, side)
