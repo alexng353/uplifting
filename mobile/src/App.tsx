@@ -44,6 +44,7 @@ import { ActivityTracker } from "./components/ActivityTracker";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { useBootstrap } from "./hooks/useBootstrap";
 import { WorkoutProvider } from "./hooks/useWorkout";
+import ExerciseProfiles from "./pages/exercise-profiles/ExerciseProfiles";
 /* Pages */
 import Friends from "./pages/friends/Friends";
 import Login from "./pages/login/Login";
@@ -96,6 +97,9 @@ function AuthenticatedRoutes() {
 				</Route>
 				<Route exact path="/settings">
 					<Settings />
+				</Route>
+				<Route exact path="/settings/exercise-profiles">
+					<ExerciseProfiles />
 				</Route>
 				<Route exact path="/">
 					<Redirect to="/me" />
