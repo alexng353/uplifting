@@ -76,7 +76,7 @@ function SetRow({
 				placeholder={String(suggestedReps)}
 				onIonFocus={(e) => onInputFocus(e, set.id)}
 				onIonBlur={onInputBlur}
-				onIonChange={(e) =>
+				onIonInput={(e) =>
 					updateSet(exerciseId, set.id, {
 						reps: e.detail.value ? Number(e.detail.value) : undefined,
 					})
@@ -89,7 +89,7 @@ function SetRow({
 				placeholder={String(suggestedWeight)}
 				onIonFocus={(e) => onInputFocus(e, set.id)}
 				onIonBlur={onInputBlur}
-				onIonChange={(e) =>
+				onIonInput={(e) =>
 					updateSet(exerciseId, set.id, {
 						weight: e.detail.value ? Number(e.detail.value) : undefined,
 					})
@@ -134,7 +134,7 @@ function LeftSetRow({
 				placeholder={String(suggestedReps)}
 				onIonFocus={(e) => onInputFocus(e, set.id)}
 				onIonBlur={onInputBlur}
-				onIonChange={(e) =>
+				onIonInput={(e) =>
 					updateSet(exerciseId, set.id, {
 						reps: e.detail.value ? Number(e.detail.value) : undefined,
 					})
@@ -147,7 +147,7 @@ function LeftSetRow({
 				placeholder={String(suggestedWeight)}
 				onIonFocus={(e) => onInputFocus(e, set.id)}
 				onIonBlur={onInputBlur}
-				onIonChange={(e) =>
+				onIonInput={(e) =>
 					updateSet(exerciseId, set.id, {
 						weight: e.detail.value ? Number(e.detail.value) : undefined,
 					})
