@@ -236,7 +236,7 @@ export function clearWorkoutLastSlide(): void {
 }
 
 export function getSettings(): StoredSettings {
-  return getJSON<StoredSettings>(STORAGE_KEYS.SETTINGS) ?? DEFAULT_SETTINGS;
+  return { ...DEFAULT_SETTINGS, ...getJSON<StoredSettings>(STORAGE_KEYS.SETTINGS) };
 }
 
 export function setSettings(settings: StoredSettings): void {
