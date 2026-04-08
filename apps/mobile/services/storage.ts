@@ -357,6 +357,10 @@ export function getGymProfileMap(): GymProfileMapping {
   return getJSON<GymProfileMapping>(STORAGE_KEYS.GYM_PROFILE_MAP) ?? {};
 }
 
+export function setGymProfileMap(map: GymProfileMapping): void {
+  setJSON(STORAGE_KEYS.GYM_PROFILE_MAP, map);
+}
+
 export function setGymProfileForExercise(
   exerciseId: string,
   gymId: string,
