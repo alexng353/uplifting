@@ -15,6 +15,7 @@ import { useMe } from "../../hooks/useMe";
 import { useWorkouts } from "../../hooks/useWorkouts";
 import { useStreak } from "../../hooks/useStreak";
 import { useSync } from "../../hooks/useSync";
+import { useThemeColors } from "../../hooks/useThemeColors";
 import WeekStreak from "../../components/WeekStreak";
 import type { WorkoutEntry } from "../../components/WeekStreak";
 import SyncBanner from "../../components/SyncBanner";
@@ -22,6 +23,7 @@ import SyncBanner from "../../components/SyncBanner";
 export default function MeScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const colors = useThemeColors();
   const { data: me } = useMe();
   const { data: workouts } = useWorkouts(1, 20);
   const streak = useStreak();
@@ -125,7 +127,7 @@ export default function MeScreen() {
     (me as any)?.real_name || (me as any)?.username || "User";
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900" edges={["top"]}>
       <ScrollView
         className="flex-1"
         contentContainerClassName="pb-8"
@@ -135,7 +137,7 @@ export default function MeScreen() {
       >
         {/* Header */}
         <View className="px-4 pb-2 pt-4">
-          <Text className="text-3xl font-bold">Me</Text>
+          <Text className="text-3xl font-bold dark:text-zinc-100">Me</Text>
         </View>
 
         {/* Sync Banner */}
@@ -153,9 +155,9 @@ export default function MeScreen() {
               <Text className="text-lg font-bold text-white">{initials}</Text>
             </View>
             <View>
-              <Text className="text-xl font-semibold">{displayName}</Text>
+              <Text className="text-xl font-semibold dark:text-zinc-100">{displayName}</Text>
               {(me as any)?.username && (me as any)?.real_name && (
-                <Text className="text-sm text-zinc-500">
+                <Text className="text-sm text-zinc-500 dark:text-zinc-400">
                   @{(me as any).username}
                 </Text>
               )}
@@ -164,57 +166,57 @@ export default function MeScreen() {
 
           {/* Streak Banner */}
           {streak > 0 && (
-            <View className="mb-4 flex-row items-center justify-center gap-1.5 rounded-xl bg-amber-100 px-4 py-3">
-              <Ionicons name="flame" size={24} color="#f59e0b" />
-              <Text className="text-2xl font-extrabold text-amber-600">
+            <View className="mb-4 flex-row items-center justify-center gap-1.5 rounded-xl bg-amber-100 dark:bg-amber-950 px-4 py-3">
+              <Ionicons name="flame" size={24} color={colors.warningIcon} />
+              <Text className="text-2xl font-extrabold text-amber-600 dark:text-amber-400">
                 {streak}
               </Text>
-              <Text className="text-base font-medium text-amber-600">
+              <Text className="text-base font-medium text-amber-600 dark:text-amber-400">
                 day{streak !== 1 ? "s" : ""} streak
               </Text>
             </View>
           )}
 
           {/* Week Streak */}
-          <View className="mb-4 rounded-xl border border-zinc-200 bg-white p-4">
-            <Text className="mb-3 text-lg font-semibold">This Week</Text>
+          <View className="mb-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4">
+            <Text className="mb-3 text-lg font-semibold dark:text-zinc-100">This Week</Text>
             <WeekStreak entries={weekEntries} size="large" />
           </View>
 
           {/* This Week Stats */}
-          <View className="mb-4 rounded-xl border border-zinc-200 bg-white p-4">
-            <Text className="mb-3 text-lg font-semibold">Week Stats</Text>
+          <View className="mb-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4">
+            <Text className="mb-3 text-lg font-semibold dark:text-zinc-100">Week Stats</Text>
 
             {!weekStats ||
             (weekStats.workouts.length === 0 && weekStats.restDays === 0) ? (
-              <Text className="text-center text-zinc-400">
+              <Text className="text-center text-zinc-400 dark:text-zinc-500">
                 No activity this week
               </Text>
             ) : (
               <>
                 <View className="mb-3 flex-row justify-center gap-8">
                   <View className="items-center">
-                    <Text className="text-2xl font-bold">
+                    <Text className="text-2xl font-bold dark:text-zinc-100">
                       {weekStats.workouts.length}
                     </Text>
-                    <Text className="text-xs uppercase text-zinc-400">
+                    <Text className="text-xs uppercase text-zinc-400 dark:text-zinc-500">
                       {weekStats.workouts.length === 1 ? "Workout" : "Workouts"}
                     </Text>
                   </View>
                   <View className="items-center">
-                    <Text className="text-2xl font-bold">
+                    <Text className="text-2xl font-bold dark:text-zinc-100">
                       {weekStats.totalMinutes}
                     </Text>
-                    <Text className="text-xs uppercase text-zinc-400">
+                    <Text className="text-xs uppercase text-zinc-400 dark:text-zinc-500">
                       Minutes
                     </Text>
                   </View>
                   {weekStats.restDays > 0 && (
                     <View className="items-center">
-                      <Text className="text-2xl font-bold">
+                      <Text className="text-2xl font-bold dark:text-zinc-100">
                         {weekStats.restDays}
                       </Text>
-                      <Text className="text-xs uppercase text-zinc-400">
+                      <Text className="text-xs uppercase text-zinc-400 dark:text-zinc-500">
                         Rest
                       </Text>
                     </View>
@@ -222,32 +224,32 @@ export default function MeScreen() {
                 </View>
 
                 {/* Workout list */}
-                <View className="mt-1 border-t border-zinc-100 pt-2">
+                <View className="mt-1 border-t border-zinc-100 dark:border-zinc-800 pt-2">
                   {weekStats.workouts.map((w: any) => (
                     <Pressable
                       key={w.id}
-                      className="flex-row items-center justify-between border-b border-zinc-50 py-3 active:bg-zinc-50"
+                      className="flex-row items-center justify-between border-b border-zinc-50 dark:border-zinc-800 py-3 active:bg-zinc-50 dark:active:bg-zinc-800"
                       onPress={() =>
                         router.push(`/(tabs)/stats/workout/${w.id}`)
                       }
                     >
                       <View className="flex-1">
-                        <Text className="text-base font-medium">
+                        <Text className="text-base font-medium dark:text-zinc-100">
                           {w.name || "Workout"}
                         </Text>
-                        <Text className="text-sm text-zinc-400">
+                        <Text className="text-sm text-zinc-400 dark:text-zinc-500">
                           {formatTime(w.startTime)}
                           {w.gymLocation ? ` \u00b7 ${w.gymLocation}` : ""}
                         </Text>
                       </View>
                       <View className="flex-row items-center gap-1">
-                        <Text className="text-sm text-zinc-400">
+                        <Text className="text-sm text-zinc-400 dark:text-zinc-500">
                           {formatDuration(w.startTime, w.endTime)}
                         </Text>
                         <Ionicons
                           name="chevron-forward"
                           size={16}
-                          color="#a1a1aa"
+                          color={colors.chevron}
                         />
                       </View>
                     </Pressable>
@@ -259,23 +261,23 @@ export default function MeScreen() {
 
           {/* Recent Workouts */}
           {workouts && workouts.length > 0 && (
-            <View className="mb-4 rounded-xl border border-zinc-200 bg-white p-4">
-              <Text className="mb-3 text-lg font-semibold">
+            <View className="mb-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4">
+              <Text className="mb-3 text-lg font-semibold dark:text-zinc-100">
                 Recent Workouts
               </Text>
               {workouts.slice(0, 5).map((w: any) => (
                 <Pressable
                   key={w.id}
-                  className="flex-row items-center justify-between border-b border-zinc-50 py-3 active:bg-zinc-50"
+                  className="flex-row items-center justify-between border-b border-zinc-50 dark:border-zinc-800 py-3 active:bg-zinc-50 dark:active:bg-zinc-800"
                   onPress={() =>
                     router.push(`/(tabs)/stats/workout/${w.id}`)
                   }
                 >
                   <View className="flex-1">
-                    <Text className="text-base font-medium">
+                    <Text className="text-base font-medium dark:text-zinc-100">
                       {w.name || (w.kind === "rest" ? "Rest Day" : "Workout")}
                     </Text>
-                    <Text className="text-sm text-zinc-400">
+                    <Text className="text-sm text-zinc-400 dark:text-zinc-500">
                       {new Date(w.startTime).toLocaleDateString(undefined, {
                         weekday: "short",
                         month: "short",
@@ -285,13 +287,13 @@ export default function MeScreen() {
                     </Text>
                   </View>
                   <View className="flex-row items-center gap-1">
-                    <Text className="text-sm text-zinc-400">
+                    <Text className="text-sm text-zinc-400 dark:text-zinc-500">
                       {formatDuration(w.startTime, w.endTime)}
                     </Text>
                     <Ionicons
                       name="chevron-forward"
                       size={16}
-                      color="#a1a1aa"
+                      color={colors.chevron}
                     />
                   </View>
                 </Pressable>
@@ -301,7 +303,7 @@ export default function MeScreen() {
 
           {/* Last Sync Time */}
           {lastSyncTime && (
-            <Text className="mt-4 text-center text-xs text-zinc-400">
+            <Text className="mt-4 text-center text-xs text-zinc-400 dark:text-zinc-500">
               Last synced: {lastSyncTime.toLocaleString()}
             </Text>
           )}

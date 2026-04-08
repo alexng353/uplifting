@@ -88,8 +88,8 @@ const LABEL_SIZES = {
 } as const;
 
 const STATUS_COLORS = {
-  none: "bg-zinc-700",
-  rest: "bg-zinc-400",
+  none: "bg-zinc-700 dark:bg-zinc-600",
+  rest: "bg-zinc-400 dark:bg-zinc-500",
   workout: "bg-blue-500",
 } as const;
 
@@ -126,7 +126,7 @@ export default function WeekStreak({
           >
             {showLabels && (
               <Text
-                className={`font-semibold uppercase text-zinc-400 ${LABEL_SIZES[size]}`}
+                className={`font-semibold uppercase text-zinc-400 dark:text-zinc-500 ${LABEL_SIZES[size]}`}
               >
                 {DAY_LABELS[index]}
               </Text>

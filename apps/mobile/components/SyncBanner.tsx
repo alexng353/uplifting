@@ -1,5 +1,6 @@
 import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useThemeColors } from "../hooks/useThemeColors";
 
 interface SyncBannerProps {
   isOnline: boolean;
@@ -14,6 +15,8 @@ export default function SyncBanner({
   isSyncing,
   onSync,
 }: SyncBannerProps) {
+  const colors = useThemeColors();
+
   if (isOnline && !hasPendingWorkout) return null;
 
   const isOffline = !isOnline;
@@ -21,18 +24,18 @@ export default function SyncBanner({
   return (
     <View
       className={`flex-row items-center justify-between px-4 py-2 ${
-        isOffline ? "bg-red-100" : "bg-amber-100"
+        isOffline ? "bg-red-100 dark:bg-red-950" : "bg-amber-100 dark:bg-amber-950"
       }`}
     >
       <View className="flex-row items-center gap-2">
         <Ionicons
           name="warning"
           size={18}
-          color={isOffline ? "#dc2626" : "#d97706"}
+          color={isOffline ? colors.dangerIcon : colors.warningIcon}
         />
         <Text
           className={`text-sm font-medium ${
-            isOffline ? "text-red-800" : "text-amber-800"
+            isOffline ? "text-red-800 dark:text-red-300" : "text-amber-800 dark:text-amber-300"
           }`}
         >
           {isOffline ? "You're offline" : "Workout pending sync"}
@@ -46,9 +49,9 @@ export default function SyncBanner({
         }`}
       >
         {isSyncing ? (
-          <ActivityIndicator size="small" color="#3b82f6" />
+          <ActivityIndicator size="small" color={colors.accentIcon} />
         ) : (
-          <Ionicons name="refresh" size={16} color="#3b82f6" />
+          <Ionicons name="refresh" size={16} color={colors.accentIcon} />
         )}
         <Text className="text-sm font-medium text-blue-500">
           {isSyncing ? "Syncing..." : "Sync"}
