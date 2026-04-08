@@ -1,0 +1,9 @@
+{
+  "name": "uplifting-2",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "api": "bun --filter api",
+    "mobile": "bun --filter mobile"
+  }
+}
