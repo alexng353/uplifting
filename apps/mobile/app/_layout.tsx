@@ -3,6 +3,7 @@ import { Slot, useRouter, useSegments } from "expo-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "../hooks/useAuth";
 import { WorkoutProvider } from "../hooks/useWorkout";
+import { ActivityTracker } from "../components/ActivityTracker";
 import { useEffect } from "react";
 import { View, ActivityIndicator } from "react-native";
 
@@ -27,7 +28,12 @@ function AuthGate() {
       </View>
     );
   }
-  return <Slot />;
+  return (
+    <>
+      <ActivityTracker />
+      <Slot />
+    </>
+  );
 }
 
 export default function RootLayout() {
