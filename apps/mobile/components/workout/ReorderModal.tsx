@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { View, Text, Pressable, ScrollView, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useThemeColors } from "../../hooks/useThemeColors";
 import { useWorkout } from "../../hooks/useWorkout";
 
 interface ReorderModalProps {
@@ -10,6 +11,7 @@ interface ReorderModalProps {
 
 export default function ReorderModal({ visible, onClose }: ReorderModalProps) {
   const { workout, reorderExercises } = useWorkout();
+  const colors = useThemeColors();
 
   const handleMoveUp = useCallback(
     (index: number) => {
@@ -40,10 +42,10 @@ export default function ReorderModal({ visible, onClose }: ReorderModalProps) {
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View className="flex-1 bg-white">
+      <View className="flex-1 bg-white dark:bg-zinc-900">
         {/* Header */}
-        <View className="flex-row items-center justify-between border-b border-zinc-200 px-4 pb-3 pt-4">
-          <Text className="text-lg font-bold">Reorder Exercises</Text>
+        <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-4 pb-3 pt-4">
+          <Text className="text-lg font-bold dark:text-zinc-100">Reorder Exercises</Text>
           <Pressable
             onPress={onClose}
             className="rounded-lg bg-blue-500 px-4 py-2 active:bg-blue-600"
@@ -57,13 +59,13 @@ export default function ReorderModal({ visible, onClose }: ReorderModalProps) {
           {workout?.exercises.map((exercise, index) => (
             <View
               key={exercise.exerciseId}
-              className="mb-2 flex-row items-center rounded-lg border border-zinc-200 bg-zinc-50 p-3"
+              className="mb-2 flex-row items-center rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-3"
             >
               <View className="flex-1">
-                <Text className="text-base font-medium">
+                <Text className="text-base font-medium dark:text-zinc-100">
                   {exercise.exerciseName}
                 </Text>
-                <Text className="text-sm text-zinc-400">
+                <Text className="text-sm text-zinc-400 dark:text-zinc-500">
                   {exercise.sets.length} set{exercise.sets.length !== 1 ? "s" : ""}
                 </Text>
               </View>
@@ -72,17 +74,17 @@ export default function ReorderModal({ visible, onClose }: ReorderModalProps) {
                 <Pressable
                   onPress={() => handleMoveUp(index)}
                   disabled={index === 0}
-                  className="h-9 w-9 items-center justify-center rounded-md bg-zinc-200 active:bg-zinc-300"
+                  className="h-9 w-9 items-center justify-center rounded-md bg-zinc-200 dark:bg-zinc-700 active:bg-zinc-300 dark:active:bg-zinc-600"
                   style={{ opacity: index === 0 ? 0.3 : 1 }}
                 >
-                  <Ionicons name="chevron-up" size={20} color="#3f3f46" />
+                  <Ionicons name="chevron-up" size={20} color={colors.secondaryText} />
                 </Pressable>
                 <Pressable
                   onPress={() => handleMoveDown(index)}
                   disabled={
                     !workout || index === workout.exercises.length - 1
                   }
-                  className="h-9 w-9 items-center justify-center rounded-md bg-zinc-200 active:bg-zinc-300"
+                  className="h-9 w-9 items-center justify-center rounded-md bg-zinc-200 dark:bg-zinc-700 active:bg-zinc-300 dark:active:bg-zinc-600"
                   style={{
                     opacity:
                       !workout || index === workout.exercises.length - 1
@@ -90,14 +92,14 @@ export default function ReorderModal({ visible, onClose }: ReorderModalProps) {
                         : 1,
                   }}
                 >
-                  <Ionicons name="chevron-down" size={20} color="#3f3f46" />
+                  <Ionicons name="chevron-down" size={20} color={colors.secondaryText} />
                 </Pressable>
               </View>
             </View>
           ))}
 
           {(!workout || workout.exercises.length === 0) && (
-            <Text className="py-8 text-center text-zinc-400">
+            <Text className="py-8 text-center text-zinc-400 dark:text-zinc-500">
               No exercises to reorder
             </Text>
           )}

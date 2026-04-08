@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useWorkout } from "../../hooks/useWorkout";
+import { useThemeColors } from "../../hooks/useThemeColors";
 import { useSettings } from "../../hooks/useSettings";
 import { usePreviousSets } from "../../hooks/usePreviousSets";
 import { useExerciseProfiles } from "../../hooks/useExerciseProfiles";
@@ -56,21 +57,22 @@ function SetRow({
   suggestedWeight: number;
   isBodyweight?: boolean;
 }) {
+  const colors = useThemeColors();
   return (
     <View className="mb-1 flex-row items-center gap-2 px-2 py-1">
-      <Text className="w-8 text-center text-sm font-medium text-zinc-400">
+      <Text className="w-8 text-center text-sm font-medium text-zinc-400 dark:text-zinc-500">
         {sideLabel === "L" ? "" : String(setNumber)}
       </Text>
       {sideLabel != null && (
         <View
           className="w-7 items-center rounded px-1 py-0.5"
           style={{
-            backgroundColor: sideLabel === "R" ? "#dbeafe" : "#fef3c7",
+            backgroundColor: sideLabel === "R" ? colors.rightSideBg : colors.leftSideBg,
           }}
         >
           <Text
             className="text-xs font-bold"
-            style={{ color: sideLabel === "R" ? "#2563eb" : "#d97706" }}
+            style={{ color: sideLabel === "R" ? colors.rightSideText : colors.leftSideText }}
           >
             {sideLabel}
           </Text>
@@ -81,35 +83,35 @@ function SetRow({
           keyboardType="numeric"
           value={set.reps != null ? String(set.reps) : ""}
           placeholder={String(suggestedReps)}
-          placeholderTextColor="#a1a1aa"
+          placeholderTextColor={colors.placeholder}
           onChangeText={(text) =>
             updateSet(exerciseId, set.id, {
               reps: text ? Number(text) : undefined,
             })
           }
-          className="rounded border border-zinc-200 bg-white px-2 py-1.5 text-center text-base"
+          className="rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1.5 text-center text-base dark:text-zinc-100"
           selectTextOnFocus
         />
       </View>
       {isBodyweight && (
-        <Text className="text-xs text-zinc-400">BW +</Text>
+        <Text className="text-xs text-zinc-400 dark:text-zinc-500">BW +</Text>
       )}
       <View className="flex-1">
         <TextInput
           keyboardType="numeric"
           value={set.weight != null ? String(set.weight) : ""}
           placeholder={String(suggestedWeight)}
-          placeholderTextColor="#a1a1aa"
+          placeholderTextColor={colors.placeholder}
           onChangeText={(text) =>
             updateSet(exerciseId, set.id, {
               weight: text ? Number(text) : undefined,
             })
           }
-          className="rounded border border-zinc-200 bg-white px-2 py-1.5 text-center text-base"
+          className="rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1.5 text-center text-base dark:text-zinc-100"
           selectTextOnFocus
         />
       </View>
-      <Text className="w-8 text-xs text-zinc-400">{displayUnit}</Text>
+      <Text className="w-8 text-xs text-zinc-400 dark:text-zinc-500">{displayUnit}</Text>
     </View>
   );
 }
@@ -124,6 +126,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
     removeLastUnilateralPair,
     changeExerciseProfile,
   } = useWorkout();
+  const colors = useThemeColors();
   const { getDisplayUnit } = useSettings();
   const { getSuggestion } = usePreviousSets();
   const { data: profiles = [] } = useExerciseProfiles(exercise.exerciseId);
@@ -253,14 +256,14 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   const suggestedProfileId = getSuggestedProfile(exercise.exerciseId);
 
   return (
-    <View className="flex-1 bg-white px-3 pt-2">
+    <View className="flex-1 bg-white dark:bg-zinc-900 px-3 pt-2">
       {/* Header */}
       <View className="mb-2">
         <Pressable
           onPress={hasProfiles ? () => setShowProfileModal(true) : undefined}
           disabled={!hasProfiles}
         >
-          <Text className="text-xl font-bold">
+          <Text className="text-xl font-bold dark:text-zinc-100">
             {exercise.exerciseName}
             {hasProfiles && (
               <Text className="text-blue-500"> ...</Text>
@@ -269,18 +272,18 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
         </Pressable>
         {exercise.exerciseType && (
           <View className="mt-1 flex-row items-center gap-2">
-            <View className="rounded bg-zinc-200 px-2 py-0.5">
-              <Text className="text-xs font-medium text-zinc-600">
+            <View className="rounded bg-zinc-200 dark:bg-zinc-700 px-2 py-0.5">
+              <Text className="text-xs font-medium text-zinc-600 dark:text-zinc-300">
                 {exercise.exerciseType}
               </Text>
             </View>
             <View className="flex-row items-center gap-1">
-              <Text className="text-xs text-zinc-500">Unilateral</Text>
+              <Text className="text-xs text-zinc-500 dark:text-zinc-400">Unilateral</Text>
               <Switch
                 value={exercise.isUnilateral ?? false}
                 onValueChange={handleToggleUnilateral}
-                trackColor={{ false: "#d4d4d8", true: "#93c5fd" }}
-                thumbColor={exercise.isUnilateral ? "#3b82f6" : "#f4f4f5"}
+                trackColor={{ false: colors.switchTrackFalse, true: colors.switchTrackTrue }}
+                thumbColor={exercise.isUnilateral ? colors.switchThumbOn : colors.switchThumbOff}
               />
             </View>
           </View>
@@ -289,19 +292,19 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 
       {/* Set Table Header */}
       <View className="mb-1 flex-row items-center gap-2 px-2">
-        <Text className="w-8 text-center text-xs font-bold uppercase text-zinc-400">
+        <Text className="w-8 text-center text-xs font-bold uppercase text-zinc-400 dark:text-zinc-500">
           Set
         </Text>
         {exercise.isUnilateral && (
-          <Text className="w-7 text-center text-xs font-bold uppercase text-zinc-400">
+          <Text className="w-7 text-center text-xs font-bold uppercase text-zinc-400 dark:text-zinc-500">
             Side
           </Text>
         )}
-        <Text className="flex-1 text-center text-xs font-bold uppercase text-zinc-400">
+        <Text className="flex-1 text-center text-xs font-bold uppercase text-zinc-400 dark:text-zinc-500">
           Reps
         </Text>
         {isBodyweight && <Text className="text-xs text-transparent">BW +</Text>}
-        <Text className="flex-1 text-center text-xs font-bold uppercase text-zinc-400">
+        <Text className="flex-1 text-center text-xs font-bold uppercase text-zinc-400 dark:text-zinc-500">
           Weight
         </Text>
         <Text className="w-8 text-xs text-transparent">kg</Text>
@@ -393,23 +396,23 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
           onPress={handleAddSet}
           className="h-10 w-10 items-center justify-center rounded-full border border-blue-500 active:bg-blue-50"
         >
-          <Ionicons name="add" size={22} color="#3b82f6" />
+          <Ionicons name="add" size={22} color={colors.accentIcon} />
         </Pressable>
         <Pressable
           onPress={handleDuplicateLastSet}
           disabled={!canDuplicate}
-          className="h-10 w-10 items-center justify-center rounded-full border border-zinc-400 active:bg-zinc-50"
+          className="h-10 w-10 items-center justify-center rounded-full border border-zinc-400 active:bg-zinc-50 dark:active:bg-zinc-800"
           style={{ opacity: canDuplicate ? 1 : 0.3 }}
         >
-          <Ionicons name="copy-outline" size={18} color="#71717a" />
+          <Ionicons name="copy-outline" size={18} color={colors.secondaryText} />
         </Pressable>
         <Pressable
           onPress={handleRemoveLastSet}
           disabled={!canRemove}
-          className="h-10 w-10 items-center justify-center rounded-full border border-red-400 active:bg-red-50"
+          className="h-10 w-10 items-center justify-center rounded-full border border-red-400 active:bg-red-50 dark:active:bg-red-950"
           style={{ opacity: canRemove ? 1 : 0.3 }}
         >
-          <Ionicons name="remove" size={22} color="#ef4444" />
+          <Ionicons name="remove" size={22} color={colors.dangerIcon} />
         </Pressable>
       </View>
 
@@ -420,14 +423,14 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowProfileModal(false)}
       >
-        <View className="flex-1 bg-white">
-          <View className="flex-row items-center justify-between border-b border-zinc-200 px-4 pb-3 pt-4">
-            <Text className="text-lg font-bold">
+        <View className="flex-1 bg-white dark:bg-zinc-900">
+          <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-4 pb-3 pt-4">
+            <Text className="text-lg font-bold dark:text-zinc-100">
               Profile for {baseName}
             </Text>
             <Pressable
               onPress={() => setShowProfileModal(false)}
-              className="rounded-lg px-3 py-1.5 active:bg-zinc-100"
+              className="rounded-lg px-3 py-1.5 active:bg-zinc-100 dark:active:bg-zinc-800"
             >
               <Text className="text-base font-medium text-blue-500">
                 Cancel
@@ -453,11 +456,11 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
               return (
                 <Pressable
                   onPress={() => handleChangeProfile(item.id, item.id ? item.name : undefined)}
-                  className="flex-row items-center justify-between border-b border-zinc-100 px-4 py-3.5 active:bg-zinc-50"
+                  className="flex-row items-center justify-between border-b border-zinc-100 dark:border-zinc-800 px-4 py-3.5 active:bg-zinc-50 dark:active:bg-zinc-800"
                 >
-                  <Text className="text-base">{item.name}</Text>
+                  <Text className="text-base dark:text-zinc-100">{item.name}</Text>
                   {isCurrent && (
-                    <Ionicons name="checkmark" size={20} color="#3b82f6" />
+                    <Ionicons name="checkmark" size={20} color={colors.accentIcon} />
                   )}
                 </Pressable>
               );

@@ -49,7 +49,7 @@ export default function RestTimer() {
 
   return (
     <View className="flex-row items-center justify-center gap-3 py-2">
-      <Text className="font-mono text-lg font-semibold text-zinc-700">
+      <Text className="font-mono text-lg font-semibold text-zinc-700 dark:text-zinc-200">
         {formatTime(elapsedMs)}
       </Text>
       <Pressable

@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useThemeColors } from "../../hooks/useThemeColors";
 import { useExercises, type Exercise } from "../../hooks/useExercises";
 import { useExerciseSuggestions } from "../../hooks/useExerciseSuggestions";
 import {
@@ -26,6 +27,7 @@ export default function AddExerciseSlide({
   onExerciseAdded,
 }: AddExerciseSlideProps) {
   const { addExercise } = useWorkout();
+  const colors = useThemeColors();
   const [searchText, setSearchText] = useState("");
 
   const { data: exercises, isLoading } = useExercises(searchText);
@@ -157,7 +159,7 @@ export default function AddExerciseSlide({
       return (
         <Pressable
           onPress={() => handleQuickAdd(exercise)}
-          className="flex-row items-center border-b border-zinc-100 px-4 py-3 active:bg-zinc-50"
+          className="flex-row items-center border-b border-zinc-100 dark:border-zinc-800 px-4 py-3 active:bg-zinc-50 dark:active:bg-zinc-800"
         >
           {/* Favourite toggle */}
           <Pressable
@@ -168,19 +170,19 @@ export default function AddExerciseSlide({
             <Ionicons
               name={isFavourite ? "star" : "star-outline"}
               size={20}
-              color={isFavourite ? "#f59e0b" : "#a1a1aa"}
+              color={isFavourite ? colors.warningIcon : colors.mutedIcon}
             />
           </Pressable>
 
           {/* Exercise info */}
           <View className="flex-1">
-            <Text className="text-base font-medium">{exercise.name}</Text>
+            <Text className="text-base font-medium dark:text-zinc-100">{exercise.name}</Text>
             <View className="flex-row items-center gap-2">
-              <Text className="text-xs text-zinc-400">
+              <Text className="text-xs text-zinc-400 dark:text-zinc-500">
                 {exercise.exercise_type}
               </Text>
               {profilesLabel && (
-                <Text className="text-xs text-zinc-400">
+                <Text className="text-xs text-zinc-400 dark:text-zinc-500">
                   ({profilesLabel})
                 </Text>
               )}
@@ -188,7 +190,7 @@ export default function AddExerciseSlide({
           </View>
 
           {/* Add button */}
-          <Ionicons name="add-circle-outline" size={24} color="#3b82f6" />
+          <Ionicons name="add-circle-outline" size={24} color={colors.accentIcon} />
         </Pressable>
       );
     },
@@ -196,24 +198,24 @@ export default function AddExerciseSlide({
   );
 
   return (
-    <View className="flex-1 bg-white px-0 pt-2">
-      <Text className="mb-2 px-4 text-xl font-bold">Add Exercise</Text>
+    <View className="flex-1 bg-white dark:bg-zinc-900 px-0 pt-2">
+      <Text className="mb-2 px-4 text-xl font-bold dark:text-zinc-100">Add Exercise</Text>
 
       {/* Search bar */}
-      <View className="mx-4 mb-2 flex-row items-center rounded-lg border border-zinc-300 bg-zinc-50 px-3">
-        <Ionicons name="search" size={18} color="#a1a1aa" />
+      <View className="mx-4 mb-2 flex-row items-center rounded-lg border border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800 px-3">
+        <Ionicons name="search" size={18} color={colors.mutedIcon} />
         <TextInput
           value={searchText}
           onChangeText={setSearchText}
           placeholder="Search exercises..."
-          placeholderTextColor="#a1a1aa"
-          className="ml-2 flex-1 py-2.5 text-base"
+          placeholderTextColor={colors.placeholder}
+          className="ml-2 flex-1 py-2.5 text-base dark:text-zinc-100"
           autoCapitalize="none"
           autoCorrect={false}
         />
         {searchText.length > 0 && (
           <Pressable onPress={() => setSearchText("")} hitSlop={8}>
-            <Ionicons name="close-circle" size={18} color="#a1a1aa" />
+            <Ionicons name="close-circle" size={18} color={colors.mutedIcon} />
           </Pressable>
         )}
       </View>
@@ -222,11 +224,11 @@ export default function AddExerciseSlide({
       {isLoading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" />
-          <Text className="mt-2 text-zinc-400">Loading exercises...</Text>
+          <Text className="mt-2 text-zinc-400 dark:text-zinc-500">Loading exercises...</Text>
         </View>
       ) : sections.length === 0 ? (
         <View className="flex-1 items-center justify-center">
-          <Text className="text-zinc-400">No exercises found</Text>
+          <Text className="text-zinc-400 dark:text-zinc-500">No exercises found</Text>
         </View>
       ) : (
         <SectionList
@@ -234,8 +236,8 @@ export default function AddExerciseSlide({
           keyExtractor={(item) => item.id}
           renderItem={renderExerciseRow}
           renderSectionHeader={({ section: { title } }) => (
-            <View className="bg-zinc-100 px-4 py-1.5">
-              <Text className="text-xs font-bold uppercase text-zinc-500">
+            <View className="bg-zinc-100 dark:bg-zinc-800 px-4 py-1.5">
+              <Text className="text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400">
                 {title}
               </Text>
             </View>

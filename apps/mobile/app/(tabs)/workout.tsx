@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { useWorkout } from "../../hooks/useWorkout";
 import { useSync } from "../../hooks/useSync";
+import { useThemeColors } from "../../hooks/useThemeColors";
 import {
   getWorkoutLastSlide,
   setWorkoutLastSlide,
@@ -38,6 +39,7 @@ export default function WorkoutScreen() {
     cancelWorkout,
   } = useWorkout();
   const { forceSync } = useSync();
+  const colors = useThemeColors();
 
   const pagerRef = useRef<PagerView>(null);
   const [activeSlide, setActiveSlide] = useState(0);
@@ -158,13 +160,13 @@ export default function WorkoutScreen() {
   // --- Idle state (no active workout) ---
   if (!isActive) {
     return (
-      <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
+      <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900" edges={["top"]}>
         <View className="px-4 pb-2 pt-4">
-          <Text className="text-3xl font-bold">Workout</Text>
+          <Text className="text-3xl font-bold dark:text-zinc-100">Workout</Text>
         </View>
         <View className="flex-1 items-center justify-center px-6">
-          <Text className="mb-2 text-xl font-semibold">Ready to train?</Text>
-          <Text className="mb-6 text-center text-base text-zinc-500">
+          <Text className="mb-2 text-xl font-semibold dark:text-zinc-100">Ready to train?</Text>
+          <Text className="mb-6 text-center text-base text-zinc-500 dark:text-zinc-400">
             Start a new workout session to begin logging your exercises.
           </Text>
           <Pressable
@@ -177,10 +179,10 @@ export default function WorkoutScreen() {
           </Pressable>
           <Pressable
             onPress={handleLogRestDay}
-            className="w-full flex-row items-center justify-center gap-2 rounded-lg border border-zinc-300 py-3.5 active:bg-zinc-50"
+            className="w-full flex-row items-center justify-center gap-2 rounded-lg border border-zinc-300 dark:border-zinc-600 py-3.5 active:bg-zinc-50 dark:active:bg-zinc-800"
           >
-            <Ionicons name="bed-outline" size={18} color="#71717a" />
-            <Text className="text-base font-semibold text-zinc-600">
+            <Ionicons name="bed-outline" size={18} color={colors.secondaryText} />
+            <Text className="text-base font-semibold text-zinc-600 dark:text-zinc-300">
               Log Rest Day
             </Text>
           </Pressable>
@@ -194,30 +196,30 @@ export default function WorkoutScreen() {
   if (!workout) return null;
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900" edges={["top"]}>
       {/* Header */}
-      <View className="flex-row items-center justify-between border-b border-zinc-200 px-3 pb-2 pt-2">
+      <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-3 pb-2 pt-2">
         <View className="flex-row items-center gap-2">
           {/* Reorder button */}
           <Pressable
             onPress={() => setShowReorder(true)}
-            className="h-9 w-9 items-center justify-center rounded-md active:bg-zinc-100"
+            className="h-9 w-9 items-center justify-center rounded-md active:bg-zinc-100 dark:active:bg-zinc-800"
           >
-            <Ionicons name="reorder-four" size={22} color="#3f3f46" />
+            <Ionicons name="reorder-four" size={22} color={colors.secondaryText} />
           </Pressable>
           {/* Remove current exercise button */}
           {isOnExerciseSlide && (
             <Pressable
               onPress={handleRemoveCurrentExercise}
-              className="h-9 w-9 items-center justify-center rounded-md active:bg-red-50"
+              className="h-9 w-9 items-center justify-center rounded-md active:bg-red-50 dark:active:bg-red-950"
             >
-              <Ionicons name="trash-outline" size={20} color="#ef4444" />
+              <Ionicons name="trash-outline" size={20} color={colors.dangerIcon} />
             </Pressable>
           )}
         </View>
 
         {/* Timer */}
-        <Text className="font-mono text-base font-semibold text-zinc-600">
+        <Text className="font-mono text-base font-semibold text-zinc-600 dark:text-zinc-300">
           {elapsedTime}
         </Text>
 
@@ -225,16 +227,16 @@ export default function WorkoutScreen() {
           {/* Cancel button */}
           <Pressable
             onPress={handleCancelWorkout}
-            className="h-9 w-9 items-center justify-center rounded-md active:bg-red-50"
+            className="h-9 w-9 items-center justify-center rounded-md active:bg-red-50 dark:active:bg-red-950"
           >
-            <Ionicons name="close" size={22} color="#ef4444" />
+            <Ionicons name="close" size={22} color={colors.dangerIcon} />
           </Pressable>
           {/* Finish button */}
           <Pressable
             onPress={handleFinish}
-            className="h-9 w-9 items-center justify-center rounded-md active:bg-green-50"
+            className="h-9 w-9 items-center justify-center rounded-md active:bg-green-50 dark:active:bg-green-950"
           >
-            <Ionicons name="checkmark" size={22} color="#22c55e" />
+            <Ionicons name="checkmark" size={22} color={colors.successIcon} />
           </Pressable>
         </View>
       </View>
@@ -247,7 +249,7 @@ export default function WorkoutScreen() {
             className="h-1.5 rounded-full"
             style={{
               width: i === activeSlide ? 16 : 6,
-              backgroundColor: i === activeSlide ? "#3b82f6" : "#d4d4d8",
+              backgroundColor: i === activeSlide ? colors.activeIndicator : colors.inactiveIndicator,
             }}
           />
         ))}
@@ -256,7 +258,7 @@ export default function WorkoutScreen() {
           style={{
             width: activeSlide === exerciseCount ? 16 : 6,
             backgroundColor:
-              activeSlide === exerciseCount ? "#3b82f6" : "#d4d4d8",
+              activeSlide === exerciseCount ? colors.activeIndicator : colors.inactiveIndicator,
           }}
         />
       </View>
