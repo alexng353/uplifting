@@ -33,6 +33,7 @@ export function useUpdateSettings() {
         share_workout_status: settings.shareWorkoutStatus ?? undefined,
         share_workout_history: settings.shareWorkoutHistory ?? undefined,
         current_gym_id: settings.currentGymId ?? undefined,
+        color_scheme: settings.colorScheme ?? undefined,
       });
       if (error) {
         throw new Error("Failed to update settings");

@@ -124,6 +124,8 @@ export interface StoredSettings {
   bodyweight: number | null;
   // Chart rep range colors
   repRanges: RepRangeConfig[] | null;
+  // Appearance
+  colorScheme: "light" | "dark" | "system";
 }
 
 export interface StoredPreviousSets {
@@ -181,6 +183,7 @@ export const DEFAULT_SETTINGS: StoredSettings = {
   autoRemoveEmptySet: true,
   bodyweight: null,
   repRanges: null,
+  colorScheme: "system",
 };
 
 // --- Internal helpers ---

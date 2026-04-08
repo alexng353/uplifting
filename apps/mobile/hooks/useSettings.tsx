@@ -46,6 +46,9 @@ export function useSettings() {
         shareWorkoutHistory:
           serverSettings.shareWorkoutHistory ??
           DEFAULT_SETTINGS.shareWorkoutHistory,
+        colorScheme:
+          (serverSettings.colorScheme as "light" | "dark" | "system") ??
+          prev.colorScheme,
         currentGymId: serverSettings.currentGymId ?? null,
         autoAddSet: prev.autoAddSet,
         autoRemoveEmptySet: prev.autoRemoveEmptySet,

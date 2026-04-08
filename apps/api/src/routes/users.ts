@@ -129,6 +129,10 @@ export const userRoutes = new Elysia({ prefix: "/users" })
         values.currentGymId = body.current_gym_id;
         set.currentGymId = body.current_gym_id;
       }
+      if (body.color_scheme !== undefined) {
+        values.colorScheme = body.color_scheme;
+        set.colorScheme = body.color_scheme;
+      }
 
       const [result] = await db
         .insert(userSettings)
@@ -152,6 +156,7 @@ export const userRoutes = new Elysia({ prefix: "/users" })
         share_workout_status: t.Optional(t.Boolean()),
         share_workout_history: t.Optional(t.Boolean()),
         current_gym_id: t.Optional(t.String()),
+        color_scheme: t.Optional(t.String()),
       }),
     },
   )

@@ -156,6 +156,7 @@ export const userSettings = pgTable("user_settings", {
   shareWorkoutStatus: boolean("share_workout_status").notNull().default(true),
   shareWorkoutHistory: boolean("share_workout_history").notNull().default(true),
   currentGymId: uuid("current_gym_id").references(() => userGyms.id, { onDelete: "set null" }),
+  colorScheme: varchar("color_scheme", { length: 10 }).notNull().default("system"),
 });
 
 // ── Favourite Exercises ────────────────────────────────────────────────────
