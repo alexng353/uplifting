@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useSearchUsers } from "../../hooks/useSearchUsers";
 import { useSendFriendRequest } from "../../hooks/useSendFriendRequest";
+import { useThemeColors } from "../../hooks/useThemeColors";
 
 interface FriendSearchProps {
   visible: boolean;
@@ -30,6 +31,7 @@ function getInitials(name: string): string {
 export default function FriendSearch({ visible, onClose }: FriendSearchProps) {
   const [searchText, setSearchText] = useState("");
   const [sentRequests, setSentRequests] = useState<Set<string>>(new Set());
+  const colors = useThemeColors();
 
   const { data: results = [], isLoading: isSearching } =
     useSearchUsers(searchText);
@@ -55,10 +57,10 @@ export default function FriendSearch({ visible, onClose }: FriendSearchProps) {
       presentationStyle="pageSheet"
       onRequestClose={handleClose}
     >
-      <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
+      <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900" edges={["top"]}>
         {/* Header */}
-        <View className="flex-row items-center justify-between border-b border-zinc-200 px-4 pb-3 pt-4">
-          <Text className="text-xl font-bold">Find Friends</Text>
+        <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-4 pb-3 pt-4">
+          <Text className="text-xl font-bold dark:text-zinc-100">Find Friends</Text>
           <Pressable onPress={handleClose}>
             <Text className="text-base font-medium text-blue-500">Done</Text>
           </Pressable>
@@ -66,21 +68,21 @@ export default function FriendSearch({ visible, onClose }: FriendSearchProps) {
 
         {/* Search bar */}
         <View className="px-4 py-3">
-          <View className="flex-row items-center rounded-lg bg-zinc-100 px-3 py-2.5">
-            <Ionicons name="search" size={18} color="#a1a1aa" />
+          <View className="flex-row items-center rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 py-2.5">
+            <Ionicons name="search" size={18} color={colors.mutedIcon} />
             <TextInput
               value={searchText}
               onChangeText={setSearchText}
               placeholder="Search by username..."
-              className="ml-2 flex-1 text-base"
-              placeholderTextColor="#a1a1aa"
+              className="ml-2 flex-1 text-base dark:text-zinc-100"
+              placeholderTextColor={colors.placeholder}
               autoCapitalize="none"
               autoCorrect={false}
               returnKeyType="search"
             />
             {searchText.length > 0 && (
               <Pressable onPress={() => setSearchText("")}>
-                <Ionicons name="close-circle" size={18} color="#a1a1aa" />
+                <Ionicons name="close-circle" size={18} color={colors.mutedIcon} />
               </Pressable>
             )}
           </View>
@@ -90,11 +92,11 @@ export default function FriendSearch({ visible, onClose }: FriendSearchProps) {
         {isSearching ? (
           <View className="flex-1 items-center pt-8">
             <ActivityIndicator size="small" />
-            <Text className="mt-2 text-sm text-zinc-400">Searching...</Text>
+            <Text className="mt-2 text-sm text-zinc-400 dark:text-zinc-500">Searching...</Text>
           </View>
         ) : (results as any[]).length === 0 && searchText.trim().length > 0 ? (
           <View className="flex-1 items-center pt-8">
-            <Text className="text-base text-zinc-400">No users found</Text>
+            <Text className="text-base text-zinc-400 dark:text-zinc-500">No users found</Text>
           </View>
         ) : (
           <FlatList
@@ -103,17 +105,17 @@ export default function FriendSearch({ visible, onClose }: FriendSearchProps) {
             keyboardShouldPersistTaps="handled"
             contentContainerClassName="px-4"
             renderItem={({ item }) => (
-              <View className="flex-row items-center border-b border-zinc-100 py-3">
+              <View className="flex-row items-center border-b border-zinc-100 dark:border-zinc-800 py-3">
                 <View className="h-10 w-10 items-center justify-center rounded-full bg-blue-500">
                   <Text className="text-sm font-bold text-white">
                     {getInitials(item.realName || item.username)}
                   </Text>
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-base font-medium">
+                  <Text className="text-base font-medium dark:text-zinc-100">
                     {item.realName}
                   </Text>
-                  <Text className="text-sm text-zinc-400">
+                  <Text className="text-sm text-zinc-400 dark:text-zinc-500">
                     @{item.username}
                   </Text>
                 </View>
@@ -121,11 +123,11 @@ export default function FriendSearch({ visible, onClose }: FriendSearchProps) {
                   onPress={() => handleSendRequest(item.id)}
                   disabled={sentRequests.has(item.id)}
                   className={`rounded-lg px-3 py-1.5 ${
-                    sentRequests.has(item.id) ? "bg-zinc-100" : "bg-blue-500"
+                    sentRequests.has(item.id) ? "bg-zinc-100 dark:bg-zinc-800" : "bg-blue-500"
                   }`}
                 >
                   {sentRequests.has(item.id) ? (
-                    <Text className="text-sm font-medium text-zinc-400">
+                    <Text className="text-sm font-medium text-zinc-400 dark:text-zinc-500">
                       Sent
                     </Text>
                   ) : (

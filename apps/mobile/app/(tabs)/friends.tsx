@@ -14,6 +14,7 @@ import { useFeed } from "../../hooks/useFeed";
 import { useFriendsList } from "../../hooks/useFriendsList";
 import { usePendingFriendRequests } from "../../hooks/usePendingFriendRequests";
 import { useSettings } from "../../hooks/useSettings";
+import { useThemeColors } from "../../hooks/useThemeColors";
 
 import FeedCard from "../../components/friends/FeedCard";
 import FriendSearch from "../../components/friends/FriendSearch";
@@ -45,6 +46,7 @@ export default function FriendsScreen() {
     usePendingFriendRequests();
   const { getDisplayUnit } = useSettings();
   const unit = getDisplayUnit();
+  const colors = useThemeColors();
 
   const feed = feedData?.pages.flat() ?? [];
   const pendingCount = (pendingRequests as any[]).length;
@@ -71,14 +73,14 @@ export default function FriendsScreen() {
   }, [activeTab, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900" edges={["top"]}>
       {/* Header */}
       <View className="px-4 pb-2 pt-4">
-        <Text className="text-3xl font-bold">Friends</Text>
+        <Text className="text-3xl font-bold dark:text-zinc-100">Friends</Text>
       </View>
 
       {/* Segmented Control */}
-      <View className="mx-4 mb-3 flex-row rounded-xl bg-zinc-100 p-1">
+      <View className="mx-4 mb-3 flex-row rounded-xl bg-zinc-100 dark:bg-zinc-800 p-1">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.key;
           return (
@@ -86,7 +88,7 @@ export default function FriendsScreen() {
               key={tab.key}
               onPress={() => setActiveTab(tab.key)}
               className={`flex-1 flex-row items-center justify-center gap-1.5 rounded-lg py-2 ${
-                isActive ? "bg-white" : ""
+                isActive ? "bg-white dark:bg-zinc-700" : ""
               }`}
               style={
                 isActive
@@ -103,11 +105,11 @@ export default function FriendsScreen() {
               <Ionicons
                 name={tab.icon as any}
                 size={16}
-                color={isActive ? "#3b82f6" : "#71717a"}
+                color={isActive ? colors.accentIcon : colors.secondaryText}
               />
               <Text
                 className={`text-sm font-medium ${
-                  isActive ? "text-blue-500" : "text-zinc-500"
+                  isActive ? "text-blue-500" : "text-zinc-500 dark:text-zinc-400"
                 }`}
               >
                 {tab.label}
@@ -134,7 +136,7 @@ export default function FriendsScreen() {
           {feedLoading && feed.length === 0 ? (
             <View className="flex-1 items-center justify-center">
               <ActivityIndicator size="large" />
-              <Text className="mt-2 text-sm text-zinc-400">
+              <Text className="mt-2 text-sm text-zinc-400 dark:text-zinc-500">
                 Loading feed...
               </Text>
             </View>
@@ -143,12 +145,12 @@ export default function FriendsScreen() {
               <Ionicons
                 name="newspaper-outline"
                 size={48}
-                color="#a1a1aa"
+                color={colors.mutedIcon}
               />
-              <Text className="mt-3 text-lg font-semibold text-zinc-500">
+              <Text className="mt-3 text-lg font-semibold text-zinc-500 dark:text-zinc-400">
                 No workouts yet
               </Text>
-              <Text className="mt-1 text-center text-sm text-zinc-400">
+              <Text className="mt-1 text-center text-sm text-zinc-400 dark:text-zinc-500">
                 Add friends to see their workouts here
               </Text>
               <Pressable

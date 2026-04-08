@@ -3,6 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFriendWorkouts } from "../../hooks/useFriendWorkouts";
 import { useSettings } from "../../hooks/useSettings";
+import { useThemeColors } from "../../hooks/useThemeColors";
 
 interface Friend {
   friendship_id: string;
@@ -68,6 +69,7 @@ export default function FriendProfile({
   const { data, isLoading } = useFriendWorkouts(friend.user_id, visible);
   const { getDisplayUnit } = useSettings();
   const unit = getDisplayUnit();
+  const colors = useThemeColors();
 
   return (
     <Modal
@@ -76,10 +78,10 @@ export default function FriendProfile({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
+      <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900" edges={["top"]}>
         {/* Header */}
-        <View className="flex-row items-center justify-between border-b border-zinc-200 px-4 pb-3 pt-4">
-          <Text className="text-xl font-bold">{friend.real_name}</Text>
+        <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-4 pb-3 pt-4">
+          <Text className="text-xl font-bold dark:text-zinc-100">{friend.real_name}</Text>
           <Pressable onPress={onClose}>
             <Text className="text-base font-medium text-blue-500">Done</Text>
           </Pressable>
@@ -93,23 +95,23 @@ export default function FriendProfile({
                 {getInitials(friend.realName)}
               </Text>
             </View>
-            <Text className="text-xl font-bold">{friend.real_name}</Text>
-            <Text className="text-sm text-zinc-400">@{friend.username}</Text>
+            <Text className="text-xl font-bold dark:text-zinc-100">{friend.real_name}</Text>
+            <Text className="text-sm text-zinc-400 dark:text-zinc-500">@{friend.username}</Text>
 
             {/* Status badges */}
             <View className="mt-2 flex-row gap-2">
               {friend.is_online === true && (
-                <View className="flex-row items-center gap-1 rounded-full border border-green-200 bg-green-50 px-3 py-1">
+                <View className="flex-row items-center gap-1 rounded-full border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950 px-3 py-1">
                   <View className="h-2 w-2 rounded-full bg-green-500" />
-                  <Text className="text-xs font-medium text-green-700">
+                  <Text className="text-xs font-medium text-green-700 dark:text-green-400">
                     Online
                   </Text>
                 </View>
               )}
               {friend.is_in_workout === true && (
-                <View className="flex-row items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-3 py-1">
-                  <Ionicons name="barbell" size={12} color="#3b82f6" />
-                  <Text className="text-xs font-medium text-blue-700">
+                <View className="flex-row items-center gap-1 rounded-full border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950 px-3 py-1">
+                  <Ionicons name="barbell" size={12} color={colors.accentIcon} />
+                  <Text className="text-xs font-medium text-blue-700 dark:text-blue-400">
                     {friend.current_workout_name || "Working out"}
                   </Text>
                 </View>
@@ -125,33 +127,33 @@ export default function FriendProfile({
             <>
               {/* This Week Summary */}
               {(data as any).week_stats?.workout_count > 0 && (
-                <View className="mx-4 mb-4 rounded-xl border border-zinc-200 bg-white p-4">
+                <View className="mx-4 mb-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4">
                   <View className="mb-3 flex-row items-center gap-1">
-                    <Ionicons name="flame" size={16} color="#f59e0b" />
-                    <Text className="text-base font-semibold">This Week</Text>
+                    <Ionicons name="flame" size={16} color={colors.warningIcon} />
+                    <Text className="text-base font-semibold dark:text-zinc-100">This Week</Text>
                   </View>
                   <View className="flex-row justify-center gap-8">
                     <View className="items-center">
-                      <Text className="text-2xl font-bold">
+                      <Text className="text-2xl font-bold dark:text-zinc-100">
                         {(data as any).week_stats.workout_count}
                       </Text>
-                      <Text className="text-xs uppercase text-zinc-400">
+                      <Text className="text-xs uppercase text-zinc-400 dark:text-zinc-500">
                         Workouts
                       </Text>
                     </View>
                     <View className="items-center">
-                      <Text className="text-2xl font-bold">
+                      <Text className="text-2xl font-bold dark:text-zinc-100">
                         {formatVolume((data as any).week_stats.total_volume)}
                       </Text>
-                      <Text className="text-xs uppercase text-zinc-400">
+                      <Text className="text-xs uppercase text-zinc-400 dark:text-zinc-500">
                         Volume ({unit})
                       </Text>
                     </View>
                     <View className="items-center">
-                      <Text className="text-2xl font-bold">
+                      <Text className="text-2xl font-bold dark:text-zinc-100">
                         {formatDuration((data as any).week_stats.total_duration_minutes)}
                       </Text>
-                      <Text className="text-xs uppercase text-zinc-400">
+                      <Text className="text-xs uppercase text-zinc-400 dark:text-zinc-500">
                         Time
                       </Text>
                     </View>
@@ -161,11 +163,11 @@ export default function FriendProfile({
 
               {/* Recent Workouts */}
               <View className="mx-4 mb-4">
-                <Text className="mb-3 text-lg font-semibold">
+                <Text className="mb-3 text-lg font-semibold dark:text-zinc-100">
                   Recent Workouts
                 </Text>
                 {(data as any).workouts.length === 0 ? (
-                  <Text className="text-center text-base text-zinc-400">
+                  <Text className="text-center text-base text-zinc-400 dark:text-zinc-500">
                     No workouts yet
                   </Text>
                 ) : (
@@ -180,12 +182,12 @@ export default function FriendProfile({
                     }) => (
                       <View
                         key={workout.id}
-                        className="mb-2 rounded-xl border border-zinc-200 bg-white p-4"
+                        className="mb-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4"
                       >
-                        <Text className="text-xs text-zinc-400">
+                        <Text className="text-xs text-zinc-400 dark:text-zinc-500">
                           {formatDate(workout.start_time)}
                         </Text>
-                        <Text className="mt-1 text-base font-semibold">
+                        <Text className="mt-1 text-base font-semibold dark:text-zinc-100">
                           {workout.name || "Workout"}
                         </Text>
                         <View className="mt-2 flex-row gap-4">
@@ -193,9 +195,9 @@ export default function FriendProfile({
                             <Ionicons
                               name="time-outline"
                               size={14}
-                              color="#71717a"
+                              color={colors.secondaryText}
                             />
-                            <Text className="text-sm text-zinc-500">
+                            <Text className="text-sm text-zinc-500 dark:text-zinc-400">
                               {formatDuration(workout.duration_minutes)}
                             </Text>
                           </View>
@@ -203,9 +205,9 @@ export default function FriendProfile({
                             <Ionicons
                               name="trending-up"
                               size={14}
-                              color="#71717a"
+                              color={colors.secondaryText}
                             />
-                            <Text className="text-sm text-zinc-500">
+                            <Text className="text-sm text-zinc-500 dark:text-zinc-400">
                               {formatVolume(workout.total_volume)} {unit}
                             </Text>
                           </View>
@@ -213,9 +215,9 @@ export default function FriendProfile({
                             <Ionicons
                               name="barbell-outline"
                               size={14}
-                              color="#71717a"
+                              color={colors.secondaryText}
                             />
-                            <Text className="text-sm text-zinc-500">
+                            <Text className="text-sm text-zinc-500 dark:text-zinc-400">
                               {workout.total_sets} sets
                             </Text>
                           </View>
