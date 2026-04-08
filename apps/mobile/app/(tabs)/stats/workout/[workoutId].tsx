@@ -1,16 +1,274 @@
-import { View, Text } from "react-native";
+import { useMemo } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  ActivityIndicator,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useQuery } from "@tanstack/react-query";
+import { Ionicons } from "@expo/vector-icons";
+
+import { useSettings } from "../../../../hooks/useSettings";
+import { api } from "../../../../lib/api";
+import { convertWeight } from "../../../../services/storage";
 
 export default function WorkoutDetailScreen() {
   const { workoutId } = useLocalSearchParams<{ workoutId: string }>();
+  const router = useRouter();
+  const { formatWeight, getDisplayUnit } = useSettings();
+  const unit = getDisplayUnit();
+
+  // Fetch workout with sets
+  const {
+    data: workout,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["workout", workoutId],
+    queryFn: async () => {
+      const { data, error } = await (api.api.v1.workouts as any)[
+        workoutId!
+      ].get();
+      if (error || !data) throw new Error("Failed to fetch workout");
+      return data;
+    },
+    enabled: !!workoutId,
+  });
+
+  // Fetch exercises for names
+  const { data: exercises = [] } = useQuery({
+    queryKey: ["exercises"],
+    queryFn: async () => {
+      const { data } = await api.api.v1.exercises.get({
+        query: { limit: "500" },
+      });
+      return (data as any)?.exercises ?? [];
+    },
+  });
+
+  const exerciseMap = useMemo(() => {
+    return new Map((exercises as any[]).map((e: any) => [e.id, e]));
+  }, [exercises]);
+
+  const w = workout as any;
+  const exerciseGroups: any[] = w?.exercises ?? [];
+
+  const formatDate = (date: string): string => {
+    return new Date(date).toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const formatTime = (date: string): string => {
+    return new Date(date).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  };
+
+  const getDuration = (): number => {
+    const start = w?.start_time ?? w?.startTime;
+    const end = w?.end_time ?? w?.endTime;
+    if (!start || !end) return 0;
+    return Math.round(
+      (new Date(end).getTime() - new Date(start).getTime()) / 60000,
+    );
+  };
+
+  const getTotalSets = (): number => {
+    return exerciseGroups.reduce((total: number, group: any) => {
+      if (group.is_unilateral) {
+        return (
+          total +
+          group.sets.filter((s: any) => s.side === "R" || !s.side).length
+        );
+      }
+      return total + group.sets.length;
+    }, 0);
+  };
+
+  const getTotalVolume = (): number => {
+    return exerciseGroups.reduce((total: number, group: any) => {
+      const ex = exerciseMap.get(group.exercise_id);
+      const isBw = ex?.exerciseType === "Bodyweight" || ex?.exercise_type === "Bodyweight";
+      return (
+        total +
+        group.sets.reduce((sum: number, s: any) => {
+          const weight = Number.parseFloat(s.weight);
+          const bw =
+            isBw && s.bodyweight ? Number.parseFloat(s.bodyweight) : 0;
+          return sum + s.reps * (weight + bw);
+        }, 0)
+      );
+    }, 0);
+  };
+
+  const getExerciseName = (exerciseId: string): string => {
+    return exerciseMap.get(exerciseId)?.name ?? "Unknown Exercise";
+  };
+
+  const formatSetDisplay = (group: any): string => {
+    const ex = exerciseMap.get(group.exercise_id);
+    const isBw = ex?.exerciseType === "Bodyweight" || ex?.exercise_type === "Bodyweight";
+
+    const formatSingleSet = (s: any): string => {
+      const w = Number.parseFloat(s.weight);
+      const weightConverted = convertWeight(w, s.weight_unit ?? s.weightUnit ?? "kg", unit);
+      if (!isBw) return `${s.reps}x${weightConverted}${unit}`;
+      const bw = s.bodyweight ? Number.parseFloat(s.bodyweight) : null;
+      if (bw != null) {
+        const total = convertWeight(bw + w, s.weight_unit ?? s.weightUnit ?? "kg", unit);
+        return w > 0
+          ? `${s.reps}x${total}${unit}`
+          : `${s.reps}x${convertWeight(bw, s.weight_unit ?? s.weightUnit ?? "kg", unit)}${unit}`;
+      }
+      return w > 0 ? `${s.reps}xBW+${weightConverted}${unit}` : `${s.reps}xBW`;
+    };
+
+    if (group.is_unilateral) {
+      const rightSets = group.sets.filter((s: any) => s.side === "R");
+      const leftSets = group.sets.filter((s: any) => s.side === "L");
+      const pairCount = Math.max(rightSets.length, leftSets.length);
+      const pairs: string[] = [];
+      for (let i = 0; i < pairCount; i++) {
+        const r = rightSets[i];
+        const l = leftSets[i];
+        if (r && l && formatSingleSet(r) === formatSingleSet(l)) {
+          pairs.push(`${formatSingleSet(r)} L/R`);
+        } else {
+          if (r) pairs.push(`${formatSingleSet(r)} R`);
+          if (l) pairs.push(`${formatSingleSet(l)} L`);
+        }
+      }
+      return `${pairCount} sets/side · ${pairs.join(", ")}`;
+    }
+
+    return `${group.sets.length} sets · ${group.sets.map(formatSingleSet).join(", ")}`;
+  };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-white">
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" />
+          <Text className="mt-2 text-sm text-zinc-400">
+            Loading workout...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !workout) {
+    return (
+      <SafeAreaView className="flex-1 bg-white">
+        <View className="flex-row items-center px-4 pt-4 pb-2">
+          <Pressable onPress={() => router.back()} className="mr-3 p-1">
+            <Ionicons name="chevron-back" size={24} color="#3b82f6" />
+          </Pressable>
+          <Text className="text-xl font-bold">Workout</Text>
+        </View>
+        <View className="flex-1 items-center justify-center px-8">
+          <Text className="text-zinc-400">Failed to load workout</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const startTime = w.start_time ?? w.startTime;
+  const endTime = w.end_time ?? w.endTime;
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-1 items-center justify-center">
-        <Text className="text-xl font-bold">Workout Detail</Text>
-        <Text className="text-gray-500 mt-2">{workoutId}</Text>
+      {/* Header */}
+      <View className="flex-row items-center px-4 pt-4 pb-2">
+        <Pressable onPress={() => router.back()} className="mr-3 p-1">
+          <Ionicons name="chevron-back" size={24} color="#3b82f6" />
+        </Pressable>
+        <Text className="flex-1 text-xl font-bold" numberOfLines={1}>
+          {w.name || "Workout"}
+        </Text>
       </View>
+
+      <ScrollView className="flex-1" contentContainerClassName="pb-24">
+        {/* Date & time */}
+        <View className="mx-4 mt-2 mb-4">
+          <Text className="text-base text-zinc-600">
+            {formatDate(startTime)}
+          </Text>
+          <Text className="text-sm text-zinc-400">
+            {formatTime(startTime)}
+            {endTime && ` – ${formatTime(endTime)}`}
+          </Text>
+          {w.gym_location ?? w.gymLocation ? (
+            <Text className="mt-0.5 text-sm text-zinc-400">
+              {w.gym_location ?? w.gymLocation}
+            </Text>
+          ) : null}
+        </View>
+
+        {/* Summary stats */}
+        <View className="mx-4 mb-4 flex-row rounded-2xl bg-zinc-50 p-4">
+          <View className="flex-1 items-center">
+            <Text className="text-xl font-bold text-zinc-900">
+              {getDuration()}
+            </Text>
+            <Text className="text-xs text-zinc-500">Minutes</Text>
+          </View>
+          <View className="flex-1 items-center">
+            <Text className="text-xl font-bold text-zinc-900">
+              {exerciseGroups.length}
+            </Text>
+            <Text className="text-xs text-zinc-500">Exercises</Text>
+          </View>
+          <View className="flex-1 items-center">
+            <Text className="text-xl font-bold text-zinc-900">
+              {getTotalSets()}
+            </Text>
+            <Text className="text-xs text-zinc-500">Sets</Text>
+          </View>
+          <View className="flex-1 items-center">
+            <Text className="text-xl font-bold text-zinc-900">
+              {Math.round(getTotalVolume()).toLocaleString()}
+            </Text>
+            <Text className="text-xs text-zinc-500">Vol ({unit})</Text>
+          </View>
+        </View>
+
+        {/* Exercises */}
+        <Text className="mx-4 mb-2 text-base font-semibold text-zinc-700">
+          Exercises
+        </Text>
+        {exerciseGroups.map((group: any) => {
+          const groupKey = `${group.exercise_id}_${group.profile_id ?? "null"}`;
+          return (
+            <View
+              key={groupKey}
+              className="mx-4 mb-3 rounded-xl bg-white px-4 py-3"
+              style={{
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 2,
+                elevation: 1,
+              }}
+            >
+              <Text className="text-base font-medium text-zinc-900">
+                {getExerciseName(group.exercise_id)}
+              </Text>
+              <Text className="mt-1 text-sm text-zinc-400">
+                {formatSetDisplay(group)}
+              </Text>
+            </View>
+          );
+        })}
+      </ScrollView>
     </SafeAreaView>
   );
 }
