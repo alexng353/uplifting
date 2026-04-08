@@ -3,11 +3,29 @@ import { Slot, useRouter, useSegments } from "expo-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "../hooks/useAuth";
 import { WorkoutProvider } from "../hooks/useWorkout";
+import { useBootstrap } from "../hooks/useBootstrap";
 import { ActivityTracker } from "../components/ActivityTracker";
 import { useEffect } from "react";
-import { View, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator, Text } from "react-native";
 
 const queryClient = new QueryClient();
+
+function BootstrapGate() {
+  const { isAuthenticated } = useAuth();
+  const { isBootstrapped, isLoading } = useBootstrap();
+
+  // Only show loading when authenticated and still bootstrapping
+  if (isAuthenticated && isLoading && !isBootstrapped) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white">
+        <ActivityIndicator size="large" />
+        <Text className="mt-4 text-gray-500">Syncing data...</Text>
+      </View>
+    );
+  }
+
+  return <Slot />;
+}
 
 function AuthGate() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -31,7 +49,7 @@ function AuthGate() {
   return (
     <>
       <ActivityTracker />
-      <Slot />
+      <BootstrapGate />
     </>
   );
 }
