@@ -11,7 +11,7 @@ import {
 // Cache key for all exercises
 const ALL_EXERCISES_KEY = ["exercises"] as const;
 
-interface Exercise {
+export interface Exercise {
   id: string;
   name: string;
   exercise_type: string;
