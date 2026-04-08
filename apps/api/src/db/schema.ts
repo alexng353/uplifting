@@ -86,7 +86,6 @@ export const workouts = pgTable("workouts", {
   privacy: varchar({ length: 20 }).notNull().default("friends"),
   gymLocation: varchar("gym_location", { length: 255 }),
   kind: varchar({ length: 20 }).notNull().default("workout"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   index("idx_workouts_user_kind").on(t.userId, t.kind),
 ]);

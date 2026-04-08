@@ -5,15 +5,15 @@ import { useFriendWorkouts } from "../../hooks/useFriendWorkouts";
 import { useSettings } from "../../hooks/useSettings";
 
 interface Friend {
-  friendshipId: string;
-  userId: string;
+  friendship_id: string;
+  user_id: string;
   username: string;
-  realName: string;
-  avatarUrl?: string | null;
-  isOnline?: boolean | null;
-  isInWorkout?: boolean | null;
-  currentWorkoutName?: string | null;
-  currentWorkoutStartedAt?: string | null;
+  real_name: string;
+  avatar_url?: string | null;
+  is_online?: boolean | null;
+  is_in_workout?: boolean | null;
+  current_workout_name?: string | null;
+  current_workout_started_at?: string | null;
 }
 
 interface FriendProfileProps {
@@ -65,7 +65,7 @@ export default function FriendProfile({
   visible,
   onClose,
 }: FriendProfileProps) {
-  const { data, isLoading } = useFriendWorkouts(friend.userId, visible);
+  const { data, isLoading } = useFriendWorkouts(friend.user_id, visible);
   const { getDisplayUnit } = useSettings();
   const unit = getDisplayUnit();
 
@@ -79,7 +79,7 @@ export default function FriendProfile({
       <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
         {/* Header */}
         <View className="flex-row items-center justify-between border-b border-zinc-200 px-4 pb-3 pt-4">
-          <Text className="text-xl font-bold">{friend.realName}</Text>
+          <Text className="text-xl font-bold">{friend.real_name}</Text>
           <Pressable onPress={onClose}>
             <Text className="text-base font-medium text-blue-500">Done</Text>
           </Pressable>
@@ -93,12 +93,12 @@ export default function FriendProfile({
                 {getInitials(friend.realName)}
               </Text>
             </View>
-            <Text className="text-xl font-bold">{friend.realName}</Text>
+            <Text className="text-xl font-bold">{friend.real_name}</Text>
             <Text className="text-sm text-zinc-400">@{friend.username}</Text>
 
             {/* Status badges */}
             <View className="mt-2 flex-row gap-2">
-              {friend.isOnline === true && (
+              {friend.is_online === true && (
                 <View className="flex-row items-center gap-1 rounded-full border border-green-200 bg-green-50 px-3 py-1">
                   <View className="h-2 w-2 rounded-full bg-green-500" />
                   <Text className="text-xs font-medium text-green-700">
@@ -106,11 +106,11 @@ export default function FriendProfile({
                   </Text>
                 </View>
               )}
-              {friend.isInWorkout === true && (
+              {friend.is_in_workout === true && (
                 <View className="flex-row items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-3 py-1">
                   <Ionicons name="barbell" size={12} color="#3b82f6" />
                   <Text className="text-xs font-medium text-blue-700">
-                    {friend.currentWorkoutName || "Working out"}
+                    {friend.current_workout_name || "Working out"}
                   </Text>
                 </View>
               )}
@@ -121,16 +121,10 @@ export default function FriendProfile({
             <View className="items-center py-8">
               <ActivityIndicator size="large" />
             </View>
-          ) : (data as any)?.canView === false ? (
-            <View className="items-center px-8 py-8">
-              <Text className="text-center text-base text-zinc-400">
-                {friend.realName} has workout history sharing disabled
-              </Text>
-            </View>
           ) : data ? (
             <>
               {/* This Week Summary */}
-              {(data as any).thisWeekCount > 0 && (
+              {(data as any).week_stats?.workout_count > 0 && (
                 <View className="mx-4 mb-4 rounded-xl border border-zinc-200 bg-white p-4">
                   <View className="mb-3 flex-row items-center gap-1">
                     <Ionicons name="flame" size={16} color="#f59e0b" />
@@ -139,7 +133,7 @@ export default function FriendProfile({
                   <View className="flex-row justify-center gap-8">
                     <View className="items-center">
                       <Text className="text-2xl font-bold">
-                        {(data as any).thisWeekCount}
+                        {(data as any).week_stats.workout_count}
                       </Text>
                       <Text className="text-xs uppercase text-zinc-400">
                         Workouts
@@ -147,7 +141,7 @@ export default function FriendProfile({
                     </View>
                     <View className="items-center">
                       <Text className="text-2xl font-bold">
-                        {formatVolume((data as any).thisWeekVolume)}
+                        {formatVolume((data as any).week_stats.total_volume)}
                       </Text>
                       <Text className="text-xs uppercase text-zinc-400">
                         Volume ({unit})
@@ -155,7 +149,7 @@ export default function FriendProfile({
                     </View>
                     <View className="items-center">
                       <Text className="text-2xl font-bold">
-                        {formatDuration((data as any).thisWeekDurationMinutes)}
+                        {formatDuration((data as any).week_stats.total_duration_minutes)}
                       </Text>
                       <Text className="text-xs uppercase text-zinc-400">
                         Time
@@ -179,17 +173,17 @@ export default function FriendProfile({
                     (workout: {
                       id: string;
                       name: string | null;
-                      startTime: string;
-                      durationMinutes: number;
-                      totalVolume: string | number;
-                      totalSets: number;
+                      start_time: string;
+                      duration_minutes: number;
+                      total_volume: number;
+                      total_sets: number;
                     }) => (
                       <View
                         key={workout.id}
                         className="mb-2 rounded-xl border border-zinc-200 bg-white p-4"
                       >
                         <Text className="text-xs text-zinc-400">
-                          {formatDate(workout.startTime)}
+                          {formatDate(workout.start_time)}
                         </Text>
                         <Text className="mt-1 text-base font-semibold">
                           {workout.name || "Workout"}
@@ -202,7 +196,7 @@ export default function FriendProfile({
                               color="#71717a"
                             />
                             <Text className="text-sm text-zinc-500">
-                              {formatDuration(workout.durationMinutes)}
+                              {formatDuration(workout.duration_minutes)}
                             </Text>
                           </View>
                           <View className="flex-row items-center gap-1">
@@ -212,7 +206,7 @@ export default function FriendProfile({
                               color="#71717a"
                             />
                             <Text className="text-sm text-zinc-500">
-                              {formatVolume(workout.totalVolume)} {unit}
+                              {formatVolume(workout.total_volume)} {unit}
                             </Text>
                           </View>
                           <View className="flex-row items-center gap-1">
@@ -222,7 +216,7 @@ export default function FriendProfile({
                               color="#71717a"
                             />
                             <Text className="text-sm text-zinc-500">
-                              {workout.totalSets} sets
+                              {workout.total_sets} sets
                             </Text>
                           </View>
                         </View>

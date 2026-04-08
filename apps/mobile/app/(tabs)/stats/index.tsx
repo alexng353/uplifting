@@ -556,8 +556,19 @@ export default function StatsScreen() {
               key={tab.key}
               onPress={() => setActiveTab(tab.key)}
               className={`flex-1 items-center justify-center rounded-lg py-2 ${
-                isActive ? "bg-white shadow-sm" : ""
+                isActive ? "bg-white" : ""
               }`}
+              style={
+                isActive
+                  ? {
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.05,
+                      shadowRadius: 2,
+                      elevation: 1,
+                    }
+                  : undefined
+              }
             >
               <Text
                 className={`text-sm font-medium ${

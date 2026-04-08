@@ -1,6 +1,39 @@
-import { createMMKV } from "react-native-mmkv";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const storage = createMMKV();
+// In-memory cache for synchronous reads, persisted to AsyncStorage
+const cache = new Map<string, string>();
+let hydrated = false;
+
+// Hydrate cache from AsyncStorage on startup
+export async function hydrateStorage(): Promise<void> {
+  if (hydrated) return;
+  const keys = await AsyncStorage.getAllKeys();
+  if (keys.length > 0) {
+    const entries = await AsyncStorage.multiGet(keys);
+    for (const [key, value] of entries) {
+      if (key && value) cache.set(key, value);
+    }
+  }
+  hydrated = true;
+}
+
+const storage = {
+  getString(key: string): string | undefined {
+    return cache.get(key);
+  },
+  set(key: string, value: string): void {
+    cache.set(key, value);
+    AsyncStorage.setItem(key, value);
+  },
+  delete(key: string): void {
+    cache.delete(key);
+    AsyncStorage.removeItem(key);
+  },
+  clearAll(): void {
+    cache.clear();
+    AsyncStorage.clear();
+  },
+};
 
 // Storage keys
 export const STORAGE_KEYS = {

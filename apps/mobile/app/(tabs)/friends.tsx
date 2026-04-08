@@ -86,8 +86,19 @@ export default function FriendsScreen() {
               key={tab.key}
               onPress={() => setActiveTab(tab.key)}
               className={`flex-1 flex-row items-center justify-center gap-1.5 rounded-lg py-2 ${
-                isActive ? "bg-white shadow-sm" : ""
+                isActive ? "bg-white" : ""
               }`}
+              style={
+                isActive
+                  ? {
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.05,
+                      shadowRadius: 2,
+                      elevation: 1,
+                    }
+                  : undefined
+              }
             >
               <Ionicons
                 name={tab.icon as any}
@@ -153,7 +164,7 @@ export default function FriendsScreen() {
           ) : (
             <FlatList
               data={feed}
-              keyExtractor={(item: any) => item.workoutId}
+              keyExtractor={(item: any) => item.workout_id}
               renderItem={({ item }: { item: any }) => (
                 <FeedCard item={item} unit={unit} />
               )}
@@ -193,7 +204,7 @@ export default function FriendsScreen() {
       {/* FAB - Find Friends */}
       <Pressable
         onPress={() => setShowSearch(true)}
-        className="absolute bottom-6 right-6 h-14 w-14 items-center justify-center rounded-full bg-blue-500 shadow-lg active:bg-blue-600"
+        className="absolute bottom-6 right-6 h-14 w-14 items-center justify-center rounded-full bg-blue-500 active:bg-blue-600"
         style={{
           shadowColor: "#3b82f6",
           shadowOffset: { width: 0, height: 4 },

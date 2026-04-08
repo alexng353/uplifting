@@ -68,7 +68,7 @@ export default function PendingRequests() {
   return (
     <FlatList
       data={requests as any[]}
-      keyExtractor={(item) => item.friendshipId}
+      keyExtractor={(item) => item.friendship_id}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
       }
@@ -78,27 +78,27 @@ export default function PendingRequests() {
           {/* Avatar */}
           <View className="h-12 w-12 items-center justify-center rounded-full bg-blue-500">
             <Text className="text-base font-bold text-white">
-              {getInitials(request.realName || request.username)}
+              {getInitials(request.real_name || request.username)}
             </Text>
           </View>
 
           {/* Name */}
           <View className="ml-3 flex-1">
-            <Text className="text-base font-medium">{request.realName}</Text>
+            <Text className="text-base font-medium">{request.real_name}</Text>
             <Text className="text-sm text-zinc-400">@{request.username}</Text>
           </View>
 
           {/* Accept / Decline buttons */}
           <View className="flex-row gap-2">
             <Pressable
-              onPress={() => handleAccept(request.friendshipId)}
+              onPress={() => handleAccept(request.friendship_id)}
               disabled={respondMutation.isPending}
               className="items-center justify-center rounded-lg bg-green-500 px-3 py-2 active:bg-green-600"
             >
               <Ionicons name="checkmark" size={18} color="white" />
             </Pressable>
             <Pressable
-              onPress={() => handleDecline(request.friendshipId)}
+              onPress={() => handleDecline(request.friendship_id)}
               disabled={respondMutation.isPending}
               className="items-center justify-center rounded-lg bg-zinc-200 px-3 py-2 active:bg-zinc-300"
             >

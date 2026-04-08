@@ -1,5 +1,6 @@
 import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
+import { logger } from "./lib/logger";
 import { authRoutes } from "./routes/auth";
 import { workoutRoutes } from "./routes/workouts";
 import { setRoutes } from "./routes/sets";
@@ -11,6 +12,7 @@ import { muscleRoutes } from "./routes/muscles";
 import { syncRoutes } from "./routes/sync";
 
 const app = new Elysia()
+  .use(logger)
   .use(
     cors({
       origin: process.env.MOBILE_FRONTEND_URL || "http://localhost:8081",

@@ -5,30 +5,15 @@ import { AuthProvider, useAuth } from "../hooks/useAuth";
 import { WorkoutProvider } from "../hooks/useWorkout";
 import { useBootstrap } from "../hooks/useBootstrap";
 import { ActivityTracker } from "../components/ActivityTracker";
-import { useEffect } from "react";
+import { hydrateStorage } from "../services/storage";
+import { useEffect, useState } from "react";
 import { View, ActivityIndicator, Text } from "react-native";
 
 const queryClient = new QueryClient();
 
-function BootstrapGate() {
-  const { isAuthenticated } = useAuth();
-  const { isBootstrapped, isLoading } = useBootstrap();
-
-  // Only show loading when authenticated and still bootstrapping
-  if (isAuthenticated && isLoading && !isBootstrapped) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" />
-        <Text className="mt-4 text-gray-500">Syncing data...</Text>
-      </View>
-    );
-  }
-
-  return <Slot />;
-}
-
 function AuthGate() {
   const { isAuthenticated, isLoading } = useAuth();
+  const { isBootstrapped, isLoading: isBootstrapping } = useBootstrap();
   const segments = useSegments();
   const router = useRouter();
 
@@ -46,15 +31,39 @@ function AuthGate() {
       </View>
     );
   }
+
+  if (isAuthenticated && isBootstrapping && !isBootstrapped) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white">
+        <ActivityIndicator size="large" />
+        <Text className="mt-4 text-gray-500">Syncing data...</Text>
+      </View>
+    );
+  }
+
   return (
     <>
       <ActivityTracker />
-      <BootstrapGate />
+      <Slot />
     </>
   );
 }
 
 export default function RootLayout() {
+  const [storageReady, setStorageReady] = useState(false);
+
+  useEffect(() => {
+    hydrateStorage().then(() => setStorageReady(true));
+  }, []);
+
+  if (!storageReady) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white">
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

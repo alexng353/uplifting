@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "bun --watch src/index.ts",
+    "dev:hot": "bun --hot src/index.ts",
     "start": "bun src/index.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

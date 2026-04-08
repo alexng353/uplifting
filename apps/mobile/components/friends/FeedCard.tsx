@@ -1,15 +1,15 @@
 import { View, Text } from "react-native";
 
 interface FeedItem {
-  workoutId: string;
+  workout_id: string;
   username: string;
-  realName: string;
-  workoutName: string | null;
-  durationMinutes: number | null;
-  totalVolume: string | null;
-  totalSets: number | null;
-  gymLocation: string | null;
-  startTime: string;
+  real_name: string;
+  workout_name: string | null;
+  duration_minutes: number | null;
+  total_volume: number | null;
+  total_sets: number | null;
+  gym_location: string | null;
+  start_time: string;
 }
 
 interface FeedCardProps {
@@ -41,14 +41,14 @@ function formatDuration(minutes: number | null | undefined): string {
   return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
 }
 
-function formatVolume(volume: string | null | undefined): string {
+function formatVolume(volume: number | null | undefined): string {
   if (!volume) return "";
-  const num = Number(volume);
-  if (num >= 1000) return `${(num / 1000).toFixed(1)}k`;
-  return String(Math.round(num));
+  if (volume >= 1000) return `${(volume / 1000).toFixed(1)}k`;
+  return String(Math.round(volume));
 }
 
-function getInitials(name: string): string {
+function getInitials(name?: string | null): string {
+  if (!name) return "?";
   return name
     .split(" ")
     .map((n) => n[0])
@@ -64,52 +64,52 @@ export default function FeedCard({ item, unit }: FeedCardProps) {
       <View className="mb-3 flex-row items-center gap-3">
         <View className="h-10 w-10 items-center justify-center rounded-full bg-blue-500">
           <Text className="text-sm font-bold text-white">
-            {getInitials(item.realName)}
+            {getInitials(item.real_name)}
           </Text>
         </View>
         <View>
-          <Text className="text-base font-semibold">{item.realName}</Text>
+          <Text className="text-base font-semibold">{item.real_name}</Text>
           <Text className="text-sm text-zinc-400">@{item.username}</Text>
         </View>
         <Text className="ml-auto text-xs text-zinc-400">
-          {formatRelativeTime(item.startTime)}
+          {formatRelativeTime(item.start_time)}
         </Text>
       </View>
 
       {/* Workout name */}
       <Text className="mb-2 text-lg font-semibold">
-        {item.workoutName || "Workout"}
+        {item.workout_name || "Workout"}
       </Text>
 
       {/* Stats row */}
       <View className="mb-2 flex-row gap-4">
-        {item.durationMinutes != null && item.durationMinutes > 0 && (
+        {item.duration_minutes != null && item.duration_minutes > 0 && (
           <View className="rounded-md bg-zinc-100 px-2.5 py-1">
             <Text className="text-sm text-zinc-600">
-              {formatDuration(item.durationMinutes)}
+              {formatDuration(item.duration_minutes)}
             </Text>
           </View>
         )}
-        {item.totalVolume != null && Number(item.totalVolume) > 0 && (
+        {item.total_volume != null && item.total_volume > 0 && (
           <View className="rounded-md bg-zinc-100 px-2.5 py-1">
             <Text className="text-sm text-zinc-600">
-              {formatVolume(item.totalVolume)} {unit} vol
+              {formatVolume(item.total_volume)} {unit} vol
             </Text>
           </View>
         )}
-        {item.totalSets != null && item.totalSets > 0 && (
+        {item.total_sets != null && item.total_sets > 0 && (
           <View className="rounded-md bg-zinc-100 px-2.5 py-1">
             <Text className="text-sm text-zinc-600">
-              {item.totalSets} sets
+              {item.total_sets} sets
             </Text>
           </View>
         )}
       </View>
 
       {/* Gym location */}
-      {item.gymLocation && (
+      {item.gym_location && (
         <Text className="text-sm text-zinc-400">
-          {"\uD83D\uDCCD"} {item.gymLocation}
+          {"\uD83D\uDCCD"} {item.gym_location}
         </Text>
       )}
     </View>

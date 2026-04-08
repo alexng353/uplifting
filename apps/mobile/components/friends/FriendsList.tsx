@@ -36,16 +36,16 @@ export default function FriendsList() {
   const [refreshing, setRefreshing] = useState(false);
 
   const selectedFriend = (friends as any[]).find(
-    (f) => f.userId === selectedFriendId,
+    (f) => f.user_id === selectedFriendId,
   );
 
   const sortedFriends = useMemo(() => {
     return [...(friends as any[])].sort((a, b) => {
-      if (a.isInWorkout && !b.isInWorkout) return -1;
-      if (!a.isInWorkout && b.isInWorkout) return 1;
-      if (a.isOnline && !b.isOnline) return -1;
-      if (!a.isOnline && b.isOnline) return 1;
-      return a.realName.localeCompare(b.realName);
+      if (a.is_in_workout && !b.is_in_workout) return -1;
+      if (!a.is_in_workout && b.is_in_workout) return 1;
+      if (a.is_online && !b.is_online) return -1;
+      if (!a.is_online && b.is_online) return 1;
+      return a.real_name.localeCompare(b.real_name);
     });
   }, [friends]);
 
@@ -81,41 +81,41 @@ export default function FriendsList() {
     <>
       <FlatList
         data={sortedFriends}
-        keyExtractor={(item) => item.friendshipId}
+        keyExtractor={(item) => item.friendship_id}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
         contentContainerClassName="px-4"
         renderItem={({ item: friend }) => (
           <Pressable
-            onPress={() => setSelectedFriendId(friend.userId)}
+            onPress={() => setSelectedFriendId(friend.user_id)}
             className="flex-row items-center border-b border-zinc-100 py-3 active:bg-zinc-50"
           >
             {/* Avatar with online indicator */}
             <View className="relative">
               <View className="h-12 w-12 items-center justify-center rounded-full bg-blue-500">
                 <Text className="text-base font-bold text-white">
-                  {getInitials(friend.realName)}
+                  {getInitials(friend.real_name)}
                 </Text>
               </View>
-              {friend.isOnline === true && (
+              {friend.is_online === true && (
                 <View className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-green-500" />
               )}
             </View>
 
             {/* Name + status */}
             <View className="ml-3 flex-1">
-              <Text className="text-base font-medium">{friend.realName}</Text>
+              <Text className="text-base font-medium">{friend.real_name}</Text>
               <Text className="text-sm text-zinc-400">
                 @{friend.username}
               </Text>
-              {friend.isInWorkout === true && (
+              {friend.is_in_workout === true && (
                 <View className="mt-0.5 flex-row items-center gap-1">
                   <Ionicons name="barbell-outline" size={12} color="#3b82f6" />
                   <Text className="text-xs text-blue-500">
-                    {friend.currentWorkoutName || "Working out"}
-                    {friend.currentWorkoutStartedAt
-                      ? ` \u00b7 ${formatWorkoutDuration(friend.currentWorkoutStartedAt)}`
+                    {friend.current_workout_name || "Working out"}
+                    {friend.current_workout_started_at
+                      ? ` \u00b7 ${formatWorkoutDuration(friend.current_workout_started_at)}`
                       : ""}
                   </Text>
                 </View>
@@ -123,7 +123,7 @@ export default function FriendsList() {
             </View>
 
             {/* Workout icon on the right */}
-            {friend.isInWorkout === true && (
+            {friend.is_in_workout === true && (
               <Ionicons name="barbell" size={20} color="#3b82f6" />
             )}
 
