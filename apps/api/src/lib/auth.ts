@@ -17,15 +17,13 @@ export const jwtPlugin = new Elysia({ name: "jwt" })
 
 export const authPlugin = new Elysia({ name: "auth" })
   .use(jwtPlugin)
-  .derive(async ({ jwt, bearer, set }) => {
+  .derive({ as: "scoped" }, async ({ jwt, bearer, set }) => {
     if (!bearer) {
-      set.status = 401;
-      throw new Error("Unauthorized");
+      return { userId: "" as string, user: null as any };
     }
     const payload = await jwt.verify(bearer);
     if (!payload) {
-      set.status = 401;
-      throw new Error("JWT has expired. Please log in again.");
+      return { userId: "" as string, user: null as any };
     }
     const userId = payload.sub as string;
     const [user] = await db
@@ -34,8 +32,13 @@ export const authPlugin = new Elysia({ name: "auth" })
       .where(eq(users.id, userId))
       .limit(1);
     if (!user) {
-      set.status = 401;
-      throw new Error("User not found");
+      return { userId: "" as string, user: null as any };
     }
     return { userId, user };
+  })
+  .onBeforeHandle({ as: "scoped" }, ({ userId, set }) => {
+    if (!userId) {
+      set.status = 401;
+      return { error: "Unauthorized" };
+    }
   });
