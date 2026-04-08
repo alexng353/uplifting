@@ -12,12 +12,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useSettings } from "../../../../hooks/useSettings";
+import { useThemeColors } from "../../../../hooks/useThemeColors";
 import { api } from "../../../../lib/api";
 import { convertWeight } from "../../../../services/storage";
 
 export default function WorkoutDetailScreen() {
   const { workoutId } = useLocalSearchParams<{ workoutId: string }>();
   const router = useRouter();
+  const colors = useThemeColors();
   const { formatWeight, getDisplayUnit } = useSettings();
   const unit = getDisplayUnit();
 
@@ -154,10 +156,10 @@ export default function WorkoutDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-white">
+      <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900">
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" />
-          <Text className="mt-2 text-sm text-zinc-400">
+          <Text className="mt-2 text-sm text-zinc-400 dark:text-zinc-500">
             Loading workout...
           </Text>
         </View>
@@ -167,15 +169,15 @@ export default function WorkoutDetailScreen() {
 
   if (error || !workout) {
     return (
-      <SafeAreaView className="flex-1 bg-white">
+      <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900">
         <View className="flex-row items-center px-4 pt-4 pb-2">
           <Pressable onPress={() => router.back()} className="mr-3 p-1">
             <Ionicons name="chevron-back" size={24} color="#3b82f6" />
           </Pressable>
-          <Text className="text-xl font-bold">Workout</Text>
+          <Text className="text-xl font-bold dark:text-zinc-100">Workout</Text>
         </View>
         <View className="flex-1 items-center justify-center px-8">
-          <Text className="text-zinc-400">Failed to load workout</Text>
+          <Text className="text-zinc-400 dark:text-zinc-500">Failed to load workout</Text>
         </View>
       </SafeAreaView>
     );
@@ -185,13 +187,13 @@ export default function WorkoutDetailScreen() {
   const endTime = w.end_time ?? w.endTime;
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900">
       {/* Header */}
       <View className="flex-row items-center px-4 pt-4 pb-2">
         <Pressable onPress={() => router.back()} className="mr-3 p-1">
           <Ionicons name="chevron-back" size={24} color="#3b82f6" />
         </Pressable>
-        <Text className="flex-1 text-xl font-bold" numberOfLines={1}>
+        <Text className="flex-1 text-xl font-bold dark:text-zinc-100" numberOfLines={1}>
           {w.name || "Workout"}
         </Text>
       </View>
@@ -199,50 +201,50 @@ export default function WorkoutDetailScreen() {
       <ScrollView className="flex-1" contentContainerClassName="pb-24">
         {/* Date & time */}
         <View className="mx-4 mt-2 mb-4">
-          <Text className="text-base text-zinc-600">
+          <Text className="text-base text-zinc-600 dark:text-zinc-300">
             {formatDate(startTime)}
           </Text>
-          <Text className="text-sm text-zinc-400">
+          <Text className="text-sm text-zinc-400 dark:text-zinc-500">
             {formatTime(startTime)}
             {endTime && ` – ${formatTime(endTime)}`}
           </Text>
           {w.gym_location ?? w.gymLocation ? (
-            <Text className="mt-0.5 text-sm text-zinc-400">
+            <Text className="mt-0.5 text-sm text-zinc-400 dark:text-zinc-500">
               {w.gym_location ?? w.gymLocation}
             </Text>
           ) : null}
         </View>
 
         {/* Summary stats */}
-        <View className="mx-4 mb-4 flex-row rounded-2xl bg-zinc-50 p-4">
+        <View className="mx-4 mb-4 flex-row rounded-2xl bg-zinc-50 dark:bg-zinc-800 p-4">
           <View className="flex-1 items-center">
-            <Text className="text-xl font-bold text-zinc-900">
+            <Text className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
               {getDuration()}
             </Text>
-            <Text className="text-xs text-zinc-500">Minutes</Text>
+            <Text className="text-xs text-zinc-500 dark:text-zinc-400">Minutes</Text>
           </View>
           <View className="flex-1 items-center">
-            <Text className="text-xl font-bold text-zinc-900">
+            <Text className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
               {exerciseGroups.length}
             </Text>
-            <Text className="text-xs text-zinc-500">Exercises</Text>
+            <Text className="text-xs text-zinc-500 dark:text-zinc-400">Exercises</Text>
           </View>
           <View className="flex-1 items-center">
-            <Text className="text-xl font-bold text-zinc-900">
+            <Text className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
               {getTotalSets()}
             </Text>
-            <Text className="text-xs text-zinc-500">Sets</Text>
+            <Text className="text-xs text-zinc-500 dark:text-zinc-400">Sets</Text>
           </View>
           <View className="flex-1 items-center">
-            <Text className="text-xl font-bold text-zinc-900">
+            <Text className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
               {Math.round(getTotalVolume()).toLocaleString()}
             </Text>
-            <Text className="text-xs text-zinc-500">Vol ({unit})</Text>
+            <Text className="text-xs text-zinc-500 dark:text-zinc-400">Vol ({unit})</Text>
           </View>
         </View>
 
         {/* Exercises */}
-        <Text className="mx-4 mb-2 text-base font-semibold text-zinc-700">
+        <Text className="mx-4 mb-2 text-base font-semibold text-zinc-700 dark:text-zinc-200">
           Exercises
         </Text>
         {exerciseGroups.map((group: any) => {
@@ -250,7 +252,7 @@ export default function WorkoutDetailScreen() {
           return (
             <View
               key={groupKey}
-              className="mx-4 mb-3 rounded-xl bg-white px-4 py-3"
+              className="mx-4 mb-3 rounded-xl bg-white dark:bg-zinc-900 px-4 py-3"
               style={{
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 1 },
@@ -259,10 +261,10 @@ export default function WorkoutDetailScreen() {
                 elevation: 1,
               }}
             >
-              <Text className="text-base font-medium text-zinc-900">
+              <Text className="text-base font-medium text-zinc-900 dark:text-zinc-50">
                 {getExerciseName(group.exercise_id)}
               </Text>
-              <Text className="mt-1 text-sm text-zinc-400">
+              <Text className="mt-1 text-sm text-zinc-400 dark:text-zinc-500">
                 {formatSetDisplay(group)}
               </Text>
             </View>
