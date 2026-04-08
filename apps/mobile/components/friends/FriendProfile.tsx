@@ -92,7 +92,7 @@ export default function FriendProfile({
           <View className="items-center px-4 py-6">
             <View className="mb-3 h-20 w-20 items-center justify-center rounded-full bg-blue-500">
               <Text className="text-2xl font-bold text-white">
-                {getInitials(friend.realName)}
+                {getInitials(friend.real_name)}
               </Text>
             </View>
             <Text className="text-xl font-bold dark:text-zinc-100">{friend.real_name}</Text>

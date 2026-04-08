@@ -203,7 +203,7 @@ function setJSON<T>(key: string, value: T): void {
 }
 
 function deleteKey(key: string): void {
-  storage.remove(key);
+  storage.delete(key);
 }
 
 // --- Storage operations (all synchronous) ---
