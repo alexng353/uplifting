@@ -16,6 +16,7 @@ import {
   DEFAULT_REP_RANGES,
   type RepRangeConfig,
 } from "../../../services/storage";
+import { useThemeColors } from "../../../hooks/useThemeColors";
 
 type RangeWithId = RepRangeConfig & { _id: number };
 
@@ -38,6 +39,7 @@ const PRESET_COLORS = [
 
 export default function RepRangesScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
   const { settings, updateSettings } = useSettings();
   const [ranges, setRanges] = useState<RangeWithId[]>(() =>
     (settings.repRanges ?? [...DEFAULT_REP_RANGES]).map(withId),
@@ -105,34 +107,34 @@ export default function RepRangesScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-zinc-50" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-zinc-50 dark:bg-zinc-950" edges={["top"]}>
       {/* Header */}
-      <View className="flex-row items-center justify-between border-b border-zinc-200 bg-white px-4 pb-3 pt-4">
+      <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 pb-3 pt-4">
         <View className="flex-row items-center gap-3">
           <Pressable
             onPress={() => router.back()}
             className="active:opacity-60"
           >
-            <Ionicons name="arrow-back" size={24} color="#000" />
+            <Ionicons name="arrow-back" size={24} color={colors.primaryText} />
           </Pressable>
-          <Text className="text-xl font-bold">Rep Range Colors</Text>
+          <Text className="text-xl font-bold dark:text-zinc-100">Rep Range Colors</Text>
         </View>
         <Pressable onPress={reset} className="active:opacity-60">
-          <Text className="text-base text-zinc-400">Reset</Text>
+          <Text className="text-base text-zinc-400 dark:text-zinc-500">Reset</Text>
         </Pressable>
       </View>
 
       <ScrollView className="flex-1" contentContainerClassName="pb-8">
         {ranges.map((range, i) => (
-          <View key={range._id} className="mx-4 mt-4 overflow-hidden rounded-xl bg-white">
+          <View key={range._id} className="mx-4 mt-4 overflow-hidden rounded-xl bg-white dark:bg-zinc-900">
             {/* Range header */}
-            <View className="flex-row items-center justify-between border-b border-zinc-100 px-4 py-3">
+            <View className="flex-row items-center justify-between border-b border-zinc-100 dark:border-zinc-800 px-4 py-3">
               <View className="flex-row items-center gap-2">
                 <View
-                  className="h-4 w-4 rounded-full border border-zinc-200"
+                  className="h-4 w-4 rounded-full border border-zinc-200 dark:border-zinc-700"
                   style={{ backgroundColor: range.color }}
                 />
-                <Text className="text-base font-semibold">
+                <Text className="text-base font-semibold dark:text-zinc-100">
                   {range.label || `Range ${i + 1}`}
                 </Text>
               </View>
@@ -147,21 +149,22 @@ export default function RepRangesScreen() {
             </View>
 
             {/* Label */}
-            <View className="flex-row items-center border-b border-zinc-100 px-4 py-2.5">
-              <Text className="w-20 text-sm text-zinc-400">Label</Text>
+            <View className="flex-row items-center border-b border-zinc-100 dark:border-zinc-800 px-4 py-2.5">
+              <Text className="w-20 text-sm text-zinc-400 dark:text-zinc-500">Label</Text>
               <TextInput
-                className="flex-1 text-base"
+                className="flex-1 text-base dark:text-zinc-100"
                 value={range.label}
                 onChangeText={(v) => updateRange(i, "label", v)}
                 placeholder="Label"
+                placeholderTextColor={colors.placeholder}
               />
             </View>
 
             {/* Min */}
-            <View className="flex-row items-center border-b border-zinc-100 px-4 py-2.5">
-              <Text className="w-20 text-sm text-zinc-400">Min</Text>
+            <View className="flex-row items-center border-b border-zinc-100 dark:border-zinc-800 px-4 py-2.5">
+              <Text className="w-20 text-sm text-zinc-400 dark:text-zinc-500">Min</Text>
               <TextInput
-                className="flex-1 text-base"
+                className="flex-1 text-base dark:text-zinc-100"
                 value={String(range.min)}
                 onChangeText={(v) =>
                   updateRange(i, "min", parseInt(v, 10) || 0)
@@ -171,22 +174,23 @@ export default function RepRangesScreen() {
             </View>
 
             {/* Max */}
-            <View className="flex-row items-center border-b border-zinc-100 px-4 py-2.5">
-              <Text className="w-20 text-sm text-zinc-400">Max</Text>
+            <View className="flex-row items-center border-b border-zinc-100 dark:border-zinc-800 px-4 py-2.5">
+              <Text className="w-20 text-sm text-zinc-400 dark:text-zinc-500">Max</Text>
               <TextInput
-                className="flex-1 text-base"
+                className="flex-1 text-base dark:text-zinc-100"
                 value={range.max >= 9999 ? "" : String(range.max)}
                 onChangeText={(v) =>
                   updateRange(i, "max", v ? parseInt(v, 10) || 0 : 9999)
                 }
                 keyboardType="number-pad"
                 placeholder="No limit"
+                placeholderTextColor={colors.placeholder}
               />
             </View>
 
             {/* Color picker */}
             <View className="px-4 py-3">
-              <Text className="mb-2 text-sm text-zinc-400">Color</Text>
+              <Text className="mb-2 text-sm text-zinc-400 dark:text-zinc-500">Color</Text>
               <View className="flex-row flex-wrap gap-2">
                 {PRESET_COLORS.map((color) => (
                   <Pressable
@@ -195,7 +199,7 @@ export default function RepRangesScreen() {
                     className={`h-8 w-8 rounded-full border-2 ${
                       range.color === color
                         ? "border-blue-500"
-                        : "border-zinc-200"
+                        : "border-zinc-200 dark:border-zinc-700"
                     }`}
                     style={{ backgroundColor: color }}
                   />
@@ -209,9 +213,9 @@ export default function RepRangesScreen() {
         <View className="mt-4 px-4">
           <Pressable
             onPress={addRange}
-            className="flex-row items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-300 bg-white py-3 active:bg-zinc-50"
+            className="flex-row items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 py-3 active:bg-zinc-50 dark:active:bg-zinc-800"
           >
-            <Ionicons name="add-circle-outline" size={20} color="#3b82f6" />
+            <Ionicons name="add-circle-outline" size={20} color={colors.accentIcon} />
             <Text className="text-base font-medium text-blue-500">
               Add Range
             </Text>

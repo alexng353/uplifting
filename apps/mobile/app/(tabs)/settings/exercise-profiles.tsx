@@ -19,6 +19,7 @@ import {
   useRenameExerciseProfile,
 } from "../../../hooks/useExerciseProfiles";
 import { useExercises } from "../../../hooks/useExercises";
+import { useThemeColors } from "../../../hooks/useThemeColors";
 
 interface ProfileItem {
   exerciseId: string;
@@ -48,6 +49,7 @@ export default function ExerciseProfilesScreen() {
     currentName: string;
   } | null>(null);
   const [newProfileName, setNewProfileName] = useState("");
+  const colors = useThemeColors();
 
   // Build sections
   const sections = useMemo((): ProfileSection[] => {
@@ -153,28 +155,29 @@ export default function ExerciseProfilesScreen() {
   }, [renameData, newProfileName, renameProfileMutation]);
 
   return (
-    <SafeAreaView className="flex-1 bg-zinc-50" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-zinc-50 dark:bg-zinc-950" edges={["top"]}>
       {/* Header */}
-      <View className="flex-row items-center gap-3 border-b border-zinc-200 bg-white px-4 pb-3 pt-4">
+      <View className="flex-row items-center gap-3 border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 pb-3 pt-4">
         <Pressable onPress={() => router.back()} className="active:opacity-60">
-          <Ionicons name="arrow-back" size={24} color="#000" />
+          <Ionicons name="arrow-back" size={24} color={colors.primaryText} />
         </Pressable>
-        <Text className="flex-1 text-xl font-bold">Exercise Profiles</Text>
+        <Text className="flex-1 text-xl font-bold dark:text-zinc-100">Exercise Profiles</Text>
       </View>
 
       {/* Search */}
-      <View className="bg-white px-4 py-2">
-        <View className="flex-row items-center rounded-lg bg-zinc-100 px-3 py-2">
-          <Ionicons name="search" size={18} color="#a1a1aa" />
+      <View className="bg-white dark:bg-zinc-900 px-4 py-2">
+        <View className="flex-row items-center rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 py-2">
+          <Ionicons name="search" size={18} color={colors.mutedIcon} />
           <TextInput
-            className="ml-2 flex-1 text-base"
+            className="ml-2 flex-1 text-base dark:text-zinc-100"
             placeholder="Filter by exercise or profile name"
+            placeholderTextColor={colors.placeholder}
             value={searchText}
             onChangeText={setSearchText}
           />
           {searchText.length > 0 && (
             <Pressable onPress={() => setSearchText("")}>
-              <Ionicons name="close-circle" size={18} color="#a1a1aa" />
+              <Ionicons name="close-circle" size={18} color={colors.mutedIcon} />
             </Pressable>
           )}
         </View>
@@ -183,8 +186,8 @@ export default function ExerciseProfilesScreen() {
       {/* Profile List */}
       {sections.length === 0 ? (
         <View className="flex-1 items-center justify-center px-8">
-          <Ionicons name="barbell-outline" size={48} color="#a1a1aa" />
-          <Text className="mt-3 text-center text-base text-zinc-400">
+          <Ionicons name="barbell-outline" size={48} color={colors.mutedIcon} />
+          <Text className="mt-3 text-center text-base text-zinc-400 dark:text-zinc-500">
             {searchText.trim()
               ? "No profiles match your search."
               : "No exercise profiles yet."}
@@ -196,8 +199,8 @@ export default function ExerciseProfilesScreen() {
           keyExtractor={(item) => `${item.exerciseId}_${item.profileId}`}
           contentContainerClassName="pb-8"
           renderSectionHeader={({ section }) => (
-            <View className="bg-zinc-50 px-4 pb-1 pt-4">
-              <Text className="text-sm font-semibold text-zinc-400">
+            <View className="bg-zinc-50 dark:bg-zinc-950 px-4 pb-1 pt-4">
+              <Text className="text-sm font-semibold text-zinc-400 dark:text-zinc-500">
                 {section.title}
               </Text>
             </View>
@@ -211,15 +214,15 @@ export default function ExerciseProfilesScreen() {
                   item.profileName,
                 )
               }
-              className={`flex-row items-center bg-white px-4 py-3 active:bg-zinc-50 ${
+              className={`flex-row items-center bg-white dark:bg-zinc-900 px-4 py-3 active:bg-zinc-50 dark:active:bg-zinc-800 ${
                 index < section.data.length - 1
-                  ? "border-b border-zinc-100"
+                  ? "border-b border-zinc-100 dark:border-zinc-800"
                   : ""
               }`}
             >
-              <Ionicons name="barbell" size={20} color="#3b82f6" />
-              <Text className="ml-3 flex-1 text-base">{item.profileName}</Text>
-              <Ionicons name="chevron-forward" size={16} color="#a1a1aa" />
+              <Ionicons name="barbell" size={20} color={colors.accentIcon} />
+              <Text className="ml-3 flex-1 text-base dark:text-zinc-100">{item.profileName}</Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.mutedIcon} />
             </Pressable>
           )}
         />
@@ -234,23 +237,24 @@ export default function ExerciseProfilesScreen() {
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
-          className="flex-1 bg-white"
+          className="flex-1 bg-white dark:bg-zinc-900"
         >
-          <View className="flex-row items-center justify-between border-b border-zinc-200 px-4 pb-3 pt-4">
-            <Text className="text-xl font-bold">Rename Profile</Text>
+          <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-4 pb-3 pt-4">
+            <Text className="text-xl font-bold dark:text-zinc-100">Rename Profile</Text>
             <Pressable
               onPress={() => setShowRenameModal(false)}
               className="active:opacity-60"
             >
-              <Text className="text-base text-zinc-400">Cancel</Text>
+              <Text className="text-base text-zinc-400 dark:text-zinc-500">Cancel</Text>
             </Pressable>
           </View>
           <View className="p-4">
-            <Text className="mb-2 text-sm font-medium text-zinc-500">
+            <Text className="mb-2 text-sm font-medium text-zinc-500 dark:text-zinc-400">
               Profile Name
             </Text>
             <TextInput
-              className="rounded-lg bg-zinc-100 px-4 py-3 text-base"
+              className="rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 py-3 text-base dark:text-zinc-100"
+              placeholderTextColor={colors.placeholder}
               value={newProfileName}
               onChangeText={setNewProfileName}
               autoFocus
@@ -262,14 +266,14 @@ export default function ExerciseProfilesScreen() {
               }
               className={`mt-4 items-center rounded-lg py-3 ${
                 renameProfileMutation.isPending || !newProfileName.trim()
-                  ? "bg-zinc-200"
+                  ? "bg-zinc-200 dark:bg-zinc-700"
                   : "bg-blue-500 active:bg-blue-600"
               }`}
             >
               <Text
                 className={`text-base font-semibold ${
                   renameProfileMutation.isPending || !newProfileName.trim()
-                    ? "text-zinc-400"
+                    ? "text-zinc-400 dark:text-zinc-500"
                     : "text-white"
                 }`}
               >
