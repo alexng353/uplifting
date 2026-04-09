@@ -311,8 +311,8 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
     return {
       id: row.id,
       name: row.name,
-      start_time: row.start_time,
-      end_time: row.end_time,
+      start_time: new Date(row.start_time).toISOString(),
+      end_time: row.end_time ? new Date(row.end_time).toISOString() : null,
       duration_minutes: Number(row.duration_minutes),
       total_volume: Number(row.total_volume),
       total_sets: Number(row.total_sets),

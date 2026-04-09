@@ -170,7 +170,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
         official: r.official,
         author_id: r.author_id,
         description: r.description,
-        created_at: r.created_at,
+        created_at: new Date(r.created_at).toISOString(),
         primary_muscles: r.primary_muscles ?? [],
         secondary_muscles: r.secondary_muscles ?? [],
       }));
@@ -306,7 +306,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
       official: e.official,
       author_id: e.author_id,
       description: e.description,
-      created_at: e.created_at,
+      created_at: new Date(e.created_at).toISOString(),
       primary_muscles: primaryMuscles.map((m) => m.name),
       secondary_muscles: secondaryMuscles.map((m) => m.name),
       is_favourite: favourite.length > 0,
@@ -315,7 +315,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
             weight: Number(pr[0].weight),
             weight_unit: pr[0].weight_unit,
             reps: pr[0].reps,
-            created_at: pr[0].created_at,
+            created_at: new Date(pr[0].created_at).toISOString(),
           }
         : null,
     };
@@ -356,7 +356,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
         const wid = r.workout_id as string;
         if (!workoutMap.has(wid)) {
           workoutMap.set(wid, {
-            date: r.start_time as string,
+            date: new Date(r.start_time as string).toISOString(),
             workout_id: wid,
             sets: [],
           });
