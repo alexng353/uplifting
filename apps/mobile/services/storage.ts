@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Crypto from "expo-crypto";
 
 // In-memory cache for synchronous reads, persisted to AsyncStorage
 const cache = new Map<string, string>();
@@ -305,7 +306,7 @@ export function clearAllData(): void {
 
 // Helper to generate unique IDs
 export function generateId(): string {
-  return crypto.randomUUID();
+  return Crypto.randomUUID();
 }
 
 // Helper for weight conversion (display only)
