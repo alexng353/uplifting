@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Crypto from "expo-crypto";
+import { z } from "zod";
 
 // In-memory cache for synchronous reads, persisted to AsyncStorage
 const cache = new Map<string, string>();
@@ -197,11 +198,13 @@ export const DEFAULT_SETTINGS: StoredSettings = {
 
 // --- Internal helpers ---
 
-function getJSON<T>(key: string): T | null {
+function getJSON<T>(key: string, schema?: z.ZodType<T>): T | null {
   const raw = storage.getString(key);
   if (raw === undefined) return null;
   try {
-    return JSON.parse(raw) as T;
+    const parsed = JSON.parse(raw);
+    if (schema) return schema.parse(parsed);
+    return parsed as T;
   } catch {
     return null;
   }
@@ -424,16 +427,25 @@ export function setGymProfileForExercise(
 
 const MAX_EXERCISE_SEQUENCES = 20;
 
+const oldSequenceFormat = z.array(z.array(z.string()));
+const newSequenceFormat = z.array(
+  z.object({ exerciseIds: z.array(z.string()), title: z.string().optional() }),
+);
+
 export function getExerciseSequences(): StoredExerciseSequences {
-  const raw = getJSON<StoredExerciseSequences | string[][]>(
-    STORAGE_KEYS.EXERCISE_SEQUENCES,
-  );
-  if (!raw || raw.length === 0) return [];
-  // Migrate old format (string[][]) to new format (ExerciseSequenceEntry[])
-  if (Array.isArray(raw[0])) {
-    return (raw as string[][]).map((ids) => ({ exerciseIds: ids }));
+  const raw = storage.getString(STORAGE_KEYS.EXERCISE_SEQUENCES);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    const newResult = newSequenceFormat.safeParse(parsed);
+    if (newResult.success) return newResult.data;
+    const oldResult = oldSequenceFormat.safeParse(parsed);
+    if (oldResult.success)
+      return oldResult.data.map((ids) => ({ exerciseIds: ids }));
+    return [];
+  } catch {
+    return [];
   }
-  return raw as StoredExerciseSequences;
 }
 
 export function addExerciseSequence(sequence: string[], title?: string): void {
