@@ -10,7 +10,7 @@ export function useServerSettings(enabled = true) {
       if (error || !data) {
         throw new Error("Failed to fetch settings");
       }
-      return data as any;
+      return data;
     },
     enabled,
   });

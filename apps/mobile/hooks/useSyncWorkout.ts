@@ -25,11 +25,11 @@ interface SyncWorkoutRequest {
 export function useSyncWorkout() {
   return useMutation({
     mutationFn: async (body: SyncWorkoutRequest) => {
-      const { data, error } = await api.api.v1.sync.workout.post(body as any);
+      const { data, error } = await api.api.v1.sync.workout.post(body);
       if (error || !data) {
         throw new Error("Failed to sync workout");
       }
-      return data as any;
+      return data;
     },
     retry: false, // Don't auto-retry - we handle retries manually
   });

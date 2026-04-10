@@ -11,7 +11,7 @@ export function useUsedExercises() {
         query: { offset: String(pageParam), limit: String(PAGE_SIZE) },
       });
       if (error || !data) throw new Error("Failed to fetch used exercises");
-      return data as any[];
+      return data;
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {

@@ -11,7 +11,7 @@ export function useWorkouts(page = 1, perPage = 10) {
       if (error || !data) {
         throw new Error("Failed to fetch workouts");
       }
-      return (data as any).workouts;
+      return data.workouts;
     },
   });
 }

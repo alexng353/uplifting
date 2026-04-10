@@ -39,7 +39,7 @@ export default function LoginScreen() {
         setErrorMessage("Invalid username or password");
         return;
       }
-      await login(data as string);
+      await login(data);
     } catch {
       setErrorMessage("Invalid username or password");
     } finally {
@@ -61,7 +61,7 @@ export default function LoginScreen() {
         setErrorMessage("Registration failed. Username may already be taken.");
         return;
       }
-      await login(data as string);
+      await login(data);
     } catch {
       setErrorMessage("Registration failed. Username may already be taken.");
     } finally {

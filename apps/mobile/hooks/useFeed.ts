@@ -13,7 +13,7 @@ export function useFeed() {
       if (error || !data) {
         throw new Error("Failed to fetch feed");
       }
-      return data as any[];
+      return data;
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {

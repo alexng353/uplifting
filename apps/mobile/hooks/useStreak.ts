@@ -11,7 +11,7 @@ export function useStreak() {
     queryFn: async () => {
       const { data, error } = await api.api.v1.workouts.streak.get();
       if (error || !data) return 0;
-      return (data as any).current_streak;
+      return data.current_streak;
     },
   });
 

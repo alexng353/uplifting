@@ -64,7 +64,7 @@ export function useExercises(search?: string) {
         throw new Error("Failed to fetch exercises");
       }
 
-      const exercises = data as Exercise[];
+      const exercises = data;
 
       // Cache all exercises to MMKV
       const toCache: StoredExercise[] = exercises.map((e) => ({

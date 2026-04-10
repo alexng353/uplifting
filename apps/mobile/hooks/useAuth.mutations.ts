@@ -8,7 +8,7 @@ export function useLoginMutation() {
       if (error || !data) {
         throw new Error("Failed to login");
       }
-      return data as string;
+      return data;
     },
   });
 }
@@ -25,7 +25,7 @@ export function useSignupMutation() {
       if (error || !data) {
         throw new Error("Failed to register");
       }
-      return data as string;
+      return data;
     },
   });
 }
