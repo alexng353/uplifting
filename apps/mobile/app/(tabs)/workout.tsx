@@ -176,22 +176,41 @@ export default function WorkoutScreen() {
   }, [workout, activeSlide, removeExercise]);
 
   const handleLogRestDay = useCallback(() => {
-    logRestDay();
-    forceSync();
+    const result = logRestDay();
+    if (result) forceSync();
   }, [logRestDay, forceSync]);
 
-  const handleCancelRestDay = useCallback(async () => {
-    const syncedWorkoutId = cancelRestDay();
-    if (syncedWorkoutId) {
-      try {
-        await (api.api.v1.workouts as any)[syncedWorkoutId].delete();
-      } catch {
-        // Best-effort — server reconciliation will clean up
-      }
-    }
-    queryClient.invalidateQueries({ queryKey: ["workouts"] });
-    queryClient.invalidateQueries({ queryKey: ["streak"] });
-    queryClient.invalidateQueries({ queryKey: ["all-time-stats"] });
+  const handleCancelRestDay = useCallback(() => {
+    Alert.alert(
+      "Cancel Rest Day",
+      "Are you sure you want to cancel your rest day?",
+      [
+        { text: "No", style: "cancel" },
+        {
+          text: "Cancel Rest Day",
+          style: "destructive",
+          onPress: async () => {
+            const syncedWorkoutId = cancelRestDay();
+            if (syncedWorkoutId) {
+              // Optimistically remove from query cache to prevent reconciliation re-adoption
+              queryClient.setQueryData(
+                ["workouts", 1, 20],
+                (old: any[] | undefined) =>
+                  old?.filter((w: any) => w.id !== syncedWorkoutId),
+              );
+              try {
+                await (api.api.v1.workouts as any)[syncedWorkoutId].delete();
+              } catch {
+                // Best-effort
+              }
+            }
+            queryClient.invalidateQueries({ queryKey: ["workouts"] });
+            queryClient.invalidateQueries({ queryKey: ["streak"] });
+            queryClient.invalidateQueries({ queryKey: ["all-time-stats"] });
+          },
+        },
+      ],
+    );
   }, [cancelRestDay, queryClient]);
 
   const isOnExerciseSlide = workout !== null && activeSlide < exerciseCount;

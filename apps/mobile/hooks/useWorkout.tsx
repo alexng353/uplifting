@@ -214,6 +214,21 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       };
       setTodayRestDay(updated);
       setTodayRestDayState(updated);
+    } else if (
+      local &&
+      serverRestDay &&
+      local.syncedWorkoutId &&
+      local.syncedWorkoutId !== serverRestDay.id
+    ) {
+      // Both exist with different IDs (e.g., re-created from another device) — server wins
+      const pointer: TodayRestDay = {
+        workoutId: serverRestDay.id,
+        date: today,
+        startTime: serverRestDay.startTime,
+        syncedWorkoutId: serverRestDay.id,
+      };
+      setTodayRestDay(pointer);
+      setTodayRestDayState(pointer);
     }
     // If local has rest day but server doesn't → still pending sync, keep local
     // If neither has rest day → nothing to do
