@@ -50,6 +50,7 @@ export const STORAGE_KEYS = {
   CURRENT_GYM: "current_gym",
   GYM_PROFILE_MAP: "gym_profile_map",
   EXERCISE_SEQUENCES: "exercise_sequences",
+  TODAY_REST_DAY: "today_rest_day",
 } as const;
 
 // Workout kind type
@@ -168,6 +169,13 @@ export interface ExerciseSequenceEntry {
 
 // Stored exercise sequences from recent workouts (most recent first, max 20)
 export type StoredExerciseSequences = ExerciseSequenceEntry[];
+
+export interface TodayRestDay {
+  workoutId: string;        // local StoredWorkout.id
+  date: string;             // YYYY-MM-DD for staleness check
+  startTime: string;        // ISO timestamp for multi-device dedup
+  syncedWorkoutId?: string; // server workout ID after sync
+}
 
 // Default settings
 export const DEFAULT_SETTINGS: StoredSettings = {
@@ -446,4 +454,25 @@ export function getLastProfileForExerciseAtGym(
   const map = getGymProfileMap();
   const key = `${exerciseId}_${gymId}`;
   return map[key] ?? null;
+}
+
+// --- Date helpers ---
+
+export function getLocalDateString(date?: Date | string): string {
+  const d = date ? (typeof date === "string" ? new Date(date) : date) : new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// --- Today rest day operations ---
+
+export function getTodayRestDay(): TodayRestDay | null {
+  return getJSON<TodayRestDay>(STORAGE_KEYS.TODAY_REST_DAY);
+}
+
+export function setTodayRestDay(data: TodayRestDay): void {
+  setJSON(STORAGE_KEYS.TODAY_REST_DAY, data);
+}
+
+export function clearTodayRestDay(): void {
+  deleteKey(STORAGE_KEYS.TODAY_REST_DAY);
 }
