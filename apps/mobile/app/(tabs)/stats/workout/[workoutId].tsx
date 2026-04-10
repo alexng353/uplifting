@@ -47,7 +47,7 @@ export default function WorkoutDetailScreen() {
       const { data } = await api.api.v1.exercises.get({
         query: { limit: "500" },
       });
-      return (data as any)?.exercises ?? [];
+      return (data as any) ?? [];
     },
   });
 
