@@ -94,7 +94,7 @@ export function useSync() {
         } else {
           // User cancelled while sync was in-flight — delete from server
           try {
-            await (api.api.v1.workouts as any)[response.workout_id].delete();
+            await api.api.v1.workouts({ workoutId: response.workout_id }).delete();
           } catch {
             // Best-effort cleanup
           }
@@ -102,16 +102,14 @@ export function useSync() {
       }
 
       if (response.previous_sets) {
-        for (const [key, sets] of Object.entries(
-          response.previous_sets as Record<string, any[]>,
-        )) {
+        for (const [key, sets] of Object.entries(response.previous_sets)) {
           const parts = key.split("_");
           const exerciseId = parts[0];
           const profileId = parts.slice(1).join("_");
           updatePreviousSets(
             exerciseId,
             profileId === "default" ? null : profileId,
-            (sets as any[]).map((s) => ({
+            sets.map((s) => ({
               id: generateId(),
               reps: s.reps,
               weight: Number(s.weight),

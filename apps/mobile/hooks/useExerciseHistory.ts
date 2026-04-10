@@ -9,8 +9,7 @@ export function useExerciseHistory(
   return useQuery({
     queryKey: ["exercise-history", exerciseId, months, profileId],
     queryFn: async () => {
-      const { data, error } = await (api.api.v1.exercises as any)[exerciseId]
-        .history.get({
+      const { data, error } = await api.api.v1.exercises({ exerciseId }).history.get({
           query: {
             months: months != null ? String(months) : undefined,
             profile_id: profileId ?? undefined,

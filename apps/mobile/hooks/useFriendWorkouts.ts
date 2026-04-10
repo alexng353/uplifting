@@ -6,9 +6,7 @@ export function useFriendWorkouts(friendId: string | null, enabled = true) {
     queryKey: ["friends", friendId, "workouts"],
     queryFn: async () => {
       if (!friendId) return null;
-      const { data, error } = await (api.api.v1.friends.workouts as any)[
-        friendId
-      ].get({
+      const { data, error } = await api.api.v1.friends.workouts({ friendId }).get({
         query: { limit: "20", offset: "0" },
       });
       if (error || !data) {

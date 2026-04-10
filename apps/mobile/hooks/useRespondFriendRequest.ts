@@ -12,9 +12,7 @@ export function useRespondFriendRequest() {
       friendshipId: string;
       action: "accept" | "decline" | "block";
     }) => {
-      const { data, error } = await (api.api.v1.friends.respond as any)[
-        friendshipId
-      ].put({ action });
+      const { data, error } = await api.api.v1.friends.respond({ friendshipId }).put({ action });
       if (error) {
         throw new Error("Failed to respond to friend request");
       }

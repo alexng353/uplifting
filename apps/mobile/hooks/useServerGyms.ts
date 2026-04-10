@@ -9,7 +9,7 @@ export function useServerGyms(enabled = true) {
       if (error || !data) {
         throw new Error("Failed to fetch gyms");
       }
-      return data as any[];
+      return data;
     },
     enabled,
   });
@@ -28,7 +28,7 @@ export function useCreateServerGym() {
       if (error || !data) {
         throw new Error("Failed to create gym");
       }
-      return data as any;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["gyms"] });
@@ -41,13 +41,13 @@ export function useUpdateServerGym() {
 
   return useMutation({
     mutationFn: async ({ gymId, name }: { gymId: string; name: string }) => {
-      const { data, error } = await (api.api.v1.gyms as any)[gymId].put({
+      const { data, error } = await api.api.v1.gyms({ gymId }).put({
         name,
       });
       if (error || !data) {
         throw new Error("Failed to update gym");
       }
-      return data as any;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["gyms"] });
@@ -60,7 +60,7 @@ export function useDeleteServerGym() {
 
   return useMutation({
     mutationFn: async (gymId: string) => {
-      const { error } = await (api.api.v1.gyms as any)[gymId].delete();
+      const { error } = await api.api.v1.gyms({ gymId }).delete();
       if (error) {
         throw new Error("Failed to delete gym");
       }
@@ -79,13 +79,11 @@ export function useServerGymProfileMappings(
     queryKey: ["gymProfileMappings", gymId],
     queryFn: async () => {
       if (!gymId) return [];
-      const { data, error } = await (api.api.v1.gyms as any)[gymId][
-        "profile-mappings"
-      ].get();
+      const { data, error } = await api.api.v1.gyms({ gymId })["profile-mappings"].get();
       if (error || !data) {
         throw new Error("Failed to fetch gym profile mappings");
       }
-      return data as any[];
+      return data;
     },
     enabled: enabled && !!gymId,
   });
@@ -104,16 +102,14 @@ export function useSetServerGymProfileMapping() {
       exerciseId: string;
       profileId: string;
     }) => {
-      const { data, error } = await (api.api.v1.gyms as any)[gymId][
-        "profile-mappings"
-      ].put({
+      const { data, error } = await api.api.v1.gyms({ gymId })["profile-mappings"].put({
         exercise_id: exerciseId,
         profile_id: profileId,
       });
       if (error || !data) {
         throw new Error("Failed to set gym profile mapping");
       }
-      return data as any;
+      return data;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({

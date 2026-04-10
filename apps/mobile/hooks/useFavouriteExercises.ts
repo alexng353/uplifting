@@ -9,7 +9,7 @@ export function useFavouriteExercises() {
       if (error || !data) {
         throw new Error("Failed to fetch favourite exercises");
       }
-      return new Set(data as string[]);
+      return new Set(data);
     },
   });
 }
@@ -26,12 +26,10 @@ export function useToggleFavourite() {
       isFavourite: boolean;
     }) => {
       if (isFavourite) {
-        const { error } = await (api.api.v1.exercises as any)[exerciseId]
-          .favourite.delete();
+        const { error } = await api.api.v1.exercises({ exerciseId }).favourite.delete();
         if (error) throw new Error("Failed to remove favourite");
       } else {
-        const { error } = await (api.api.v1.exercises as any)[exerciseId]
-          .favourite.post();
+        const { error } = await api.api.v1.exercises({ exerciseId }).favourite.post();
         if (error) throw new Error("Failed to add favourite");
       }
       return { exerciseId, newState: !isFavourite };

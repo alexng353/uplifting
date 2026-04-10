@@ -9,7 +9,7 @@ export function useAllExerciseProfiles() {
       if (error || !data) {
         throw new Error("Failed to fetch exercise profiles");
       }
-      const profiles = data as any[];
+      const profiles = data;
       // Group by exerciseId for easier lookup
       const grouped = new Map<string, typeof profiles>();
       for (const profile of profiles) {
@@ -27,12 +27,11 @@ export function useExerciseProfiles(exerciseId: string) {
   return useQuery({
     queryKey: ["exerciseProfiles", exerciseId],
     queryFn: async () => {
-      const { data, error } = await (api.api.v1.exercises as any)[exerciseId]
-        .profiles.get();
+      const { data, error } = await api.api.v1.exercises({ exerciseId }).profiles.get();
       if (error || !data) {
         throw new Error("Failed to fetch exercise profiles");
       }
-      return data as any[];
+      return data;
     },
     enabled: !!exerciseId,
   });
@@ -43,8 +42,7 @@ export function useCreateExerciseProfile(exerciseId: string) {
 
   return useMutation({
     mutationFn: async (name: string) => {
-      const { data, error } = await (api.api.v1.exercises as any)[exerciseId]
-        .profiles.post({ name });
+      const { data, error } = await api.api.v1.exercises({ exerciseId }).profiles.post({ name });
       if (error || !data) {
         throw new Error("Failed to create exercise profile");
       }
@@ -71,8 +69,7 @@ export function useRenameExerciseProfile() {
       profileId: string;
       name: string;
     }) => {
-      const { data, error } = await (api.api.v1.exercises as any)[exerciseId]
-        .profiles[profileId].put({ name });
+      const { data, error } = await api.api.v1.exercises({ exerciseId }).profiles({ profileId }).put({ name });
       if (error || !data) {
         throw new Error("Failed to rename exercise profile");
       }
