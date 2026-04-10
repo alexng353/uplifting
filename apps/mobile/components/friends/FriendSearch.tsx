@@ -94,13 +94,13 @@ export default function FriendSearch({ visible, onClose }: FriendSearchProps) {
             <ActivityIndicator size="small" />
             <Text className="mt-2 text-sm text-zinc-400 dark:text-zinc-500">Searching...</Text>
           </View>
-        ) : (results as any[]).length === 0 && searchText.trim().length > 0 ? (
+        ) : (results ?? []).length === 0 && searchText.trim().length > 0 ? (
           <View className="flex-1 items-center pt-8">
             <Text className="text-base text-zinc-400 dark:text-zinc-500">No users found</Text>
           </View>
         ) : (
           <FlatList
-            data={results as any[]}
+            data={results ?? []}
             keyExtractor={(item) => item.id}
             keyboardShouldPersistTaps="handled"
             contentContainerClassName="px-4"

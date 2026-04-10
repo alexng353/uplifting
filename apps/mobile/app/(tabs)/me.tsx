@@ -52,12 +52,12 @@ export default function MeScreen() {
     startOfWeek.setDate(now.getDate() - dayOfWeek);
     startOfWeek.setHours(0, 0, 0, 0);
 
-    const weekWorkouts = workouts.filter((w: any) => {
+    const weekWorkouts = workouts.filter((w) => {
       const d = new Date(w.startTime);
       return d >= startOfWeek && w.kind === "workout";
     });
 
-    const weekRests = workouts.filter((w: any) => {
+    const weekRests = workouts.filter((w) => {
       const d = new Date(w.startTime);
       return d >= startOfWeek && w.kind === "rest";
     });
@@ -71,7 +71,7 @@ export default function MeScreen() {
     }
 
     return {
-      workouts: weekWorkouts as any[],
+      workouts: weekWorkouts,
       restDays: weekRests.length,
       totalMinutes,
     };
@@ -88,8 +88,8 @@ export default function MeScreen() {
     startOfWeek.setHours(0, 0, 0, 0);
 
     return workouts
-      .filter((w: any) => new Date(w.startTime) >= startOfWeek)
-      .map((w: any) => ({
+      .filter((w) => new Date(w.startTime) >= startOfWeek)
+      .map((w) => ({
         date: w.startTime,
         kind: w.kind === "rest" ? ("rest" as const) : ("workout" as const),
       }));
@@ -114,7 +114,7 @@ export default function MeScreen() {
   // Avatar initials from user name
   const initials = useMemo(() => {
     if (!me) return "?";
-    const name = (me as any).real_name || (me as any).username || "";
+    const name = me.real_name || me.username || "";
     return name
       .split(" ")
       .map((n: string) => n[0])
@@ -124,7 +124,7 @@ export default function MeScreen() {
   }, [me]);
 
   const displayName =
-    (me as any)?.real_name || (me as any)?.username || "User";
+    me?.real_name || me?.username || "User";
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900" edges={["top"]}>
@@ -156,9 +156,9 @@ export default function MeScreen() {
             </View>
             <View>
               <Text className="text-xl font-semibold dark:text-zinc-100">{displayName}</Text>
-              {(me as any)?.username && (me as any)?.real_name && (
+              {me?.username && me?.real_name && (
                 <Text className="text-sm text-zinc-500 dark:text-zinc-400">
-                  @{(me as any).username}
+                  @{me.username}
                 </Text>
               )}
             </View>
@@ -225,7 +225,7 @@ export default function MeScreen() {
 
                 {/* Workout list */}
                 <View className="mt-1 border-t border-zinc-100 dark:border-zinc-800 pt-2">
-                  {weekStats.workouts.map((w: any) => (
+                  {weekStats.workouts.map((w) => (
                     <Pressable
                       key={w.id}
                       className="flex-row items-center justify-between border-b border-zinc-50 dark:border-zinc-800 py-3 active:bg-zinc-50 dark:active:bg-zinc-800"
@@ -265,7 +265,7 @@ export default function MeScreen() {
               <Text className="mb-3 text-lg font-semibold dark:text-zinc-100">
                 Recent Workouts
               </Text>
-              {workouts.slice(0, 5).map((w: any) => (
+              {workouts.slice(0, 5).map((w) => (
                 <Pressable
                   key={w.id}
                   className="flex-row items-center justify-between border-b border-zinc-50 dark:border-zinc-800 py-3 active:bg-zinc-50 dark:active:bg-zinc-800"

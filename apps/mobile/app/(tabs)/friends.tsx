@@ -49,8 +49,8 @@ export default function FriendsScreen() {
   const colors = useThemeColors();
 
   const feed = feedData?.pages.flat() ?? [];
-  const pendingCount = (pendingRequests as any[]).length;
-  const friendsCount = (friendsData as any[] | undefined)?.length ?? 0;
+  const pendingCount = pendingRequests.length;
+  const friendsCount = friendsData?.length ?? 0;
 
   const [refreshing, setRefreshing] = useState(false);
 

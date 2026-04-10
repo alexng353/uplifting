@@ -53,7 +53,7 @@ export default function PendingRequests() {
     );
   }
 
-  if ((requests as any[]).length === 0) {
+  if (requests.length === 0) {
     return (
       <View className="flex-1 items-center justify-center px-8">
         <Ionicons name="mail-open-outline" size={48} color={colors.mutedIcon} />
@@ -69,7 +69,7 @@ export default function PendingRequests() {
 
   return (
     <FlatList
-      data={requests as any[]}
+      data={requests}
       keyExtractor={(item) => item.friendship_id}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />

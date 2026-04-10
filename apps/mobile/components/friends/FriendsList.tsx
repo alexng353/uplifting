@@ -37,12 +37,12 @@ export default function FriendsList() {
   const [refreshing, setRefreshing] = useState(false);
   const colors = useThemeColors();
 
-  const selectedFriend = (friends as any[]).find(
+  const selectedFriend = friends.find(
     (f) => f.user_id === selectedFriendId,
   );
 
   const sortedFriends = useMemo(() => {
-    return [...(friends as any[])].sort((a, b) => {
+    return [...friends].sort((a, b) => {
       if (a.is_in_workout && !b.is_in_workout) return -1;
       if (!a.is_in_workout && b.is_in_workout) return 1;
       if (a.is_online && !b.is_online) return -1;
@@ -65,7 +65,7 @@ export default function FriendsList() {
     );
   }
 
-  if ((friends as any[]).length === 0) {
+  if (friends.length === 0) {
     return (
       <View className="flex-1 items-center justify-center px-8">
         <Ionicons name="people-outline" size={48} color={colors.mutedIcon} />

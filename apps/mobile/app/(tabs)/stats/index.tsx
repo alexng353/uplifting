@@ -79,13 +79,13 @@ function ThisWeekTab({
     startOfWeek.setDate(now.getDate() - dayOfWeek);
     startOfWeek.setHours(0, 0, 0, 0);
 
-    const thisWeek = (workouts ?? []).filter((w: any) => {
+    const thisWeek = (workouts ?? []).filter((w) => {
       const d = new Date(w.startTime ?? w.start_time);
       return d >= startOfWeek;
     });
 
     const actualWorkouts = thisWeek.filter(
-      (w: any) => (w.kind ?? "workout") === "workout",
+      (w) => (w.kind ?? "workout") === "workout",
     );
 
     let totalMinutes = 0;
@@ -168,7 +168,7 @@ function ThisWeekTab({
           </Text>
         </View>
       ) : (
-        workouts.map((w: any) => {
+        workouts.map((w) => {
           const isRest = (w.kind ?? "workout") === "rest";
           return (
             <Pressable
@@ -253,8 +253,6 @@ function AllTimeTab({
     );
   }
 
-  const stats = allTimeStats as any;
-
   return (
     <ScrollView
       className="flex-1"
@@ -267,25 +265,25 @@ function AllTimeTab({
       <View className="mx-4 mt-4 flex-row flex-wrap">
         <StatCard
           label="Workouts"
-          value={String(stats.total_workouts)}
+          value={String(allTimeStats.total_workouts)}
           icon="barbell-outline"
           color="#3b82f6"
         />
         <StatCard
           label={`Volume (${unit})`}
-          value={formatVolume(stats.total_volume)}
+          value={formatVolume(allTimeStats.total_volume)}
           icon="trending-up-outline"
           color="#22c55e"
         />
         <StatCard
           label="Hours"
-          value={String(Math.round(stats.total_time_minutes / 60))}
+          value={String(Math.round(allTimeStats.total_time_minutes / 60))}
           icon="time-outline"
           color="#f97316"
         />
         <StatCard
           label="Sets"
-          value={formatVolume(stats.total_sets)}
+          value={formatVolume(allTimeStats.total_sets)}
           icon="layers-outline"
           color="#8b5cf6"
         />
@@ -297,19 +295,19 @@ function AllTimeTab({
         />
         <StatCard
           label="Best Streak"
-          value={String(stats.best_streak)}
+          value={String(allTimeStats.best_streak)}
           icon="trophy-outline"
           color="#eab308"
         />
       </View>
 
       {/* Top exercises */}
-      {stats.top_exercises?.length > 0 && (
+      {allTimeStats.top_exercises?.length > 0 && (
         <>
           <Text className="mx-4 mt-6 mb-2 text-base font-semibold text-zinc-700 dark:text-zinc-200">
             Top 10 Exercises
           </Text>
-          {stats.top_exercises.map((ex: any, i: number) => (
+          {allTimeStats.top_exercises.map((ex: any, i: number) => (
             <View
               key={ex.id}
               className="mx-4 mb-2 flex-row items-center rounded-xl bg-white dark:bg-zinc-900 px-4 py-3"
@@ -339,12 +337,12 @@ function AllTimeTab({
       )}
 
       {/* Muscle group volume */}
-      {stats.muscle_group_volume?.length > 0 && (
+      {allTimeStats.muscle_group_volume?.length > 0 && (
         <>
           <Text className="mx-4 mt-6 mb-2 text-base font-semibold text-zinc-700 dark:text-zinc-200">
             Muscle Group Volume
           </Text>
-          {stats.muscle_group_volume.map((mg: any) => (
+          {allTimeStats.muscle_group_volume.map((mg: any) => (
             <View
               key={mg.group}
               className="mx-4 mb-2 rounded-xl bg-white dark:bg-zinc-900 px-4 py-3"
@@ -478,14 +476,14 @@ function ExercisesTab({
   return (
     <FlatList
       data={usedExercises}
-      keyExtractor={(item: any) => item.id}
+      keyExtractor={(item) => item.id}
       onEndReached={handleEndReached}
       onEndReachedThreshold={0.5}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
       }
       contentContainerClassName="pt-2 pb-24"
-      renderItem={({ item, index }: { item: any; index: number }) => (
+      renderItem={({ item, index }) => (
         <Pressable
           onPress={() =>
             router.push(`/(tabs)/stats/exercise/${item.id}` as any)

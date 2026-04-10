@@ -45,18 +45,16 @@ export default function ExerciseHistoryScreen() {
   const { data: exercise } = useQuery({
     queryKey: ["exercise", exerciseId],
     queryFn: async () => {
-      const { data, error } = await (api.api.v1.exercises as any)[
-        exerciseId!
-      ].get();
+      const { data, error } = await api.api.v1.exercises({ exerciseId: exerciseId! }).get();
       if (error || !data) return null;
       return data;
     },
     enabled: !!exerciseId,
   });
 
-  const exerciseName = (exercise as any)?.name ?? "Exercise";
+  const exerciseName = exercise?.name ?? "Exercise";
 
-  const historyData = (history as any)?.history ?? [];
+  const historyData = history?.history ?? [];
 
   // Sort history descending by date (most recent first)
   const sortedHistory = useMemo(() => {

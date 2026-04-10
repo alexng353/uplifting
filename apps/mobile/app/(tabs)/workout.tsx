@@ -199,7 +199,7 @@ export default function WorkoutScreen() {
                   old?.filter((w: any) => w.id !== syncedWorkoutId),
               );
               try {
-                await (api.api.v1.workouts as any)[syncedWorkoutId].delete();
+                await api.api.v1.workouts({ workoutId: syncedWorkoutId }).delete();
               } catch {
                 // Best-effort
               }

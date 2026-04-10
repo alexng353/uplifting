@@ -31,9 +31,7 @@ export default function WorkoutDetailScreen() {
   } = useQuery({
     queryKey: ["workout", workoutId],
     queryFn: async () => {
-      const { data, error } = await (api.api.v1.workouts as any)[
-        workoutId!
-      ].get();
+      const { data, error } = await api.api.v1.workouts({ workoutId: workoutId! }).get();
       if (error || !data) throw new Error("Failed to fetch workout");
       return data;
     },
@@ -47,16 +45,15 @@ export default function WorkoutDetailScreen() {
       const { data } = await api.api.v1.exercises.get({
         query: { limit: "500" },
       });
-      return (data as any) ?? [];
+      return data ?? [];
     },
   });
 
   const exerciseMap = useMemo(() => {
-    return new Map((exercises as any[]).map((e: any) => [e.id, e]));
+    return new Map(exercises.map((e) => [e.id, e]));
   }, [exercises]);
 
-  const w = workout as any;
-  const exerciseGroups: any[] = w?.exercises ?? [];
+  const exerciseGroups: any[] = workout?.exercises ?? [];
 
   const formatDate = (date: string): string => {
     return new Date(date).toLocaleDateString("en-US", {
@@ -75,8 +72,8 @@ export default function WorkoutDetailScreen() {
   };
 
   const getDuration = (): number => {
-    const start = w?.start_time ?? w?.startTime;
-    const end = w?.end_time ?? w?.endTime;
+    const start = workout?.start_time ?? workout?.startTime;
+    const end = workout?.end_time ?? workout?.endTime;
     if (!start || !end) return 0;
     return Math.round(
       (new Date(end).getTime() - new Date(start).getTime()) / 60000,
@@ -183,8 +180,8 @@ export default function WorkoutDetailScreen() {
     );
   }
 
-  const startTime = w.start_time ?? w.startTime;
-  const endTime = w.end_time ?? w.endTime;
+  const startTime = workout.start_time ?? workout.startTime;
+  const endTime = workout.end_time ?? workout.endTime;
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900">
@@ -194,7 +191,7 @@ export default function WorkoutDetailScreen() {
           <Ionicons name="chevron-back" size={24} color="#3b82f6" />
         </Pressable>
         <Text className="flex-1 text-xl font-bold dark:text-zinc-100" numberOfLines={1}>
-          {w.name || "Workout"}
+          {workout.name || "Workout"}
         </Text>
       </View>
 
@@ -208,9 +205,9 @@ export default function WorkoutDetailScreen() {
             {formatTime(startTime)}
             {endTime && ` – ${formatTime(endTime)}`}
           </Text>
-          {w.gym_location ?? w.gymLocation ? (
+          {workout.gym_location ?? workout.gymLocation ? (
             <Text className="mt-0.5 text-sm text-zinc-400 dark:text-zinc-500">
-              {w.gym_location ?? w.gymLocation}
+              {workout.gym_location ?? workout.gymLocation}
             </Text>
           ) : null}
         </View>

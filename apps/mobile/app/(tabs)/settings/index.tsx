@@ -176,7 +176,7 @@ export default function SettingsScreen() {
   );
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  const me = user as any;
+  const me = user;
   const profileCount = allProfiles
     ? Array.from(allProfiles.values()).reduce(
         (sum, profiles) => sum + profiles.length,

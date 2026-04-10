@@ -126,7 +126,7 @@ export default function FriendProfile({
           ) : data ? (
             <>
               {/* This Week Summary */}
-              {(data as any).week_stats?.workout_count > 0 && (
+              {data.week_stats?.workout_count > 0 && (
                 <View className="mx-4 mb-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4">
                   <View className="mb-3 flex-row items-center gap-1">
                     <Ionicons name="flame" size={16} color={colors.warningIcon} />
@@ -135,7 +135,7 @@ export default function FriendProfile({
                   <View className="flex-row justify-center gap-8">
                     <View className="items-center">
                       <Text className="text-2xl font-bold dark:text-zinc-100">
-                        {(data as any).week_stats.workout_count}
+                        {data.week_stats.workout_count}
                       </Text>
                       <Text className="text-xs uppercase text-zinc-400 dark:text-zinc-500">
                         Workouts
@@ -143,7 +143,7 @@ export default function FriendProfile({
                     </View>
                     <View className="items-center">
                       <Text className="text-2xl font-bold dark:text-zinc-100">
-                        {formatVolume((data as any).week_stats.total_volume)}
+                        {formatVolume(data.week_stats.total_volume)}
                       </Text>
                       <Text className="text-xs uppercase text-zinc-400 dark:text-zinc-500">
                         Volume ({unit})
@@ -151,7 +151,7 @@ export default function FriendProfile({
                     </View>
                     <View className="items-center">
                       <Text className="text-2xl font-bold dark:text-zinc-100">
-                        {formatDuration((data as any).week_stats.total_duration_minutes)}
+                        {formatDuration(data.week_stats.total_duration_minutes)}
                       </Text>
                       <Text className="text-xs uppercase text-zinc-400 dark:text-zinc-500">
                         Time
@@ -166,12 +166,12 @@ export default function FriendProfile({
                 <Text className="mb-3 text-lg font-semibold dark:text-zinc-100">
                   Recent Workouts
                 </Text>
-                {(data as any).workouts.length === 0 ? (
+                {data.workouts.length === 0 ? (
                   <Text className="text-center text-base text-zinc-400 dark:text-zinc-500">
                     No workouts yet
                   </Text>
                 ) : (
-                  (data as any).workouts.map(
+                  data.workouts.map(
                     (workout: {
                       id: string;
                       name: string | null;
