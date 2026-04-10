@@ -1,16 +1,20 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, Pressable, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import PagerView from "react-native-pager-view";
 import { Ionicons } from "@expo/vector-icons";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useWorkout } from "../../hooks/useWorkout";
+import { useWorkouts } from "../../hooks/useWorkouts";
 import { useSync } from "../../hooks/useSync";
 import { useThemeColors } from "../../hooks/useThemeColors";
 import {
+  getLocalDateString,
   getWorkoutLastSlide,
   setWorkoutLastSlide,
 } from "../../services/storage";
+import { api } from "../../lib/api";
 import ExerciseSlide from "../../components/workout/ExerciseSlide";
 import AddExerciseSlide from "../../components/workout/AddExerciseSlide";
 import WorkoutSummary from "../../components/workout/WorkoutSummary";
@@ -32,14 +36,27 @@ export default function WorkoutScreen() {
   const {
     workout,
     isActive,
+    todayRestDay,
     startWorkout,
     logRestDay,
+    cancelRestDay,
+    reconcileRestDay,
     removeExercise,
     finishWorkout,
     cancelWorkout,
   } = useWorkout();
   const { forceSync } = useSync();
   const colors = useThemeColors();
+  const queryClient = useQueryClient();
+  const { data: serverWorkouts } = useWorkouts(1, 20);
+
+  const todayHasWorkouts = useMemo(() => {
+    if (!serverWorkouts) return false;
+    const today = getLocalDateString();
+    return serverWorkouts.some(
+      (w: any) => getLocalDateString(w.startTime) === today && w.kind === "workout",
+    );
+  }, [serverWorkouts]);
 
   const pagerRef = useRef<PagerView>(null);
   const [activeSlide, setActiveSlide] = useState(0);
@@ -80,6 +97,13 @@ export default function WorkoutScreen() {
       setActiveSlide(maxIndex);
     }
   }, [workoutId, exerciseCount, activeSlide]);
+
+  // Reconcile local rest day state with server data
+  useEffect(() => {
+    if (serverWorkouts) {
+      reconcileRestDay(serverWorkouts);
+    }
+  }, [serverWorkouts, reconcileRestDay]);
 
   const handlePageSelected = useCallback(
     (e: { nativeEvent: { position: number } }) => {
@@ -155,7 +179,50 @@ export default function WorkoutScreen() {
     forceSync();
   }, [logRestDay, forceSync]);
 
+  const handleCancelRestDay = useCallback(async () => {
+    const syncedWorkoutId = cancelRestDay();
+    if (syncedWorkoutId) {
+      try {
+        await (api.api.v1.workouts as any)[syncedWorkoutId].delete();
+      } catch {
+        // Best-effort — server reconciliation will clean up
+      }
+    }
+    queryClient.invalidateQueries({ queryKey: ["workouts"] });
+    queryClient.invalidateQueries({ queryKey: ["streak"] });
+    queryClient.invalidateQueries({ queryKey: ["all-time-stats"] });
+  }, [cancelRestDay, queryClient]);
+
   const isOnExerciseSlide = workout !== null && activeSlide < exerciseCount;
+
+  // --- Rest day state ---
+  if (!isActive && todayRestDay) {
+    return (
+      <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900" edges={["top"]}>
+        <View className="px-4 pb-2 pt-4">
+          <Text className="text-3xl font-bold dark:text-zinc-100">Rest Day</Text>
+        </View>
+        <View className="flex-1 items-center justify-center px-6">
+          <Ionicons name="bed-outline" size={64} color={colors.secondaryText} />
+          <Text className="mt-4 mb-2 text-xl font-semibold dark:text-zinc-100">
+            You're resting today
+          </Text>
+          <Text className="mb-6 text-center text-base text-zinc-500 dark:text-zinc-400">
+            Recovery is part of the process.
+          </Text>
+          <Pressable
+            onPress={handleCancelRestDay}
+            className="w-full flex-row items-center justify-center gap-2 rounded-lg border border-red-300 dark:border-red-800 py-3.5 active:bg-red-50 dark:active:bg-red-950"
+          >
+            <Ionicons name="close-circle-outline" size={18} color={colors.dangerIcon} />
+            <Text className="text-base font-semibold text-red-500 dark:text-red-400">
+              Cancel Rest Day
+            </Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   // --- Idle state (no active workout) ---
   if (!isActive) {
@@ -177,15 +244,17 @@ export default function WorkoutScreen() {
               Start Workout
             </Text>
           </Pressable>
-          <Pressable
-            onPress={handleLogRestDay}
-            className="w-full flex-row items-center justify-center gap-2 rounded-lg border border-zinc-300 dark:border-zinc-600 py-3.5 active:bg-zinc-50 dark:active:bg-zinc-800"
-          >
-            <Ionicons name="bed-outline" size={18} color={colors.secondaryText} />
-            <Text className="text-base font-semibold text-zinc-600 dark:text-zinc-300">
-              Log Rest Day
-            </Text>
-          </Pressable>
+          {!todayHasWorkouts && (
+            <Pressable
+              onPress={handleLogRestDay}
+              className="w-full flex-row items-center justify-center gap-2 rounded-lg border border-zinc-300 dark:border-zinc-600 py-3.5 active:bg-zinc-50 dark:active:bg-zinc-800"
+            >
+              <Ionicons name="bed-outline" size={18} color={colors.secondaryText} />
+              <Text className="text-base font-semibold text-zinc-600 dark:text-zinc-300">
+                Log Rest Day
+              </Text>
+            </Pressable>
+          )}
         </View>
       </SafeAreaView>
     );
