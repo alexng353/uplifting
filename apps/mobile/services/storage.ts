@@ -171,9 +171,9 @@ export interface ExerciseSequenceEntry {
 export type StoredExerciseSequences = ExerciseSequenceEntry[];
 
 export interface TodayRestDay {
-  workoutId: string;        // local StoredWorkout.id
-  date: string;             // YYYY-MM-DD for staleness check
-  startTime: string;        // ISO timestamp for multi-device dedup
+  workoutId: string; // local StoredWorkout.id
+  date: string; // YYYY-MM-DD for staleness check
+  startTime: string; // ISO timestamp for multi-device dedup
   syncedWorkoutId?: string; // server workout ID after sync
 }
 
@@ -245,7 +245,10 @@ export function clearWorkoutLastSlide(): void {
 }
 
 export function getSettings(): StoredSettings {
-  return { ...DEFAULT_SETTINGS, ...getJSON<StoredSettings>(STORAGE_KEYS.SETTINGS) };
+  return {
+    ...DEFAULT_SETTINGS,
+    ...getJSON<StoredSettings>(STORAGE_KEYS.SETTINGS),
+  };
 }
 
 export function setSettings(settings: StoredSettings): void {
@@ -433,10 +436,7 @@ export function getExerciseSequences(): StoredExerciseSequences {
   return raw as StoredExerciseSequences;
 }
 
-export function addExerciseSequence(
-  sequence: string[],
-  title?: string,
-): void {
+export function addExerciseSequence(sequence: string[], title?: string): void {
   if (sequence.length === 0) return;
   const sequences = getExerciseSequences();
   sequences.unshift({ exerciseIds: sequence, title });
@@ -459,7 +459,11 @@ export function getLastProfileForExerciseAtGym(
 // --- Date helpers ---
 
 export function getLocalDateString(date?: Date | string): string {
-  const d = date ? (typeof date === "string" ? new Date(date) : date) : new Date();
+  const d = date
+    ? typeof date === "string"
+      ? new Date(date)
+      : date
+    : new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 

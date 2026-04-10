@@ -54,7 +54,8 @@ export default function WorkoutScreen() {
     if (!serverWorkouts) return false;
     const today = getLocalDateString();
     return serverWorkouts.some(
-      (w: any) => getLocalDateString(w.startTime) === today && w.kind === "workout",
+      (w: any) =>
+        getLocalDateString(w.startTime) === today && w.kind === "workout",
     );
   }, [serverWorkouts]);
 
@@ -198,9 +199,14 @@ export default function WorkoutScreen() {
   // --- Rest day state ---
   if (!isActive && todayRestDay) {
     return (
-      <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900" edges={["top"]}>
+      <SafeAreaView
+        className="flex-1 bg-white dark:bg-zinc-900"
+        edges={["top"]}
+      >
         <View className="px-4 pb-2 pt-4">
-          <Text className="text-3xl font-bold dark:text-zinc-100">Rest Day</Text>
+          <Text className="text-3xl font-bold dark:text-zinc-100">
+            Rest Day
+          </Text>
         </View>
         <View className="flex-1 items-center justify-center px-6">
           <Ionicons name="bed-outline" size={64} color={colors.secondaryText} />
@@ -214,7 +220,11 @@ export default function WorkoutScreen() {
             onPress={handleCancelRestDay}
             className="w-full flex-row items-center justify-center gap-2 rounded-lg border border-red-300 dark:border-red-800 py-3.5 active:bg-red-50 dark:active:bg-red-950"
           >
-            <Ionicons name="close-circle-outline" size={18} color={colors.dangerIcon} />
+            <Ionicons
+              name="close-circle-outline"
+              size={18}
+              color={colors.dangerIcon}
+            />
             <Text className="text-base font-semibold text-red-500 dark:text-red-400">
               Cancel Rest Day
             </Text>
@@ -227,12 +237,17 @@ export default function WorkoutScreen() {
   // --- Idle state (no active workout) ---
   if (!isActive) {
     return (
-      <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900" edges={["top"]}>
+      <SafeAreaView
+        className="flex-1 bg-white dark:bg-zinc-900"
+        edges={["top"]}
+      >
         <View className="px-4 pb-2 pt-4">
           <Text className="text-3xl font-bold dark:text-zinc-100">Workout</Text>
         </View>
         <View className="flex-1 items-center justify-center px-6">
-          <Text className="mb-2 text-xl font-semibold dark:text-zinc-100">Ready to train?</Text>
+          <Text className="mb-2 text-xl font-semibold dark:text-zinc-100">
+            Ready to train?
+          </Text>
           <Text className="mb-6 text-center text-base text-zinc-500 dark:text-zinc-400">
             Start a new workout session to begin logging your exercises.
           </Text>
@@ -249,7 +264,11 @@ export default function WorkoutScreen() {
               onPress={handleLogRestDay}
               className="w-full flex-row items-center justify-center gap-2 rounded-lg border border-zinc-300 dark:border-zinc-600 py-3.5 active:bg-zinc-50 dark:active:bg-zinc-800"
             >
-              <Ionicons name="bed-outline" size={18} color={colors.secondaryText} />
+              <Ionicons
+                name="bed-outline"
+                size={18}
+                color={colors.secondaryText}
+              />
               <Text className="text-base font-semibold text-zinc-600 dark:text-zinc-300">
                 Log Rest Day
               </Text>
@@ -274,7 +293,11 @@ export default function WorkoutScreen() {
             onPress={() => setShowReorder(true)}
             className="h-9 w-9 items-center justify-center rounded-md active:bg-zinc-100 dark:active:bg-zinc-800"
           >
-            <Ionicons name="reorder-four" size={22} color={colors.secondaryText} />
+            <Ionicons
+              name="reorder-four"
+              size={22}
+              color={colors.secondaryText}
+            />
           </Pressable>
           {/* Remove current exercise button */}
           {isOnExerciseSlide && (
@@ -282,7 +305,11 @@ export default function WorkoutScreen() {
               onPress={handleRemoveCurrentExercise}
               className="h-9 w-9 items-center justify-center rounded-md active:bg-red-50 dark:active:bg-red-950"
             >
-              <Ionicons name="trash-outline" size={20} color={colors.dangerIcon} />
+              <Ionicons
+                name="trash-outline"
+                size={20}
+                color={colors.dangerIcon}
+              />
             </Pressable>
           )}
         </View>
@@ -318,7 +345,10 @@ export default function WorkoutScreen() {
             className="h-1.5 rounded-full"
             style={{
               width: i === activeSlide ? 16 : 6,
-              backgroundColor: i === activeSlide ? colors.activeIndicator : colors.inactiveIndicator,
+              backgroundColor:
+                i === activeSlide
+                  ? colors.activeIndicator
+                  : colors.inactiveIndicator,
             }}
           />
         ))}
@@ -327,7 +357,9 @@ export default function WorkoutScreen() {
           style={{
             width: activeSlide === exerciseCount ? 16 : 6,
             backgroundColor:
-              activeSlide === exerciseCount ? colors.activeIndicator : colors.inactiveIndicator,
+              activeSlide === exerciseCount
+                ? colors.activeIndicator
+                : colors.inactiveIndicator,
           }}
         />
       </View>

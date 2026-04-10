@@ -112,7 +112,10 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
       // Fetch updated previous_sets for exercises in this workout
       const exerciseIds = body.exercises.map((e) => e.exercise_id);
 
-      const previousSetsRows = exerciseIds.length === 0 ? [] : await sql`
+      const previousSetsRows =
+        exerciseIds.length === 0
+          ? []
+          : await sql`
         WITH ranked_sets AS (
             SELECT s.exercise_id, s.profile_id, s.reps, s.weight, s.weight_unit, s.side, s.created_at,
                 DENSE_RANK() OVER (

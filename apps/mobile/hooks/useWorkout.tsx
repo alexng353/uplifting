@@ -79,7 +79,8 @@ const WorkoutContext = createContext<WorkoutContextValue | null>(null);
 export function WorkoutProvider({ children }: { children: ReactNode }) {
   const [workout, setWorkout] = useState<StoredWorkout | null>(null);
   const [hasPendingWorkout, setHasPendingWorkout] = useState(false);
-  const [todayRestDayState, setTodayRestDayState] = useState<TodayRestDay | null>(null);
+  const [todayRestDayState, setTodayRestDayState] =
+    useState<TodayRestDay | null>(null);
 
   // Load current workout on mount (MMKV is synchronous)
   useEffect(() => {
@@ -97,8 +98,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       if (minutesDiff > settings.maxWorkoutDurationMinutes) {
         // Auto-cap the workout
         const cappedEndTime = new Date(
-          startTime.getTime() +
-            settings.maxWorkoutDurationMinutes * 60 * 1000,
+          startTime.getTime() + settings.maxWorkoutDurationMinutes * 60 * 1000,
         );
         const cappedWorkout = {
           ...current,
