@@ -25,11 +25,8 @@ export async function fetchBootstrapData(): Promise<BootstrapData> {
     throw new Error("Failed to fetch bootstrap data");
   }
 
-  // Cast to any to work around Eden Treaty union type narrowing
-  const d = data as any;
-
   // Transform server data to local storage format
-  const gyms: StoredGym[] = (d.gyms as any[]).map((gym: any) => ({
+  const gyms: StoredGym[] = data.gyms.map((gym) => ({
     id: gym.id,
     name: gym.name,
     latitude: gym.latitude ?? null,
@@ -37,7 +34,7 @@ export async function fetchBootstrapData(): Promise<BootstrapData> {
     createdAt: gym.created_at ?? gym.createdAt ?? new Date().toISOString(),
   }));
 
-  const profiles: StoredProfile[] = (d.profiles as any[]).map(
+  const profiles: StoredProfile[] = data.profiles.map(
     (profile) => ({
       id: profile.id,
       exerciseId: profile.exercise_id ?? profile.exerciseId,
@@ -47,7 +44,7 @@ export async function fetchBootstrapData(): Promise<BootstrapData> {
 
   // Transform gym profile mappings to local format
   const gymProfileMappings: GymProfileMapping = {};
-  for (const mapping of d.gym_profile_mappings as any[]) {
+  for (const mapping of data.gym_profile_mappings) {
     const key = `${mapping.exercise_id ?? mapping.exerciseId}_${mapping.gym_id ?? mapping.gymId}`;
     gymProfileMappings[key] = mapping.profile_id ?? mapping.profileId;
   }
@@ -55,7 +52,7 @@ export async function fetchBootstrapData(): Promise<BootstrapData> {
   // Transform previous sets to local format
   const previousSets: StoredPreviousSets = {};
   for (const [key, sets] of Object.entries(
-    d.previous_sets as Record<string, any[]>,
+    data.previous_sets,
   )) {
     previousSets[key] = sets.map(
       (set, index): StoredSet => ({
