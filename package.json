@@ -4,6 +4,7 @@
   "workspaces": ["apps/*"],
   "scripts": {
     "api": "bun --filter api",
-    "mobile": "bun --filter mobile"
+    "mobile": "bun --filter mobile",
+    "release:ios": "bash apps/mobile/scripts/release-ios.sh"
   }
 }

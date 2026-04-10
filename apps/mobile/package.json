@@ -6,7 +6,8 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "release:ios": "bash scripts/release-ios.sh"
   },
   "dependencies": {
     "@elysiajs/eden": "^1.4.9",
