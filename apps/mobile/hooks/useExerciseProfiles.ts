@@ -1,19 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "../lib/api";
+import { api, unwrap } from "../lib/api";
 
 export function useAllExerciseProfiles() {
   return useQuery({
     queryKey: ["exerciseProfiles"],
     queryFn: async () => {
-      const { data, error } = await api.api.v1.exercises.profiles.get();
-      if (error || !data) {
-        throw new Error("Failed to fetch exercise profiles");
-      }
-      const profiles = data;
+      const profiles = unwrap(await api.api.v1.exercises.profiles.get());
       // Group by exerciseId for easier lookup
       const grouped = new Map<string, typeof profiles>();
       for (const profile of profiles) {
-        const exerciseId = profile.exercise_id ?? profile.exerciseId;
+        const exerciseId = profile.exerciseId;
         const existing = grouped.get(exerciseId) ?? [];
         existing.push(profile);
         grouped.set(exerciseId, existing);
@@ -27,11 +23,7 @@ export function useExerciseProfiles(exerciseId: string) {
   return useQuery({
     queryKey: ["exerciseProfiles", exerciseId],
     queryFn: async () => {
-      const { data, error } = await api.api.v1.exercises({ exerciseId }).profiles.get();
-      if (error || !data) {
-        throw new Error("Failed to fetch exercise profiles");
-      }
-      return data;
+      return unwrap(await api.api.v1.exercises({ exerciseId }).profiles.get());
     },
     enabled: !!exerciseId,
   });
@@ -42,11 +34,7 @@ export function useCreateExerciseProfile(exerciseId: string) {
 
   return useMutation({
     mutationFn: async (name: string) => {
-      const { data, error } = await api.api.v1.exercises({ exerciseId }).profiles.post({ name });
-      if (error || !data) {
-        throw new Error("Failed to create exercise profile");
-      }
-      return data;
+      return unwrap(await api.api.v1.exercises({ exerciseId }).profiles.post({ name }));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -69,11 +57,7 @@ export function useRenameExerciseProfile() {
       profileId: string;
       name: string;
     }) => {
-      const { data, error } = await api.api.v1.exercises({ exerciseId }).profiles({ profileId }).put({ name });
-      if (error || !data) {
-        throw new Error("Failed to rename exercise profile");
-      }
-      return data;
+      return unwrap(await api.api.v1.exercises({ exerciseId }).profiles({ profileId }).put({ name }));
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({

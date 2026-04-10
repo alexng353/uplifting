@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../hooks/useAuth";
 import { useThemeColors } from "../hooks/useThemeColors";
-import { api } from "../lib/api";
+import { api, unwrap } from "../lib/api";
 
 export default function LoginScreen() {
   const { login } = useAuth();
@@ -31,14 +31,12 @@ export default function LoginScreen() {
     setIsSubmitting(true);
     setErrorMessage("");
     try {
-      const { data, error } = await api.api.v1.auth.login.post({
-        username,
-        password,
-      });
-      if (error) {
-        setErrorMessage("Invalid username or password");
-        return;
-      }
+      const data = unwrap(
+        await api.api.v1.auth.login.post({
+          username,
+          password,
+        }),
+      );
       await login(data);
     } catch {
       setErrorMessage("Invalid username or password");
@@ -51,16 +49,14 @@ export default function LoginScreen() {
     setIsSubmitting(true);
     setErrorMessage("");
     try {
-      const { data, error } = await api.api.v1.auth.signup.post({
-        username,
-        password,
-        real_name: realName,
-        email,
-      });
-      if (error) {
-        setErrorMessage("Registration failed. Username may already be taken.");
-        return;
-      }
+      const data = unwrap(
+        await api.api.v1.auth.signup.post({
+          username,
+          password,
+          real_name: realName,
+          email,
+        }),
+      );
       await login(data);
     } catch {
       setErrorMessage("Registration failed. Username may already be taken.");

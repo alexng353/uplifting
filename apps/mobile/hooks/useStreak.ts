@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../lib/api";
+import { api, unwrap } from "../lib/api";
 
 /**
  * Fetch the current consecutive-day streak from the server.
@@ -9,9 +9,12 @@ export function useStreak() {
   const { data } = useQuery({
     queryKey: ["streak"],
     queryFn: async () => {
-      const { data, error } = await api.api.v1.workouts.streak.get();
-      if (error || !data) return 0;
-      return data.current_streak;
+      try {
+        const data = unwrap(await api.api.v1.workouts.streak.get());
+        return data.current_streak;
+      } catch {
+        return 0;
+      }
     },
   });
 

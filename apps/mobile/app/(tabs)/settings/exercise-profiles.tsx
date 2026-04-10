@@ -66,8 +66,8 @@ export default function ExerciseProfilesScreen() {
       const exercise = exercises.find((e) => e.id === exerciseId);
       const exerciseName = exercise?.name ?? "Unknown exercise";
       for (const profile of profiles) {
-        const pid = profile.id ?? profile.profile_id;
-        const pname = profile.name ?? profile.profile_name ?? "Default";
+        const pid = profile.id;
+        const pname = profile.name ?? "Default";
         items.push({
           exerciseId,
           exerciseName,

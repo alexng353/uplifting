@@ -108,12 +108,12 @@ export default function FriendSearch({ visible, onClose }: FriendSearchProps) {
               <View className="flex-row items-center border-b border-zinc-100 dark:border-zinc-800 py-3">
                 <View className="h-10 w-10 items-center justify-center rounded-full bg-blue-500">
                   <Text className="text-sm font-bold text-white">
-                    {getInitials(item.realName || item.username)}
+                    {getInitials(item.real_name || item.username)}
                   </Text>
                 </View>
                 <View className="ml-3 flex-1">
                   <Text className="text-base font-medium dark:text-zinc-100">
-                    {item.realName}
+                    {item.real_name}
                   </Text>
                   <Text className="text-sm text-zinc-400 dark:text-zinc-500">
                     @{item.username}

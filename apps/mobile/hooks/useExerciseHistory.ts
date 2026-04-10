@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../lib/api";
+import { api, unwrap } from "../lib/api";
 
 export function useExerciseHistory(
   exerciseId: string,
@@ -9,14 +9,14 @@ export function useExerciseHistory(
   return useQuery({
     queryKey: ["exercise-history", exerciseId, months, profileId],
     queryFn: async () => {
-      const { data, error } = await api.api.v1.exercises({ exerciseId }).history.get({
+      return unwrap(
+        await api.api.v1.exercises({ exerciseId }).history.get({
           query: {
             months: months != null ? String(months) : undefined,
             profile_id: profileId ?? undefined,
           },
-        });
-      if (error || !data) throw new Error("Failed to fetch exercise history");
-      return data;
+        }),
+      );
     },
     enabled: !!exerciseId,
   });

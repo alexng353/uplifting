@@ -1,14 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "../lib/api";
+import { api, unwrap } from "../lib/api";
 
 export function useFavouriteExercises() {
   return useQuery({
     queryKey: ["favouriteExercises"],
     queryFn: async () => {
-      const { data, error } = await api.api.v1.exercises.favourites.get();
-      if (error || !data) {
-        throw new Error("Failed to fetch favourite exercises");
-      }
+      const data = unwrap(await api.api.v1.exercises.favourites.get());
       return new Set(data);
     },
   });

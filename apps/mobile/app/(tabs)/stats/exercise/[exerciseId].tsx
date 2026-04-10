@@ -14,7 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useExerciseHistory } from "../../../../hooks/useExerciseHistory";
 import { useSettings } from "../../../../hooks/useSettings";
 import { useThemeColors } from "../../../../hooks/useThemeColors";
-import { api } from "../../../../lib/api";
+import { api, unwrap } from "../../../../lib/api";
 import { convertWeight } from "../../../../services/storage";
 
 type TimeRange = "1" | "6" | "12" | "all";
@@ -45,9 +45,11 @@ export default function ExerciseHistoryScreen() {
   const { data: exercise } = useQuery({
     queryKey: ["exercise", exerciseId],
     queryFn: async () => {
-      const { data, error } = await api.api.v1.exercises({ exerciseId: exerciseId! }).get();
-      if (error || !data) return null;
-      return data;
+      try {
+        return unwrap(await api.api.v1.exercises({ exerciseId: exerciseId! }).get());
+      } catch {
+        return null;
+      }
     },
     enabled: !!exerciseId,
   });

@@ -13,7 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { useSettings } from "../../../../hooks/useSettings";
 import { useThemeColors } from "../../../../hooks/useThemeColors";
-import { api } from "../../../../lib/api";
+import { api, unwrap } from "../../../../lib/api";
 import { convertWeight } from "../../../../services/storage";
 
 export default function WorkoutDetailScreen() {
@@ -31,9 +31,7 @@ export default function WorkoutDetailScreen() {
   } = useQuery({
     queryKey: ["workout", workoutId],
     queryFn: async () => {
-      const { data, error } = await api.api.v1.workouts({ workoutId: workoutId! }).get();
-      if (error || !data) throw new Error("Failed to fetch workout");
-      return data;
+      return unwrap(await api.api.v1.workouts({ workoutId: workoutId! }).get());
     },
     enabled: !!workoutId,
   });
@@ -42,10 +40,11 @@ export default function WorkoutDetailScreen() {
   const { data: exercises = [] } = useQuery({
     queryKey: ["exercises"],
     queryFn: async () => {
-      const { data } = await api.api.v1.exercises.get({
-        query: { limit: "500" },
-      });
-      return data ?? [];
+      return unwrap(
+        await api.api.v1.exercises.get({
+          query: { limit: "500" },
+        }),
+      );
     },
   });
 
@@ -55,7 +54,7 @@ export default function WorkoutDetailScreen() {
 
   const exerciseGroups: any[] = workout?.exercises ?? [];
 
-  const formatDate = (date: string): string => {
+  const formatDate = (date: string | Date): string => {
     return new Date(date).toLocaleDateString("en-US", {
       weekday: "long",
       month: "long",
@@ -64,7 +63,7 @@ export default function WorkoutDetailScreen() {
     });
   };
 
-  const formatTime = (date: string): string => {
+  const formatTime = (date: string | Date): string => {
     return new Date(date).toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
@@ -72,8 +71,8 @@ export default function WorkoutDetailScreen() {
   };
 
   const getDuration = (): number => {
-    const start = workout?.start_time ?? workout?.startTime;
-    const end = workout?.end_time ?? workout?.endTime;
+    const start = workout?.startTime;
+    const end = workout?.endTime;
     if (!start || !end) return 0;
     return Math.round(
       (new Date(end).getTime() - new Date(start).getTime()) / 60000,
@@ -95,7 +94,7 @@ export default function WorkoutDetailScreen() {
   const getTotalVolume = (): number => {
     return exerciseGroups.reduce((total: number, group: any) => {
       const ex = exerciseMap.get(group.exercise_id);
-      const isBw = ex?.exerciseType === "Bodyweight" || ex?.exercise_type === "Bodyweight";
+      const isBw = ex?.exercise_type === "Bodyweight";
       return (
         total +
         group.sets.reduce((sum: number, s: any) => {
@@ -114,7 +113,7 @@ export default function WorkoutDetailScreen() {
 
   const formatSetDisplay = (group: any): string => {
     const ex = exerciseMap.get(group.exercise_id);
-    const isBw = ex?.exerciseType === "Bodyweight" || ex?.exercise_type === "Bodyweight";
+    const isBw = ex?.exercise_type === "Bodyweight";
 
     const formatSingleSet = (s: any): string => {
       const w = Number.parseFloat(s.weight);
@@ -180,8 +179,8 @@ export default function WorkoutDetailScreen() {
     );
   }
 
-  const startTime = workout.start_time ?? workout.startTime;
-  const endTime = workout.end_time ?? workout.endTime;
+  const startTime = workout.startTime;
+  const endTime = workout.endTime;
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900">
@@ -205,9 +204,9 @@ export default function WorkoutDetailScreen() {
             {formatTime(startTime)}
             {endTime && ` – ${formatTime(endTime)}`}
           </Text>
-          {workout.gym_location ?? workout.gymLocation ? (
+          {workout.gymLocation ? (
             <Text className="mt-0.5 text-sm text-zinc-400 dark:text-zinc-500">
-              {workout.gym_location ?? workout.gymLocation}
+              {workout.gymLocation}
             </Text>
           ) : null}
         </View>

@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Fuse, { type IFuseOptions } from "fuse.js";
 import { useEffect, useMemo } from "react";
-import { api } from "../lib/api";
+import { api, unwrap } from "../lib/api";
 import {
   getExercises as getCachedExercises,
   setExercises as setCachedExercises,
@@ -57,14 +57,11 @@ export function useExercises(search?: string) {
   const allExercisesQuery = useQuery({
     queryKey: ALL_EXERCISES_KEY,
     queryFn: async () => {
-      const { data, error } = await api.api.v1.exercises.get({
-        query: { limit: "500" },
-      });
-      if (error || !data) {
-        throw new Error("Failed to fetch exercises");
-      }
-
-      const exercises = data;
+      const exercises = unwrap(
+        await api.api.v1.exercises.get({
+          query: { limit: "500" },
+        }),
+      );
 
       // Cache all exercises to MMKV
       const toCache: StoredExercise[] = exercises.map((e) => ({

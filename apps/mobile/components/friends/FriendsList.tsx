@@ -116,9 +116,6 @@ export default function FriendsList() {
                   <Ionicons name="barbell-outline" size={12} color={colors.accentIcon} />
                   <Text className="text-xs text-blue-500">
                     {friend.current_workout_name || "Working out"}
-                    {friend.current_workout_started_at
-                      ? ` \u00b7 ${formatWorkoutDuration(friend.current_workout_started_at)}`
-                      : ""}
                   </Text>
                 </View>
               )}

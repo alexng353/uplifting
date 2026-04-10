@@ -1,4 +1,4 @@
-import { api } from "../lib/api";
+import { api, unwrap } from "../lib/api";
 import {
   type GymProfileMapping,
   type StoredGym,
@@ -19,11 +19,7 @@ export interface BootstrapData {
 }
 
 export async function fetchBootstrapData(): Promise<BootstrapData> {
-  const { data, error } = await api.api.v1.sync.bootstrap.get();
-
-  if (error || !data) {
-    throw new Error("Failed to fetch bootstrap data");
-  }
+  const data = unwrap(await api.api.v1.sync.bootstrap.get());
 
   // Transform server data to local storage format
   const gyms: StoredGym[] = data.gyms.map((gym) => ({
@@ -52,14 +48,17 @@ export async function fetchBootstrapData(): Promise<BootstrapData> {
   // Transform previous sets to local format
   const previousSets: StoredPreviousSets = {};
   for (const [key, sets] of Object.entries(
-    data.previous_sets,
+    data.previous_sets as Record<
+      string,
+      { reps: number; weight: string | number; weight_unit?: string; weightUnit?: string; side?: string }[]
+    >,
   )) {
     previousSets[key] = sets.map(
       (set, index): StoredSet => ({
         id: `bootstrap_${key}_${index}`,
         reps: set.reps,
         weight: Number(set.weight),
-        weightUnit: set.weight_unit ?? set.weightUnit,
+        weightUnit: set.weight_unit ?? set.weightUnit ?? "kg",
         createdAt: new Date().toISOString(),
         side: (set.side as "L" | "R" | undefined) ?? undefined,
       }),

@@ -102,7 +102,12 @@ export function useSync() {
       }
 
       if (response.previous_sets) {
-        for (const [key, sets] of Object.entries(response.previous_sets)) {
+        for (const [key, sets] of Object.entries(
+          response.previous_sets as Record<
+            string,
+            { reps: number; weight: string | number; weight_unit?: string; weightUnit?: string; side?: string }[]
+          >,
+        )) {
           const parts = key.split("_");
           const exerciseId = parts[0];
           const profileId = parts.slice(1).join("_");
@@ -113,7 +118,7 @@ export function useSync() {
               id: generateId(),
               reps: s.reps,
               weight: Number(s.weight),
-              weightUnit: s.weight_unit ?? s.weightUnit,
+              weightUnit: s.weight_unit ?? s.weightUnit ?? "kg",
               createdAt: new Date().toISOString(),
               side: s.side as "L" | "R" | undefined,
             })),

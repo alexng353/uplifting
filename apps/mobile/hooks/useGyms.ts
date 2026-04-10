@@ -28,12 +28,12 @@ export function useGyms() {
   // Sync with server when authenticated
   useEffect(() => {
     if (!serverGyms) return;
-    const newGyms: StoredGym[] = serverGyms.map((g: any) => ({
+    const newGyms: StoredGym[] = serverGyms.map((g) => ({
       id: g.id,
       name: g.name,
       latitude: g.latitude ?? null,
       longitude: g.longitude ?? null,
-      createdAt: g.created_at ?? g.createdAt ?? new Date().toISOString(),
+      createdAt: g.createdAt ? new Date(g.createdAt).toISOString() : new Date().toISOString(),
     }));
     setGyms(newGyms);
     setGymsStorage(newGyms);
@@ -63,10 +63,9 @@ export function useGyms() {
             name: serverGym.name,
             latitude: serverGym.latitude ?? null,
             longitude: serverGym.longitude ?? null,
-            createdAt:
-              serverGym.created_at ??
-              serverGym.createdAt ??
-              new Date().toISOString(),
+            createdAt: serverGym.createdAt
+              ? new Date(serverGym.createdAt).toISOString()
+              : new Date().toISOString(),
           };
           deleteGymStorage(newGym.id);
           addGymStorage(

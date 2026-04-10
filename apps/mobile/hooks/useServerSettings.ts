@@ -1,16 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "../lib/api";
+import { api, unwrap } from "../lib/api";
 import type { StoredSettings } from "../services/storage";
 
 export function useServerSettings(enabled = true) {
   return useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
-      const { data, error } = await api.api.v1.users.settings.get();
-      if (error || !data) {
-        throw new Error("Failed to fetch settings");
-      }
-      return data;
+      return unwrap(await api.api.v1.users.settings.get());
     },
     enabled,
   });

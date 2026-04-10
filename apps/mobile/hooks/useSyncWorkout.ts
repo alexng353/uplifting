@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { api } from "../lib/api";
+import { api, unwrap } from "../lib/api";
 
 interface SyncWorkoutRequest {
   name?: string;
@@ -25,11 +25,7 @@ interface SyncWorkoutRequest {
 export function useSyncWorkout() {
   return useMutation({
     mutationFn: async (body: SyncWorkoutRequest) => {
-      const { data, error } = await api.api.v1.sync.workout.post(body);
-      if (error || !data) {
-        throw new Error("Failed to sync workout");
-      }
-      return data;
+      return unwrap(await api.api.v1.sync.workout.post(body));
     },
     retry: false, // Don't auto-retry - we handle retries manually
   });

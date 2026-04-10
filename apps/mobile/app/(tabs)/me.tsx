@@ -95,14 +95,14 @@ export default function MeScreen() {
       }));
   }, [workouts]);
 
-  const formatTime = (date: string): string => {
+  const formatTime = (date: string | Date): string => {
     return new Date(date).toLocaleTimeString([], {
       hour: "numeric",
       minute: "2-digit",
     });
   };
 
-  const formatDuration = (start: string, end?: string | null): string => {
+  const formatDuration = (start: string | Date, end?: string | Date | null): string => {
     if (!end) return "In progress";
     const mins = Math.round(
       (new Date(end).getTime() - new Date(start).getTime()) / 60000,
