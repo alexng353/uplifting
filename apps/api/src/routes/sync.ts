@@ -58,6 +58,21 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
   .post(
     "/workout",
     async ({ userId, body }) => {
+      // Dedup check for rest days
+      if (body.kind === "rest") {
+        const startDate = new Date(body.start_time);
+        const existing = await sql`
+          SELECT id FROM workouts
+          WHERE user_id = ${userId}
+            AND kind = 'rest'
+            AND (start_time AT TIME ZONE 'UTC')::date = ${startDate.toISOString()}::date
+          LIMIT 1
+        `;
+        if (existing.length > 0) {
+          return { workout_id: existing[0].id, previous_sets: {} };
+        }
+      }
+
       const workoutId = await db.transaction(async (tx) => {
         // 1. Create the workout
         const [workout] = await tx
@@ -97,7 +112,10 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
       // Fetch updated previous_sets for exercises in this workout
       const exerciseIds = body.exercises.map((e) => e.exercise_id);
 
-      const previousSetsRows = await sql`
+      const previousSetsRows =
+        exerciseIds.length === 0
+          ? []
+          : await sql`
         WITH ranked_sets AS (
             SELECT s.exercise_id, s.profile_id, s.reps, s.weight, s.weight_unit, s.side, s.created_at,
                 DENSE_RANK() OVER (

@@ -3,12 +3,15 @@ import { useCallback, useMemo } from "react";
 import {
   getLastSyncTime,
   getPendingWorkout,
+  getTodayRestDay,
+  setTodayRestDay,
   type StoredWorkout,
   setLastSyncTime,
   setPendingWorkout,
   updatePreviousSets,
   generateId,
 } from "../services/storage";
+import { api } from "../lib/api";
 import { useSyncedSave } from "./useSyncedSave";
 import { useSyncWorkout } from "./useSyncWorkout";
 
@@ -78,7 +81,26 @@ export function useSync() {
 
   // Handle successful sync - update previous sets cache
   const onSyncSuccess = useCallback(
-    async (response: any) => {
+    async (response: any, localData: StoredWorkout) => {
+      // Handle rest day sync completion
+      if (localData.kind === "rest") {
+        const currentRestDay = getTodayRestDay();
+        if (currentRestDay) {
+          // Rest day still active — save the synced server ID
+          setTodayRestDay({
+            ...currentRestDay,
+            syncedWorkoutId: response.workout_id,
+          });
+        } else {
+          // User cancelled while sync was in-flight — delete from server
+          try {
+            await (api.api.v1.workouts as any)[response.workout_id].delete();
+          } catch {
+            // Best-effort cleanup
+          }
+        }
+      }
+
       if (response.previous_sets) {
         for (const [key, sets] of Object.entries(
           response.previous_sets as Record<string, any[]>,

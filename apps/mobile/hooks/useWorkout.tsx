@@ -9,13 +9,18 @@ import {
 import { detectAndSetNearbyGym } from "../services/geolocation";
 import {
   addExerciseSequence,
+  clearTodayRestDay,
   generateId,
   getCurrentWorkout,
+  getLocalDateString,
   getPendingWorkout,
   getSettings,
+  getTodayRestDay,
+  setTodayRestDay,
   type StoredSet,
   type StoredWorkout,
   type StoredWorkoutExercise,
+  type TodayRestDay,
   setCurrentWorkout,
   setPendingWorkout,
   updatePreviousSets,
@@ -24,8 +29,11 @@ import {
 interface WorkoutContextValue {
   workout: StoredWorkout | null;
   isActive: boolean;
+  todayRestDay: TodayRestDay | null;
   startWorkout: () => void;
-  logRestDay: () => StoredWorkout;
+  logRestDay: () => StoredWorkout | null;
+  cancelRestDay: () => string | undefined;
+  reconcileRestDay: (serverWorkouts: any[]) => void;
   addExercise: (
     exerciseId: string,
     exerciseName: string,
@@ -71,6 +79,8 @@ const WorkoutContext = createContext<WorkoutContextValue | null>(null);
 export function WorkoutProvider({ children }: { children: ReactNode }) {
   const [workout, setWorkout] = useState<StoredWorkout | null>(null);
   const [hasPendingWorkout, setHasPendingWorkout] = useState(false);
+  const [todayRestDayState, setTodayRestDayState] =
+    useState<TodayRestDay | null>(null);
 
   // Load current workout on mount (MMKV is synchronous)
   useEffect(() => {
@@ -88,8 +98,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       if (minutesDiff > settings.maxWorkoutDurationMinutes) {
         // Auto-cap the workout
         const cappedEndTime = new Date(
-          startTime.getTime() +
-            settings.maxWorkoutDurationMinutes * 60 * 1000,
+          startTime.getTime() + settings.maxWorkoutDurationMinutes * 60 * 1000,
         );
         const cappedWorkout = {
           ...current,
@@ -102,6 +111,14 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
         setWorkout(current);
       }
     }
+
+    // Load today's rest day from storage
+    const storedRestDay = getTodayRestDay();
+    if (storedRestDay && storedRestDay.date === getLocalDateString()) {
+      setTodayRestDayState(storedRestDay);
+    } else if (storedRestDay) {
+      clearTodayRestDay(); // Stale — different day
+    }
   }, []);
 
   const saveWorkout = useCallback((w: StoredWorkout | null) => {
@@ -110,6 +127,8 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const startWorkout = useCallback(() => {
+    if (todayRestDayState) return; // Can't start workout on a rest day
+
     const settings = getSettings();
     const newWorkout: StoredWorkout = {
       id: generateId(),
@@ -122,9 +141,11 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 
     // Auto-detect nearby gym (fire-and-forget)
     detectAndSetNearbyGym().catch(() => {});
-  }, [saveWorkout]);
+  }, [saveWorkout, todayRestDayState]);
 
-  const logRestDay = useCallback((): StoredWorkout => {
+  const logRestDay = useCallback((): StoredWorkout | null => {
+    if (todayRestDayState) return null; // Already a rest day today
+
     const settings = getSettings();
     const now = new Date().toISOString();
     const restDay: StoredWorkout = {
@@ -136,10 +157,81 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       name: "Rest Day",
     };
 
+    const pointer: TodayRestDay = {
+      workoutId: restDay.id,
+      date: getLocalDateString(),
+      startTime: now,
+    };
+    setTodayRestDay(pointer);
+    setTodayRestDayState(pointer);
+
     setPendingWorkout(restDay);
     setHasPendingWorkout(true);
 
     return restDay;
+  }, [todayRestDayState]);
+
+  const cancelRestDay = useCallback((): string | undefined => {
+    const current = getTodayRestDay();
+    const syncedId = current?.syncedWorkoutId;
+
+    clearTodayRestDay();
+    setTodayRestDayState(null);
+
+    // Clear pending if not yet synced
+    const pending = getPendingWorkout();
+    if (pending && pending.kind === "rest") {
+      setPendingWorkout(null);
+      setHasPendingWorkout(false);
+    }
+
+    return syncedId;
+  }, []);
+
+  const reconcileRestDay = useCallback((serverWorkouts: any[]) => {
+    const today = getLocalDateString();
+    const serverRestDay = serverWorkouts.find((w: any) => {
+      return getLocalDateString(w.startTime) === today && w.kind === "rest";
+    });
+
+    const local = getTodayRestDay();
+
+    if (serverRestDay && !local) {
+      // Server has rest day, local doesn't — adopt (logged on another device)
+      const pointer: TodayRestDay = {
+        workoutId: serverRestDay.id,
+        date: today,
+        startTime: serverRestDay.startTime,
+        syncedWorkoutId: serverRestDay.id,
+      };
+      setTodayRestDay(pointer);
+      setTodayRestDayState(pointer);
+    } else if (local && serverRestDay && !local.syncedWorkoutId) {
+      // Local was pending, server now has it — update with server ID
+      const updated: TodayRestDay = {
+        ...local,
+        syncedWorkoutId: serverRestDay.id,
+      };
+      setTodayRestDay(updated);
+      setTodayRestDayState(updated);
+    } else if (
+      local &&
+      serverRestDay &&
+      local.syncedWorkoutId &&
+      local.syncedWorkoutId !== serverRestDay.id
+    ) {
+      // Both exist with different IDs (e.g., re-created from another device) — server wins
+      const pointer: TodayRestDay = {
+        workoutId: serverRestDay.id,
+        date: today,
+        startTime: serverRestDay.startTime,
+        syncedWorkoutId: serverRestDay.id,
+      };
+      setTodayRestDay(pointer);
+      setTodayRestDayState(pointer);
+    }
+    // If local has rest day but server doesn't → still pending sync, keep local
+    // If neither has rest day → nothing to do
   }, []);
 
   const addExercise = useCallback(
@@ -521,8 +613,11 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       value={{
         workout,
         isActive: workout !== null,
+        todayRestDay: todayRestDayState,
         startWorkout,
         logRestDay,
+        cancelRestDay,
+        reconcileRestDay,
         addExercise,
         removeExercise,
         reorderExercises,
