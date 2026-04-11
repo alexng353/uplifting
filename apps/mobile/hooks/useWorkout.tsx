@@ -19,12 +19,24 @@ import {
   setTodayRestDay,
   type StoredSet,
   type StoredWorkout,
-  type StoredWorkoutExercise,
   type TodayRestDay,
   setCurrentWorkout,
   setPendingWorkout,
   updatePreviousSets,
 } from "../services/storage";
+import {
+  addExerciseMutation,
+  removeExerciseMutation,
+  reorderExercisesMutation,
+  addSetMutation,
+  addUnilateralPairMutation,
+  updateSetMutation,
+  removeSetMutation,
+  removeLastSetMutation,
+  removeLastUnilateralPairMutation,
+  toggleUnilateralMutation,
+  changeExerciseProfileMutation,
+} from "../lib/workout-mutations";
 
 interface WorkoutContextValue {
   workout: StoredWorkout | null;
@@ -242,33 +254,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       exerciseType?: string,
     ) => {
       if (!workout) return;
-
-      const settings = getSettings();
-      const unit = settings.displayUnit ?? "kg";
-
-      const firstSet: StoredSet = {
-        id: generateId(),
-        weightUnit: unit,
-        createdAt: new Date().toISOString(),
-        bodyweight:
-          exerciseType === "Bodyweight"
-            ? (settings.bodyweight ?? undefined)
-            : undefined,
-      };
-
-      const newExercise: StoredWorkoutExercise = {
-        exerciseId,
-        exerciseName,
-        exerciseType,
-        profileId,
-        sets: [firstSet],
-      };
-
-      const updated = {
-        ...workout,
-        exercises: [...workout.exercises, newExercise],
-      };
-      saveWorkout(updated);
+      saveWorkout(addExerciseMutation(workout, exerciseId, exerciseName, profileId, exerciseType));
     },
     [workout, saveWorkout],
   );
@@ -276,12 +262,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   const removeExercise = useCallback(
     (exerciseId: string) => {
       if (!workout) return;
-
-      const updated = {
-        ...workout,
-        exercises: workout.exercises.filter((e) => e.exerciseId !== exerciseId),
-      };
-      saveWorkout(updated);
+      saveWorkout(removeExerciseMutation(workout, exerciseId));
     },
     [workout, saveWorkout],
   );
@@ -289,31 +270,9 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   const reorderExercises = useCallback(
     (newOrder: string[]) => {
       if (!workout) return;
-
-      const exerciseMap = new Map(
-        workout.exercises.map((e) => [e.exerciseId, e]),
-      );
-      const reordered = newOrder
-        .map((id) => exerciseMap.get(id))
-        .filter((e): e is StoredWorkoutExercise => e !== undefined);
-
-      const updated = { ...workout, exercises: reordered };
-      saveWorkout(updated);
+      saveWorkout(reorderExercisesMutation(workout, newOrder));
     },
     [workout, saveWorkout],
-  );
-
-  const getBodyweightForExercise = useCallback(
-    (exerciseId: string): number | undefined => {
-      if (!workout) return undefined;
-      const exercise = workout.exercises.find(
-        (e) => e.exerciseId === exerciseId,
-      );
-      if (exercise?.exerciseType !== "Bodyweight") return undefined;
-      const settings = getSettings();
-      return settings.bodyweight ?? undefined;
-    },
-    [workout],
   );
 
   const addSet = useCallback(
@@ -325,27 +284,9 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       side?: "L" | "R",
     ) => {
       if (!workout) return;
-
-      const bodyweight = getBodyweightForExercise(exerciseId);
-      const newSet: StoredSet = {
-        id: generateId(),
-        reps,
-        weight,
-        weightUnit,
-        createdAt: new Date().toISOString(),
-        side,
-        bodyweight,
-      };
-
-      const updated = {
-        ...workout,
-        exercises: workout.exercises.map((e) =>
-          e.exerciseId === exerciseId ? { ...e, sets: [...e.sets, newSet] } : e,
-        ),
-      };
-      saveWorkout(updated);
+      saveWorkout(addSetMutation(workout, exerciseId, weightUnit, reps, weight, side));
     },
-    [workout, saveWorkout, getBodyweightForExercise],
+    [workout, saveWorkout],
   );
 
   const addUnilateralPair = useCallback(
@@ -356,105 +297,15 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       weight?: number,
     ) => {
       if (!workout) return;
-
-      const bodyweight = getBodyweightForExercise(exerciseId);
-      const rightSet: StoredSet = {
-        id: generateId(),
-        reps,
-        weight,
-        weightUnit,
-        createdAt: new Date().toISOString(),
-        side: "R",
-        bodyweight,
-      };
-
-      const leftSet: StoredSet = {
-        id: generateId(),
-        reps,
-        weight,
-        weightUnit,
-        createdAt: new Date().toISOString(),
-        side: "L",
-        bodyweight,
-      };
-
-      const updated = {
-        ...workout,
-        exercises: workout.exercises.map((e) =>
-          e.exerciseId === exerciseId
-            ? { ...e, sets: [...e.sets, rightSet, leftSet] }
-            : e,
-        ),
-      };
-      saveWorkout(updated);
+      saveWorkout(addUnilateralPairMutation(workout, exerciseId, weightUnit, reps, weight));
     },
-    [workout, saveWorkout, getBodyweightForExercise],
+    [workout, saveWorkout],
   );
 
   const toggleUnilateral = useCallback(
     (exerciseId: string) => {
       if (!workout) return;
-
-      const updated = {
-        ...workout,
-        exercises: workout.exercises.map((e) => {
-          if (e.exerciseId !== exerciseId) {
-            return e;
-          }
-
-          const isCurrentlyUnilateral = e.isUnilateral ?? false;
-
-          if (!isCurrentlyUnilateral) {
-            const expandedSets = e.sets.flatMap((set) => {
-              if (set.side) {
-                return [set];
-              }
-
-              const rightSet: StoredSet = { ...set, side: "R" };
-              const leftSet: StoredSet = {
-                ...set,
-                id: generateId(),
-                side: "L",
-              };
-              return [rightSet, leftSet];
-            });
-
-            return { ...e, isUnilateral: true, sets: expandedSets };
-          }
-
-          const rightSets = e.sets.filter(
-            (set) => set.side === "R" || !set.side,
-          );
-          const leftSets = e.sets.filter((set) => set.side === "L");
-          const maxLen = Math.max(rightSets.length, leftSets.length);
-          const mergedSets: StoredSet[] = [];
-
-          for (let i = 0; i < maxLen; i += 1) {
-            const rightSet = rightSets[i];
-            const leftSet = leftSets[i];
-
-            if (!rightSet && !leftSet) continue;
-
-            const baseSet = rightSet ?? leftSet;
-            if (!baseSet) continue;
-
-            mergedSets.push({
-              id: rightSet?.id ?? leftSet?.id ?? generateId(),
-              reps: rightSet?.reps ?? leftSet?.reps,
-              weight: rightSet?.weight ?? leftSet?.weight,
-              weightUnit:
-                rightSet?.weightUnit ??
-                leftSet?.weightUnit ??
-                baseSet.weightUnit,
-              createdAt:
-                rightSet?.createdAt ?? leftSet?.createdAt ?? baseSet.createdAt,
-            });
-          }
-
-          return { ...e, isUnilateral: false, sets: mergedSets };
-        }),
-      };
-      saveWorkout(updated);
+      saveWorkout(toggleUnilateralMutation(workout, exerciseId));
     },
     [workout, saveWorkout],
   );
@@ -466,14 +317,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       exerciseName: string,
     ) => {
       if (!workout) return;
-
-      const updated = {
-        ...workout,
-        exercises: workout.exercises.map((e) =>
-          e.exerciseId === exerciseId ? { ...e, profileId, exerciseName } : e,
-        ),
-      };
-      saveWorkout(updated);
+      saveWorkout(changeExerciseProfileMutation(workout, exerciseId, profileId, exerciseName));
     },
     [workout, saveWorkout],
   );
@@ -481,21 +325,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   const updateSet = useCallback(
     (exerciseId: string, setId: string, updates: Partial<StoredSet>) => {
       if (!workout) return;
-
-      const updated = {
-        ...workout,
-        exercises: workout.exercises.map((e) =>
-          e.exerciseId === exerciseId
-            ? {
-                ...e,
-                sets: e.sets.map((s) =>
-                  s.id === setId ? { ...s, ...updates } : s,
-                ),
-              }
-            : e,
-        ),
-      };
-      saveWorkout(updated);
+      saveWorkout(updateSetMutation(workout, exerciseId, setId, updates));
     },
     [workout, saveWorkout],
   );
@@ -503,16 +333,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   const removeSet = useCallback(
     (exerciseId: string, setId: string) => {
       if (!workout) return;
-
-      const updated = {
-        ...workout,
-        exercises: workout.exercises.map((e) =>
-          e.exerciseId === exerciseId
-            ? { ...e, sets: e.sets.filter((s) => s.id !== setId) }
-            : e,
-        ),
-      };
-      saveWorkout(updated);
+      saveWorkout(removeSetMutation(workout, exerciseId, setId));
     },
     [workout, saveWorkout],
   );
@@ -520,14 +341,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   const removeLastSet = useCallback(
     (exerciseId: string) => {
       if (!workout) return;
-
-      const updated = {
-        ...workout,
-        exercises: workout.exercises.map((e) =>
-          e.exerciseId === exerciseId ? { ...e, sets: e.sets.slice(0, -1) } : e,
-        ),
-      };
-      saveWorkout(updated);
+      saveWorkout(removeLastSetMutation(workout, exerciseId));
     },
     [workout, saveWorkout],
   );
@@ -535,30 +349,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   const removeLastUnilateralPair = useCallback(
     (exerciseId: string) => {
       if (!workout) return;
-
-      const exercise = workout.exercises.find(
-        (e) => e.exerciseId === exerciseId,
-      );
-      if (!exercise) return;
-
-      const rightSets = exercise.sets.filter((s) => s.side === "R");
-      const leftSets = exercise.sets.filter((s) => s.side === "L");
-      const lastRight = rightSets[rightSets.length - 1];
-      const lastLeft = leftSets[leftSets.length - 1];
-
-      const idsToRemove = new Set<string>();
-      if (lastRight) idsToRemove.add(lastRight.id);
-      if (lastLeft) idsToRemove.add(lastLeft.id);
-
-      const updated = {
-        ...workout,
-        exercises: workout.exercises.map((e) =>
-          e.exerciseId === exerciseId
-            ? { ...e, sets: e.sets.filter((s) => !idsToRemove.has(s.id)) }
-            : e,
-        ),
-      };
-      saveWorkout(updated);
+      saveWorkout(removeLastUnilateralPairMutation(workout, exerciseId));
     },
     [workout, saveWorkout],
   );
