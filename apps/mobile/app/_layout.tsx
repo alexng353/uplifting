@@ -82,8 +82,8 @@ export default function RootLayout() {
   }
 
   return (
-    <KeyboardProvider>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <KeyboardProvider>
         <ColorSchemeProvider>
           <AuthProvider>
             <WorkoutProvider>
@@ -91,7 +91,7 @@ export default function RootLayout() {
             </WorkoutProvider>
           </AuthProvider>
         </ColorSchemeProvider>
-      </QueryClientProvider>
-    </KeyboardProvider>
+      </KeyboardProvider>
+    </QueryClientProvider>
   );
 }
