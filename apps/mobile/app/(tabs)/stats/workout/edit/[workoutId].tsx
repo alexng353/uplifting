@@ -100,8 +100,8 @@ function WorkoutDetailsPage({ onDelete }: WorkoutDetailsPageProps) {
           Workout Name
         </Text>
         <TextInput
-          className="mb-4 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 text-base dark:text-zinc-100"
-          style={{ height: 48, textAlignVertical: "center" }}
+          className="mb-4 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 dark:text-zinc-100"
+          style={{ height: 48, fontSize: 16, textAlignVertical: "center" }}
           value={name}
           onChangeText={setName}
           placeholder="e.g. Morning Push"
@@ -114,8 +114,8 @@ function WorkoutDetailsPage({ onDelete }: WorkoutDetailsPageProps) {
           Gym Location
         </Text>
         <TextInput
-          className="mb-4 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 text-base dark:text-zinc-100"
-          style={{ height: 48, textAlignVertical: "center" }}
+          className="mb-4 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 dark:text-zinc-100"
+          style={{ height: 48, fontSize: 16, textAlignVertical: "center" }}
           value={gymLocation}
           onChangeText={setGymLocation}
           placeholder="e.g. Gold's Gym"
@@ -156,8 +156,8 @@ function WorkoutDetailsPage({ onDelete }: WorkoutDetailsPageProps) {
           Duration (minutes)
         </Text>
         <TextInput
-          className="mb-6 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 text-base dark:text-zinc-100"
-          style={{ height: 48, textAlignVertical: "center" }}
+          className="mb-6 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 dark:text-zinc-100"
+          style={{ height: 48, fontSize: 16, textAlignVertical: "center" }}
           value={durationText}
           onChangeText={handleDurationChange}
           keyboardType="number-pad"
