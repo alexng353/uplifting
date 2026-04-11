@@ -9,6 +9,7 @@ import { getSettings, hydrateStorage } from "../services/storage";
 import { useColorScheme } from "nativewind";
 import React, { useEffect, useState } from "react";
 import { View, ActivityIndicator, Text, Appearance } from "react-native";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 
 const queryClient = new QueryClient();
 
@@ -82,13 +83,15 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ColorSchemeProvider>
-        <AuthProvider>
-          <WorkoutProvider>
-            <AuthGate />
-          </WorkoutProvider>
-        </AuthProvider>
-      </ColorSchemeProvider>
+      <KeyboardProvider>
+        <ColorSchemeProvider>
+          <AuthProvider>
+            <WorkoutProvider>
+              <AuthGate />
+            </WorkoutProvider>
+          </AuthProvider>
+        </ColorSchemeProvider>
+      </KeyboardProvider>
     </QueryClientProvider>
   );
 }
