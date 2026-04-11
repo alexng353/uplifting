@@ -77,6 +77,11 @@ Bun monorepo with two workspaces under `apps/`:
 2. Create hooks in `hooks/` for data fetching (React Query) or local state
 3. Create components in `components/`
 
+### Preferences
+
+- Prefer **React Query (TanStack Query)** for server communication — mutations, retries, cache invalidation. It gives a cleaner API and better retry surface than manual sync logic.
+- New features that need server sync should use React Query mutations rather than custom sync hooks where possible.
+
 ### Database schema changes
 
 1. Edit `apps/api/src/db/schema.ts`
