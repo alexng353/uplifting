@@ -10,7 +10,7 @@ import {
   FlatList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useWorkout } from "../../hooks/useWorkout";
+import { useWorkoutActions } from "../../hooks/useWorkoutActions";
 import { useThemeColors } from "../../hooks/useThemeColors";
 import { useSettings } from "../../hooks/useSettings";
 import { usePreviousSets } from "../../hooks/usePreviousSets";
@@ -125,7 +125,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
     removeLastSet,
     removeLastUnilateralPair,
     changeExerciseProfile,
-  } = useWorkout();
+  } = useWorkoutActions();
   const colors = useThemeColors();
   const { getDisplayUnit } = useSettings();
   const { getSuggestion } = usePreviousSets();

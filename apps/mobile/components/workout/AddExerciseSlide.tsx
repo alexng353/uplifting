@@ -17,7 +17,7 @@ import {
 } from "../../hooks/useFavouriteExercises";
 import { useAllExerciseProfiles } from "../../hooks/useExerciseProfiles";
 import { useGymProfileSuggestion } from "../../hooks/useGymProfileSuggestion";
-import { useWorkout } from "../../hooks/useWorkout";
+import { useWorkoutActions } from "../../hooks/useWorkoutActions";
 
 interface AddExerciseSlideProps {
   onExerciseAdded?: () => void;
@@ -26,7 +26,7 @@ interface AddExerciseSlideProps {
 export default function AddExerciseSlide({
   onExerciseAdded,
 }: AddExerciseSlideProps) {
-  const { addExercise } = useWorkout();
+  const { addExercise } = useWorkoutActions();
   const colors = useThemeColors();
   const [searchText, setSearchText] = useState("");
 
