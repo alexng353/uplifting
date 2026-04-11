@@ -16,14 +16,14 @@ else
 fi
 
 if [[ "$BUILD_LOCAL" == true ]]; then
-  # 2. Build locally, tee logs to file
+  # 2. Build locally — use `script` to log while preserving full TTY interactivity
   echo "Starting local iOS build..."
   echo "Logs: $LOGFILE"
   echo ""
 
   set +e
-  eas build --platform ios --profile production --local 2>&1 | tee "$LOGFILE"
-  EXIT_CODE=${PIPESTATUS[0]}
+  script -q "$LOGFILE" eas build --platform ios --profile production --local
+  EXIT_CODE=$?
   set -e
 
   if [[ $EXIT_CODE -ne 0 ]]; then
@@ -35,7 +35,7 @@ if [[ "$BUILD_LOCAL" == true ]]; then
   echo ""
   echo "Build successful!"
 
-  # 4. Parse the log to find the .ipa path
+  # 3. Parse the log to find the .ipa path
   IPA_PATH=$(grep -oE '/[^ ]+\.ipa' "$LOGFILE" | tail -1)
 
   if [[ -z "$IPA_PATH" ]]; then
@@ -46,27 +46,27 @@ if [[ "$BUILD_LOCAL" == true ]]; then
   echo "Build artifact: $IPA_PATH"
   echo ""
 
-  # 5. Confirm before submitting
+  # 4. Confirm before submitting
   read -rp "Submit this build to App Store Connect? [y/N] " CONFIRM
   if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
     echo "Submission cancelled."
     exit 0
   fi
 
-  # 6. Submit
+  # 5. Submit — fully interactive
   echo "Submitting to App Store Connect..."
   eas submit --platform ios --path "$IPA_PATH" --profile production
   echo "Done!"
 
 else
-  # Cloud build path
+  # Cloud build path — fully interactive
   echo "Starting cloud iOS build..."
   echo "Logs: $LOGFILE"
   echo ""
 
   set +e
-  eas build --platform ios --profile production 2>&1 | tee "$LOGFILE"
-  EXIT_CODE=${PIPESTATUS[0]}
+  script -q "$LOGFILE" eas build --platform ios --profile production
+  EXIT_CODE=$?
   set -e
 
   if [[ $EXIT_CODE -ne 0 ]]; then
@@ -78,7 +78,7 @@ else
   echo ""
   echo "Cloud build complete!"
   echo ""
-  echo "To submit interactively, run:"
+  echo "To submit, run:"
   echo ""
   echo "  eas submit --platform ios --profile production --latest"
   echo ""
