@@ -11,7 +11,6 @@ import { useWorkoutActions, useEditWorkoutMeta } from "../../../../../hooks/useW
 import ExerciseSlide from "../../../../../components/workout/ExerciseSlide";
 import AddExerciseSlide from "../../../../../components/workout/AddExerciseSlide";
 import ReorderModal from "../../../../../components/workout/ReorderModal";
-import type { StoredWorkout } from "../../../../../services/storage";
 
 // ─── Page 0: Workout Details Form ───────────────────────────────────────────
 
@@ -38,17 +37,17 @@ function WorkoutDetailsPage({ onDelete }: WorkoutDetailsPageProps) {
   const duration = Math.round((endTime.getTime() - startTime.getTime()) / 60000);
   const [durationText, setDurationText] = useState(String(Math.max(0, duration)));
 
-  // Sync local state → workout context (debounce via useEffect)
+  // Sync local state → workout context using functional updater
+  // to avoid capturing stale workout state (exercise mutations
+  // happen on other pages while this stays mounted in PagerView)
   useEffect(() => {
-    if (!workout) return;
-    const updated: StoredWorkout = {
-      ...workout,
+    meta.setWorkout((prev) => ({
+      ...prev,
       name: name || undefined,
       gymLocation: gymLocation || undefined,
       startTime: startTime.toISOString(),
       endTime: endTime.toISOString(),
-    };
-    meta.setWorkout(updated);
+    }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name, gymLocation, startTime, endTime]);
 
@@ -280,9 +279,16 @@ function EditWorkoutContent() {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
-            await meta.deleteWorkout();
-            router.back();
-            router.back();
+            try {
+              await meta.deleteWorkout();
+              router.back();
+              router.back();
+            } catch {
+              Alert.alert(
+                "Delete Failed",
+                "Could not delete workout. Please try again.",
+              );
+            }
           },
         },
       ],

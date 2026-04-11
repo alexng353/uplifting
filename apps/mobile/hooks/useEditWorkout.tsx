@@ -127,20 +127,22 @@ export function useEditWorkoutState(workoutId: string) {
           end_time: w.endTime,
           privacy: w.privacy,
           gym_location: w.gymLocation,
-          exercises: w.exercises.map((e) => ({
-            exercise_id: e.exerciseId,
-            profile_id: e.profileId,
-            sets: e.sets
-              .filter((s) => s.reps != null && s.reps > 0)
-              .map((s) => ({
-                reps: s.reps ?? 1,
-                weight: s.weight ?? 0,
-                weight_unit: s.weightUnit,
-                created_at: s.createdAt,
-                side: s.side,
-                bodyweight: s.bodyweight,
-              })),
-          })),
+          exercises: w.exercises
+            .map((e) => ({
+              exercise_id: e.exerciseId,
+              profile_id: e.profileId,
+              sets: e.sets
+                .filter((s) => s.reps != null && s.reps > 0)
+                .map((s) => ({
+                  reps: s.reps ?? 1,
+                  weight: s.weight ?? 0,
+                  weight_unit: s.weightUnit,
+                  created_at: s.createdAt,
+                  side: s.side,
+                  bodyweight: s.bodyweight,
+                })),
+            }))
+            .filter((e) => e.sets.length > 0),
         }),
       );
     },
@@ -213,7 +215,8 @@ export function useEditWorkoutState(workoutId: string) {
     isLoading,
     fetchError: fetchError?.message ?? null,
     hasChanges,
-    save: () => workout && saveMutation.mutateAsync(workout),
+    save: () =>
+      workout ? saveMutation.mutateAsync(workout) : Promise.resolve(),
     isSaving: saveMutation.isPending,
     saveError: saveMutation.error?.message ?? null,
     deleteWorkout: () => deleteMutation.mutateAsync(),
@@ -234,9 +237,17 @@ export function EditWorkoutProvider({
 
   const meta = {
     workout: state.workout,
-    setWorkout: state.setWorkout,
+    setWorkout: (
+      w: StoredWorkout | ((prev: StoredWorkout) => StoredWorkout),
+    ) => {
+      if (typeof w === "function") {
+        state.setWorkout((prev) => (prev ? w(prev) : prev));
+      } else {
+        state.setWorkout(w);
+      }
+    },
     hasChanges: state.hasChanges,
-    save: () => Promise.resolve(state.save()),
+    save: state.save,
     isSaving: state.isSaving,
     saveError: state.saveError,
     deleteWorkout: state.deleteWorkout,

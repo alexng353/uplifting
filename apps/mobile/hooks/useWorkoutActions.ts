@@ -26,7 +26,7 @@ export const EditWorkoutContext = createContext<WorkoutActions | null>(null);
 // Meta context for edit-specific state (save, delete, etc.)
 export interface EditWorkoutMeta {
   workout: StoredWorkout | null;
-  setWorkout: (w: StoredWorkout) => void;
+  setWorkout: (w: StoredWorkout | ((prev: StoredWorkout) => StoredWorkout)) => void;
   hasChanges: boolean;
   save: () => Promise<unknown>;
   isSaving: boolean;
