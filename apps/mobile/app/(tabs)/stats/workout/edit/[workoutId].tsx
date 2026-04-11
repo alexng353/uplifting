@@ -257,10 +257,17 @@ function EditWorkoutContent() {
   }, [meta.hasChanges, router]);
 
   const handleSave = useCallback(async () => {
-    await meta.save();
-    // Navigate back twice: past this screen and the now-stale details screen
-    router.back();
-    router.back();
+    try {
+      await meta.save();
+      // Navigate back twice: past this screen and the now-stale details screen
+      router.back();
+      router.back();
+    } catch {
+      Alert.alert(
+        "Save Failed",
+        "Could not save workout. Please try again.",
+      );
+    }
   }, [meta, router]);
 
   const handleDeleteAndNavigate = useCallback(() => {
