@@ -342,6 +342,65 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
         return { error: "Workout not found" };
       }
 
+      if (body.exercises) {
+        const result = await db.transaction(async (tx) => {
+          // 1. Build and apply metadata updates
+          const updates: Record<string, unknown> = {};
+          if (body.name !== undefined) updates.name = body.name;
+          if (body.privacy !== undefined) updates.privacy = body.privacy;
+          if (body.gym_location !== undefined) updates.gymLocation = body.gym_location;
+          if (body.start_time !== undefined) updates.startTime = new Date(body.start_time!);
+          if (body.end_time !== undefined) updates.endTime = new Date(body.end_time!);
+
+          let updated;
+          if (Object.keys(updates).length > 0) {
+            [updated] = await tx.update(workouts).set(updates).where(eq(workouts.id, params.workoutId)).returning();
+          } else {
+            [updated] = await tx.select().from(workouts).where(eq(workouts.id, params.workoutId)).limit(1);
+          }
+
+          // 2. Delete all existing sets
+          await tx.delete(userSets).where(eq(userSets.workoutId, params.workoutId));
+
+          // 3. Insert new sets
+          for (const exercise of body.exercises!) {
+            for (const s of exercise.sets) {
+              await tx.insert(userSets).values({
+                userId,
+                workoutId: params.workoutId,
+                exerciseId: exercise.exercise_id,
+                profileId: exercise.profile_id,
+                reps: s.reps,
+                weight: String(s.weight),
+                weightUnit: s.weight_unit,
+                side: s.side,
+                bodyweight: s.bodyweight ? String(s.bodyweight) : undefined,
+                createdAt: s.created_at ? new Date(s.created_at) : new Date(),
+              });
+            }
+          }
+
+          return updated;
+        });
+
+        // Re-fetch sets and group them (same shape as GET /:workoutId)
+        const sets = await db.select().from(userSets).where(eq(userSets.workoutId, params.workoutId)).orderBy(asc(userSets.createdAt));
+
+        const groupMap = new Map<string, { exercise_id: string; profile_id: string | null; is_unilateral: boolean; sets: (typeof sets)[number][] }>();
+        for (const s of sets) {
+          const key = `${s.exerciseId}|${s.profileId ?? "null"}`;
+          if (!groupMap.has(key)) {
+            groupMap.set(key, { exercise_id: s.exerciseId, profile_id: s.profileId, is_unilateral: false, sets: [] });
+          }
+          const group = groupMap.get(key)!;
+          if (s.side !== null) group.is_unilateral = true;
+          group.sets.push(s);
+        }
+
+        return { ...result, exercises: Array.from(groupMap.values()) };
+      }
+
+      // Metadata-only update (original behavior)
       const updates: Record<string, unknown> = {};
       if (body.name !== undefined) updates.name = body.name;
       if (body.privacy !== undefined) updates.privacy = body.privacy;
@@ -367,6 +426,24 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
         gym_location: t.Optional(t.String()),
         start_time: t.Optional(t.String()),
         end_time: t.Optional(t.String()),
+        exercises: t.Optional(
+          t.Array(
+            t.Object({
+              exercise_id: t.String(),
+              profile_id: t.Optional(t.String()),
+              sets: t.Array(
+                t.Object({
+                  reps: t.Number(),
+                  weight: t.Number(),
+                  weight_unit: t.String(),
+                  created_at: t.Optional(t.String()),
+                  side: t.Optional(t.String()),
+                  bodyweight: t.Optional(t.Number()),
+                }),
+              ),
+            }),
+          ),
+        ),
       }),
     },
   )
