@@ -192,6 +192,12 @@ export default function WorkoutDetailScreen() {
         <Text className="flex-1 text-xl font-bold dark:text-zinc-100" numberOfLines={1}>
           {workout.name || "Workout"}
         </Text>
+        <Pressable
+          onPress={() => router.push(`/stats/workout/edit/${workoutId}`)}
+          className="ml-2 p-1"
+        >
+          <Ionicons name="pencil" size={20} color="#3b82f6" />
+        </Pressable>
       </View>
 
       <ScrollView className="flex-1" contentContainerClassName="pb-24">
