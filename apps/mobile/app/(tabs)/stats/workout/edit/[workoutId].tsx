@@ -100,7 +100,8 @@ function WorkoutDetailsPage({ onDelete }: WorkoutDetailsPageProps) {
           Workout Name
         </Text>
         <TextInput
-          className="mb-4 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 py-3 text-base dark:text-zinc-100"
+          className="mb-4 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 text-base dark:text-zinc-100"
+          style={{ height: 48, textAlignVertical: "center" }}
           value={name}
           onChangeText={setName}
           placeholder="e.g. Morning Push"
@@ -113,7 +114,8 @@ function WorkoutDetailsPage({ onDelete }: WorkoutDetailsPageProps) {
           Gym Location
         </Text>
         <TextInput
-          className="mb-4 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 py-3 text-base dark:text-zinc-100"
+          className="mb-4 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 text-base dark:text-zinc-100"
+          style={{ height: 48, textAlignVertical: "center" }}
           value={gymLocation}
           onChangeText={setGymLocation}
           placeholder="e.g. Gold's Gym"
@@ -125,7 +127,7 @@ function WorkoutDetailsPage({ onDelete }: WorkoutDetailsPageProps) {
         <Text className="mb-1 text-xs font-semibold uppercase text-zinc-400 dark:text-zinc-500">
           Start Time
         </Text>
-        <View className="mb-4 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-2 py-1">
+        <View className="mb-4 items-start justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 px-2" style={{ height: 48 }}>
           <DateTimePicker
             value={startTime}
             mode="datetime"
@@ -139,7 +141,7 @@ function WorkoutDetailsPage({ onDelete }: WorkoutDetailsPageProps) {
         <Text className="mb-1 text-xs font-semibold uppercase text-zinc-400 dark:text-zinc-500">
           End Time
         </Text>
-        <View className="mb-4 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-2 py-1">
+        <View className="mb-4 items-start justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 px-2" style={{ height: 48 }}>
           <DateTimePicker
             value={endTime}
             mode="datetime"
@@ -154,7 +156,8 @@ function WorkoutDetailsPage({ onDelete }: WorkoutDetailsPageProps) {
           Duration (minutes)
         </Text>
         <TextInput
-          className="mb-6 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 py-3 text-base dark:text-zinc-100"
+          className="mb-6 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 text-base dark:text-zinc-100"
+          style={{ height: 48, textAlignVertical: "center" }}
           value={durationText}
           onChangeText={handleDurationChange}
           keyboardType="number-pad"
@@ -166,7 +169,8 @@ function WorkoutDetailsPage({ onDelete }: WorkoutDetailsPageProps) {
         {/* Delete button */}
         <Pressable
           onPress={onDelete}
-          className="flex-row items-center justify-center gap-2 rounded-lg border border-red-300 dark:border-red-800 py-3.5 active:bg-red-50 dark:active:bg-red-950"
+          className="flex-row items-center justify-center gap-2 rounded-lg border border-red-300 dark:border-red-800 active:bg-red-50 dark:active:bg-red-950"
+          style={{ height: 48 }}
         >
           <Ionicons name="trash-outline" size={18} color={colors.dangerIcon} />
           <Text className="text-base font-semibold text-red-500 dark:text-red-400">
@@ -301,7 +305,7 @@ function EditWorkoutContent() {
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900" edges={["top"]}>
       {/* Red "Editing Workout" banner */}
-      <View className="items-center bg-red-500 py-1">
+      <View className="items-center justify-center bg-red-500" style={{ height: 28 }}>
         <Text className="text-xs font-semibold text-white">Editing Workout</Text>
       </View>
 
