@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { View, Text, Pressable, ScrollView, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeColors } from "../../hooks/useThemeColors";
-import { useWorkout } from "../../hooks/useWorkout";
+import { useWorkoutActions } from "../../hooks/useWorkoutActions";
 
 interface ReorderModalProps {
   visible: boolean;
@@ -10,7 +10,7 @@ interface ReorderModalProps {
 }
 
 export default function ReorderModal({ visible, onClose }: ReorderModalProps) {
-  const { workout, reorderExercises } = useWorkout();
+  const { workout, reorderExercises } = useWorkoutActions();
   const colors = useThemeColors();
 
   const handleMoveUp = useCallback(
