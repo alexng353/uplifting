@@ -8,6 +8,9 @@ import {
   Switch,
   Modal,
   FlatList,
+  InputAccessoryView,
+  Keyboard,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useWorkoutActions } from "../../hooks/useWorkoutActions";
@@ -32,6 +35,10 @@ interface SetPair {
 const DEFAULT_REPS = 10;
 const DEFAULT_WEIGHT = 20;
 
+const INPUT_HEIGHT = 36;
+const SIDE_BADGE_HEIGHT = 22;
+const INPUT_ACCESSORY_ID = "exerciseSetInputs";
+
 function SetRow({
   set,
   setNumber,
@@ -42,6 +49,10 @@ function SetRow({
   suggestedReps,
   suggestedWeight,
   isBodyweight,
+  repsRef,
+  weightRef,
+  onRepsFocus,
+  onWeightFocus,
 }: {
   set: StoredSet;
   setNumber: number;
@@ -56,6 +67,10 @@ function SetRow({
   suggestedReps: number;
   suggestedWeight: number;
   isBodyweight?: boolean;
+  repsRef?: React.RefObject<TextInput | null>;
+  weightRef?: React.RefObject<TextInput | null>;
+  onRepsFocus?: () => void;
+  onWeightFocus?: () => void;
 }) {
   const colors = useThemeColors();
   return (
@@ -65,8 +80,9 @@ function SetRow({
       </Text>
       {sideLabel != null && (
         <View
-          className="w-7 items-center rounded px-1 py-0.5"
+          className="w-7 items-center justify-center rounded"
           style={{
+            height: SIDE_BADGE_HEIGHT,
             backgroundColor: sideLabel === "R" ? colors.rightSideBg : colors.leftSideBg,
           }}
         >
@@ -80,6 +96,7 @@ function SetRow({
       )}
       <View className="flex-1">
         <TextInput
+          ref={repsRef}
           keyboardType="numeric"
           value={set.reps != null ? String(set.reps) : ""}
           placeholder={String(suggestedReps)}
@@ -89,8 +106,11 @@ function SetRow({
               reps: text ? Number(text) : undefined,
             })
           }
-          className="rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1.5 text-center text-base dark:text-zinc-100"
+          onFocus={onRepsFocus}
+          className="rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 text-center text-base dark:text-zinc-100"
+          style={{ height: INPUT_HEIGHT, textAlignVertical: "center" }}
           selectTextOnFocus
+          inputAccessoryViewID={Platform.OS === "ios" ? INPUT_ACCESSORY_ID : undefined}
         />
       </View>
       {isBodyweight && (
@@ -98,6 +118,7 @@ function SetRow({
       )}
       <View className="flex-1">
         <TextInput
+          ref={weightRef}
           keyboardType="numeric"
           value={set.weight != null ? String(set.weight) : ""}
           placeholder={String(suggestedWeight)}
@@ -107,8 +128,11 @@ function SetRow({
               weight: text ? Number(text) : undefined,
             })
           }
-          className="rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1.5 text-center text-base dark:text-zinc-100"
+          onFocus={onWeightFocus}
+          className="rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 text-center text-base dark:text-zinc-100"
+          style={{ height: INPUT_HEIGHT, textAlignVertical: "center" }}
           selectTextOnFocus
+          inputAccessoryViewID={Platform.OS === "ios" ? INPUT_ACCESSORY_ID : undefined}
         />
       </View>
       <Text className="w-8 text-xs text-zinc-400 dark:text-zinc-500">{displayUnit}</Text>
@@ -135,6 +159,60 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   const isBodyweight = exercise.exerciseType === "Bodyweight";
   const scrollRef = useRef<ScrollView>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
+
+  // Build a flat ordered list of input refs for keyboard nav
+  // Each set has 2 inputs (reps, weight); unilateral sets are R then L per pair
+  const inputRefs = useRef<Map<string, React.RefObject<TextInput | null>>>(new Map());
+  const getInputRef = useCallback((key: string) => {
+    if (!inputRefs.current.has(key)) {
+      inputRefs.current.set(key, { current: null });
+    }
+    return inputRefs.current.get(key)!;
+  }, []);
+
+  const inputOrder = useMemo(() => {
+    const order: string[] = [];
+    if (exercise.isUnilateral) {
+      const rightSets = exercise.sets.filter((s) => s.side === "R");
+      const leftSets = exercise.sets.filter((s) => s.side === "L");
+      const maxLen = Math.max(rightSets.length, leftSets.length);
+      for (let i = 0; i < maxLen; i++) {
+        if (rightSets[i]) {
+          order.push(`${rightSets[i].id}-reps`);
+          order.push(`${rightSets[i].id}-weight`);
+        }
+        if (leftSets[i]) {
+          order.push(`${leftSets[i].id}-reps`);
+          order.push(`${leftSets[i].id}-weight`);
+        }
+      }
+    } else {
+      for (const set of exercise.sets) {
+        order.push(`${set.id}-reps`);
+        order.push(`${set.id}-weight`);
+      }
+    }
+    return order;
+  }, [exercise.sets, exercise.isUnilateral]);
+
+  const [focusedInputKey, setFocusedInputKey] = useState<string | null>(null);
+
+  const focusInput = useCallback((key: string) => {
+    const ref = inputRefs.current.get(key);
+    ref?.current?.focus();
+  }, []);
+
+  const handlePrevious = useCallback(() => {
+    if (!focusedInputKey) return;
+    const idx = inputOrder.indexOf(focusedInputKey);
+    if (idx > 0) focusInput(inputOrder[idx - 1]);
+  }, [focusedInputKey, inputOrder, focusInput]);
+
+  const handleNext = useCallback(() => {
+    if (!focusedInputKey) return;
+    const idx = inputOrder.indexOf(focusedInputKey);
+    if (idx < inputOrder.length - 1) focusInput(inputOrder[idx + 1]);
+  }, [focusedInputKey, inputOrder, focusInput]);
 
   const displayUnit = getDisplayUnit();
 
@@ -272,7 +350,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
         </Pressable>
         {exercise.exerciseType && (
           <View className="mt-1 flex-row items-center gap-2">
-            <View className="rounded bg-zinc-200 dark:bg-zinc-700 px-2 py-0.5">
+            <View className="items-center justify-center rounded bg-zinc-200 dark:bg-zinc-700 px-2" style={{ height: SIDE_BADGE_HEIGHT }}>
               <Text className="text-xs font-medium text-zinc-600 dark:text-zinc-300">
                 {exercise.exerciseType}
               </Text>
@@ -342,6 +420,10 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                         (isBodyweight ? 0 : DEFAULT_WEIGHT)
                       }
                       isBodyweight={isBodyweight}
+                      repsRef={getInputRef(`${group.rightSet.id}-reps`)}
+                      weightRef={getInputRef(`${group.rightSet.id}-weight`)}
+                      onRepsFocus={() => setFocusedInputKey(`${group.rightSet!.id}-reps`)}
+                      onWeightFocus={() => setFocusedInputKey(`${group.rightSet!.id}-weight`)}
                     />
                   )}
                   {group.leftSet && (
@@ -358,6 +440,10 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                         (isBodyweight ? 0 : DEFAULT_WEIGHT)
                       }
                       isBodyweight={isBodyweight}
+                      repsRef={getInputRef(`${group.leftSet.id}-reps`)}
+                      weightRef={getInputRef(`${group.leftSet.id}-weight`)}
+                      onRepsFocus={() => setFocusedInputKey(`${group.leftSet!.id}-reps`)}
+                      onWeightFocus={() => setFocusedInputKey(`${group.leftSet!.id}-weight`)}
                     />
                   )}
                 </View>
@@ -382,6 +468,10 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                     suggestion.weight ?? (isBodyweight ? 0 : DEFAULT_WEIGHT)
                   }
                   isBodyweight={isBodyweight}
+                  repsRef={getInputRef(`${set.id}-reps`)}
+                  weightRef={getInputRef(`${set.id}-weight`)}
+                  onRepsFocus={() => setFocusedInputKey(`${set.id}-reps`)}
+                  onWeightFocus={() => setFocusedInputKey(`${set.id}-weight`)}
                 />
               );
             })}
@@ -468,6 +558,35 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
           />
         </View>
       </Modal>
+
+      {/* iOS keyboard toolbar with Previous / Next / Done */}
+      {Platform.OS === "ios" && (
+        <InputAccessoryView nativeID={INPUT_ACCESSORY_ID}>
+          <View className="flex-row items-center justify-between border-t border-zinc-300 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5">
+            <View className="flex-row gap-4">
+              <Pressable
+                onPress={handlePrevious}
+                disabled={!focusedInputKey || inputOrder.indexOf(focusedInputKey) <= 0}
+                style={{ opacity: focusedInputKey && inputOrder.indexOf(focusedInputKey) > 0 ? 1 : 0.35 }}
+                hitSlop={8}
+              >
+                <Ionicons name="chevron-back" size={22} color={colors.accentIcon} />
+              </Pressable>
+              <Pressable
+                onPress={handleNext}
+                disabled={!focusedInputKey || inputOrder.indexOf(focusedInputKey) >= inputOrder.length - 1}
+                style={{ opacity: focusedInputKey && inputOrder.indexOf(focusedInputKey) < inputOrder.length - 1 ? 1 : 0.35 }}
+                hitSlop={8}
+              >
+                <Ionicons name="chevron-forward" size={22} color={colors.accentIcon} />
+              </Pressable>
+            </View>
+            <Pressable onPress={() => Keyboard.dismiss()} hitSlop={8}>
+              <Text className="text-base font-semibold text-blue-500">Done</Text>
+            </Pressable>
+          </View>
+        </InputAccessoryView>
+      )}
     </View>
   );
 }
