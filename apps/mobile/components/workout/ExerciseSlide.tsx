@@ -10,6 +10,7 @@ import {
   FlatList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { KeyboardToolbar } from "react-native-keyboard-controller";
 import { useWorkoutActions } from "../../hooks/useWorkoutActions";
 import { useThemeColors } from "../../hooks/useThemeColors";
 import { useSettings } from "../../hooks/useSettings";
@@ -476,6 +477,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
         </View>
       </Modal>
 
+      <KeyboardToolbar />
     </View>
   );
 }
