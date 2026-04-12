@@ -2,25 +2,21 @@
 
 ## Overview
 
-Add the ability to edit past workouts from the workout details
-screen. The editor opens the workout in a full PagerView — same
-components as a live workout session — with a red "Editing
-Workout" banner at the top. Users can modify workout metadata,
-edit/add/remove sets and exercises, reorder exercises, and delete
-the workout entirely.
+Add the ability to edit past workouts from the workout details screen. The
+editor opens the workout in a full PagerView — same components as a live workout
+session — with a red "Editing Workout" banner at the top. Users can modify
+workout metadata, edit/add/remove sets and exercises, reorder exercises, and
+delete the workout entirely.
 
 ## Entry Point
 
-- Workout details screen
-  (`app/(tabs)/stats/workout/[workoutId].tsx`) gets an edit
-  pencil icon in the top-right header.
-- Tapping it navigates to
-  `app/(tabs)/stats/workout/edit/[workoutId].tsx`.
+- Workout details screen (`app/(tabs)/stats/workout/[workoutId].tsx`) gets an
+  edit pencil icon in the top-right header.
+- Tapping it navigates to `app/(tabs)/stats/workout/edit/[workoutId].tsx`.
 
 ## Screen Structure
 
-PagerView with a persistent red "Editing Workout" banner above
-it.
+PagerView with a persistent red "Editing Workout" banner above it.
 
 ### Page 0: Workout Details
 
@@ -38,10 +34,9 @@ it.
 - Start time changes → end time stays fixed, duration
   recalculates
 
-**Delete workout:** Red button at bottom. `Alert.alert` with
-destructive confirmation. On confirm, calls
-`DELETE /workouts/:workoutId`, invalidates queries, navigates to
-workout list.
+**Delete workout:** Red button at bottom. `Alert.alert` with destructive
+confirmation. On confirm, calls `DELETE /workouts/:workoutId`, invalidates
+queries, navigates to workout list.
 
 ### Pages 1..n-1: Exercise Slides
 
