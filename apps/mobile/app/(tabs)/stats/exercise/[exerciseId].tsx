@@ -10,6 +10,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
+import { CartesianChart, Line, Scatter } from "victory-native";
 
 import { useExerciseHistory } from "../../../../hooks/useExerciseHistory";
 import { useSettings } from "../../../../hooks/useSettings";
@@ -65,6 +66,20 @@ export default function ExerciseHistoryScreen() {
         new Date(b.date).getTime() - new Date(a.date).getTime(),
     );
   }, [historyData]);
+
+  // Chart data: peak weight per session, sorted ascending by date
+  const chartData = useMemo(() => {
+    return sortedHistory
+      .map((entry: any) => {
+        const maxWeight = Math.max(
+          ...entry.sets.map((s: any) =>
+            convertWeight(Number(s.weight), s.weight_unit ?? "kg", unit),
+          ),
+        );
+        return { dateMs: new Date(entry.date).getTime(), weight: maxWeight };
+      })
+      .sort((a, b) => a.dateMs - b.dateMs);
+  }, [sortedHistory, unit]);
 
   const formatDate = (date: string): string => {
     return new Date(date).toLocaleDateString("en-US", {
@@ -154,6 +169,60 @@ export default function ExerciseHistoryScreen() {
         </View>
       ) : (
         <ScrollView className="flex-1" contentContainerClassName="pb-24">
+          {/* Weight progression chart */}
+          {chartData.length >= 2 && (
+            <View className="mx-4 mb-3 rounded-xl bg-zinc-100 dark:bg-zinc-900 p-3">
+              <Text className="mb-2 text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                Peak Weight ({unit})
+              </Text>
+              <View style={{ height: 220 }}>
+                <CartesianChart
+                  data={chartData}
+                  xKey="dateMs"
+                  yKeys={["weight"]}
+                  domainPadding={{ top: 20, bottom: 10, left: 10, right: 10 }}
+                  xAxis={{
+                    labelColor: colors.secondaryText,
+                    lineColor: colors.separator,
+                    tickCount: 4,
+                    formatXLabel: (val) => {
+                      const d = new Date(val as number);
+                      return d.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      });
+                    },
+                  }}
+                  yAxis={[
+                    {
+                      labelColor: colors.secondaryText,
+                      lineColor: colors.separator,
+                      tickCount: 5,
+                      formatYLabel: (val) => `${Math.round(val as number)}`,
+                    },
+                  ]}
+                >
+                  {({ points }) => (
+                    <>
+                      <Line
+                        points={points.weight}
+                        color={colors.accentIcon}
+                        strokeWidth={2}
+                        curveType="natural"
+                      />
+                      <Scatter
+                        points={points.weight}
+                        color={colors.accentIcon}
+                        radius={4}
+                        shape="circle"
+                      />
+                    </>
+                  )}
+                </CartesianChart>
+              </View>
+            </View>
+          )}
+
           {sortedHistory.map((entry: any) => (
             <Pressable
               key={entry.workout_id}
