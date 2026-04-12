@@ -26,30 +26,42 @@ export function useSettings() {
     setSettingsState((prev) => {
       const newSettings: StoredSettings = {
         displayUnit:
-          (serverSettings.displayUnit as "kg" | "lbs" | null) ?? null,
+          (serverSettings.displayUnit as "kg" | "lbs" | null) ??
+          prev.displayUnit ??
+          DEFAULT_SETTINGS.displayUnit,
         maxWorkoutDurationMinutes:
           serverSettings.maxWorkoutDurationMinutes ??
+          prev.maxWorkoutDurationMinutes ??
           DEFAULT_SETTINGS.maxWorkoutDurationMinutes,
         defaultRestTimerSeconds:
           serverSettings.defaultRestTimerSeconds ??
+          prev.defaultRestTimerSeconds ??
           DEFAULT_SETTINGS.defaultRestTimerSeconds,
         defaultPrivacy:
-          serverSettings.defaultPrivacy ?? DEFAULT_SETTINGS.defaultPrivacy,
+          serverSettings.defaultPrivacy ??
+          prev.defaultPrivacy ??
+          DEFAULT_SETTINGS.defaultPrivacy,
         shareGymLocation:
-          serverSettings.shareGymLocation ?? DEFAULT_SETTINGS.shareGymLocation,
+          serverSettings.shareGymLocation ??
+          prev.shareGymLocation ??
+          DEFAULT_SETTINGS.shareGymLocation,
         shareOnlineStatus:
           serverSettings.shareOnlineStatus ??
+          prev.shareOnlineStatus ??
           DEFAULT_SETTINGS.shareOnlineStatus,
         shareWorkoutStatus:
           serverSettings.shareWorkoutStatus ??
+          prev.shareWorkoutStatus ??
           DEFAULT_SETTINGS.shareWorkoutStatus,
         shareWorkoutHistory:
           serverSettings.shareWorkoutHistory ??
+          prev.shareWorkoutHistory ??
           DEFAULT_SETTINGS.shareWorkoutHistory,
         colorScheme:
           (serverSettings.colorScheme as "light" | "dark" | "system") ??
           prev.colorScheme,
-        currentGymId: serverSettings.currentGymId ?? null,
+        currentGymId:
+          serverSettings.currentGymId ?? prev.currentGymId ?? null,
         autoAddSet: prev.autoAddSet,
         autoRemoveEmptySet: prev.autoRemoveEmptySet,
         bodyweight: prev.bodyweight,
