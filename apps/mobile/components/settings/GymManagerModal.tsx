@@ -9,10 +9,12 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { StoredGym } from "../../services/storage";
 import { useThemeColors } from "../../hooks/useThemeColors";
+import { requestAndGetPosition } from "../../services/geolocation";
 
 interface GymManagerModalProps {
   visible: boolean;
@@ -40,13 +42,26 @@ export default function GymManagerModal({
   const [editingGymId, setEditingGymId] = useState<string | null>(null);
   const [editingGymName, setEditingGymName] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  const [capturedLocation, setCapturedLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [capturingLocation, setCapturingLocation] = useState(false);
+
+  const handleCaptureLocation = async () => {
+    setCapturingLocation(true);
+    try {
+      const pos = await requestAndGetPosition();
+      if (pos) setCapturedLocation(pos);
+    } finally {
+      setCapturingLocation(false);
+    }
+  };
 
   const handleAdd = async () => {
     if (!newGymName.trim()) return;
     setIsAdding(true);
     try {
-      await onAddGym(newGymName.trim());
+      await onAddGym(newGymName.trim(), capturedLocation?.latitude, capturedLocation?.longitude);
       setNewGymName("");
+      setCapturedLocation(null);
     } finally {
       setIsAdding(false);
     }
@@ -104,33 +119,61 @@ export default function GymManagerModal({
         </View>
 
         {/* Add Gym */}
-        <View className="flex-row items-center gap-2 border-b border-zinc-100 dark:border-zinc-800 px-4 py-3">
-          <TextInput
-            className="flex-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 py-2.5 text-base dark:text-zinc-100"
-            placeholder="New gym name..."
-            placeholderTextColor={colors.placeholder}
-            value={newGymName}
-            onChangeText={setNewGymName}
-            onSubmitEditing={handleAdd}
-            returnKeyType="done"
-          />
-          <Pressable
-            onPress={handleAdd}
-            disabled={!newGymName.trim() || isAdding}
-            className={`rounded-lg px-4 py-2.5 ${
-              newGymName.trim() && !isAdding
-                ? "bg-blue-500 active:bg-blue-600"
-                : "bg-zinc-200 dark:bg-zinc-700"
-            }`}
-          >
-            <Text
-              className={`text-base font-semibold ${
-                newGymName.trim() && !isAdding ? "text-white" : "text-zinc-400 dark:text-zinc-500"
+        <View className="border-b border-zinc-100 dark:border-zinc-800 px-4 py-3">
+          <View className="flex-row items-center gap-2">
+            <TextInput
+              className="flex-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 py-2.5 text-base dark:text-zinc-100"
+              placeholder="New gym name..."
+              placeholderTextColor={colors.placeholder}
+              value={newGymName}
+              onChangeText={setNewGymName}
+              onSubmitEditing={handleAdd}
+              returnKeyType="done"
+            />
+            <Pressable
+              onPress={handleAdd}
+              disabled={!newGymName.trim() || isAdding}
+              className={`rounded-lg px-4 py-2.5 ${
+                newGymName.trim() && !isAdding
+                  ? "bg-blue-500 active:bg-blue-600"
+                  : "bg-zinc-200 dark:bg-zinc-700"
               }`}
             >
-              Add
-            </Text>
-          </Pressable>
+              <Text
+                className={`text-base font-semibold ${
+                  newGymName.trim() && !isAdding ? "text-white" : "text-zinc-400 dark:text-zinc-500"
+                }`}
+              >
+                Add
+              </Text>
+            </Pressable>
+          </View>
+          <View className="mt-2 flex-row items-center gap-2">
+            {capturedLocation ? (
+              <View className="flex-1 flex-row items-center gap-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 py-2">
+                <Ionicons name="location" size={16} color={colors.accentIcon} />
+                <Text className="flex-1 text-sm dark:text-zinc-100">
+                  {capturedLocation.latitude.toFixed(4)}, {capturedLocation.longitude.toFixed(4)}
+                </Text>
+                <Pressable onPress={() => setCapturedLocation(null)} className="active:opacity-60">
+                  <Ionicons name="close-circle" size={20} color={colors.mutedIcon} />
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable
+                onPress={handleCaptureLocation}
+                disabled={capturingLocation}
+                className="flex-row items-center gap-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 py-2 active:opacity-60"
+              >
+                {capturingLocation ? (
+                  <ActivityIndicator size="small" color={colors.accentIcon} />
+                ) : (
+                  <Ionicons name="location-outline" size={16} color={colors.accentIcon} />
+                )}
+                <Text className="text-sm text-blue-500">Use Current Location</Text>
+              </Pressable>
+            )}
+          </View>
         </View>
 
         {/* Gym List */}
