@@ -4,37 +4,6 @@ import { db, sql } from "../db";
 import { workouts, userSets } from "../db/schema";
 import { authPlugin } from "../lib/auth";
 
-const MUSCLE_GROUP_MAP: Record<string, string> = {
-  "front delt": "Shoulders",
-  "side delt": "Shoulders",
-  "rear delt": "Shoulders",
-  "rotator cuff": "Shoulders",
-  serratus: "Shoulders",
-  "levator scap": "Shoulders",
-  chest: "Chest",
-  "upper back": "Back",
-  lats: "Back",
-  "lower back": "Back",
-  traps: "Back",
-  rhomboids: "Back",
-  biceps: "Arms",
-  triceps: "Arms",
-  forearms: "Arms",
-  brachialis: "Arms",
-  quads: "Legs",
-  hamstrings: "Legs",
-  glutes: "Legs",
-  calves: "Legs",
-  adductors: "Legs",
-  abductors: "Legs",
-  "hip flexors": "Legs",
-  tibialis: "Legs",
-  abs: "Core",
-  obliques: "Core",
-  "transverse abdominis": "Core",
-  "spinal erectors": "Core",
-};
-
 export const workoutRoutes = new Elysia({ prefix: "/workouts" })
   .use(authPlugin)
 
@@ -144,33 +113,25 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
         // Query 5 — Muscle group volume
         sql`
           SELECT
-            m.minor_group,
+            COALESCE(m.major_group, 'Other') as "group",
             COALESCE(SUM(s.weight * s.reps), 0) as volume
           FROM user_sets s
           JOIN exercise_muscle_relations emr ON emr.exercise_id = s.exercise_id AND emr.is_primary = true
           JOIN muscles m ON m.id = emr.muscle_id
           WHERE s.user_id = ${userId}
-          GROUP BY m.minor_group
+          GROUP BY m.major_group
         `,
       ]);
 
-    // Aggregate muscle group volume by category
-    const groupVolumes: Record<string, number> = {};
-    for (const row of muscleVolume) {
-      const category =
-        MUSCLE_GROUP_MAP[row.minor_group as string] ?? "Other";
-      groupVolumes[category] =
-        (groupVolumes[category] ?? 0) + Number(row.volume);
-    }
-
-    const maxVolume = Math.max(...Object.values(groupVolumes), 1);
-    const muscleGroupVolumeList = Object.entries(groupVolumes).map(
-      ([group, volume]) => ({
-        group,
-        volume,
-        percentage: Math.round((volume / maxVolume) * 100),
-      }),
+    const maxVolume = Math.max(
+      ...muscleVolume.map((r) => Number(r.volume)),
+      1,
     );
+    const muscleGroupVolumeList = muscleVolume.map((row) => ({
+      group: row.group as string,
+      volume: Number(row.volume),
+      percentage: Math.round((Number(row.volume) / maxVolume) * 100),
+    }));
 
     return {
       total_workouts: Number(totals[0]?.total_workouts ?? 0),
