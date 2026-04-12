@@ -28,6 +28,12 @@ bun api db:migrate       # run pending migrations
 bun api db:studio        # open Drizzle Studio GUI
 bun api db:seed          # seed database
 
+# Release
+bun release:ios          # bump, changelog, tag, push, build iOS
+bun release:ios minor    # minor version bump (default: patch)
+bun changelog:dry        # preview changelog without writing
+bun bump patch           # bump version only (patch|minor|major)
+
 # No test framework is configured
 # No linter/formatter is configured
 ```
@@ -91,3 +97,14 @@ All schema migrations go through drizzle-kit. Never hand-write SQL files in `dri
 3. Run `bun api db:migrate` (`drizzle-kit migrate`) to apply pending migrations
 
 For data-only changes (e.g., backfilling column values), write a standalone Bun script — drizzle-kit does not handle data migrations.
+
+### Releasing
+
+`bun release:ios [patch|minor|major]` handles the full flow:
+
+1. Bumps version in `apps/mobile/app.json` and `apps/mobile/package.json`
+2. Generates changelog entry from conventional commits since last tag
+3. Commits, tags (`vX.Y.Z`), and pushes
+4. Builds and optionally submits to App Store Connect
+
+The changelog generator (`scripts/generate-changelog.ts`) parses conventional commits and strips the `[agent]` prefix. Use conventional commit format: `feat:`, `fix:`, `refactor:`, `perf:`, `docs:`, `chore:`, etc.

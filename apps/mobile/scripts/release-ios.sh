@@ -1,22 +1,50 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# cd to apps/mobile regardless of where this is invoked from
-cd "$(dirname "$0")/.."
+# ── Navigate to repo root ────────────────────────────────────────
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+# ── 1. Version bump ──────────────────────────────────────────────
+BUMP_TYPE="${1:-patch}"   # patch | minor | major | X.Y.Z
+echo "Bumping version ($BUMP_TYPE)..."
+NEW_VERSION=$(bun scripts/bump-version.ts "$BUMP_TYPE")
+echo "New version: $NEW_VERSION"
+
+# ── 2. Generate changelog ────────────────────────────────────────
+echo ""
+echo "Generating changelog..."
+bun scripts/generate-changelog.ts \
+  --version "$NEW_VERSION" \
+  --date "$(date +%Y-%m-%d)"
+echo ""
+
+# ── 3. Commit, tag, and push the release ─────────────────────────
+git add CHANGELOG.md apps/mobile/app.json apps/mobile/package.json
+git commit -m "chore: release v${NEW_VERSION}
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>"
+git tag "v${NEW_VERSION}"
+git push && git push --tags
+echo "Tagged and pushed v${NEW_VERSION}"
+
+# ── 4. Build iOS ─────────────────────────────────────────────────
+cd apps/mobile
 
 LOGFILE="build-$(date +%s).log"
 
-# 1. Check if we're on a Mac
+# Check if we're on a Mac
 if [[ "$(uname)" == "Darwin" ]]; then
+  echo ""
   echo "macOS detected - building locally"
   BUILD_LOCAL=true
 else
+  echo ""
   echo "Not macOS - building in the cloud"
   BUILD_LOCAL=false
 fi
 
 if [[ "$BUILD_LOCAL" == true ]]; then
-  # 2. Build locally — use `script` to log while preserving full TTY interactivity
   echo "Starting local iOS build..."
   echo "Logs: $LOGFILE"
   echo ""
@@ -35,7 +63,7 @@ if [[ "$BUILD_LOCAL" == true ]]; then
   echo ""
   echo "Build successful!"
 
-  # 3. Parse the log to find the .ipa path
+  # Parse the log to find the .ipa path
   IPA_PATH=$(grep -oE '/[^ ]+\.ipa' "$LOGFILE" | tail -1)
 
   if [[ -z "$IPA_PATH" ]]; then
@@ -46,20 +74,18 @@ if [[ "$BUILD_LOCAL" == true ]]; then
   echo "Build artifact: $IPA_PATH"
   echo ""
 
-  # 4. Confirm before submitting
+  # Confirm before submitting
   read -rp "Submit this build to App Store Connect? [y/N] " CONFIRM
   if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
     echo "Submission cancelled."
     exit 0
   fi
 
-  # 5. Submit — fully interactive
   echo "Submitting to App Store Connect..."
   eas submit --platform ios --path "$IPA_PATH" --profile production
   echo "Done!"
 
 else
-  # Cloud build path — fully interactive
   echo "Starting cloud iOS build..."
   echo "Logs: $LOGFILE"
   echo ""

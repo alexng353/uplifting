@@ -5,6 +5,9 @@
   "scripts": {
     "api": "bun --filter api",
     "mobile": "bun --filter mobile",
-    "release:ios": "bash apps/mobile/scripts/release-ios.sh"
+    "release:ios": "bash apps/mobile/scripts/release-ios.sh",
+    "changelog": "bun scripts/generate-changelog.ts",
+    "changelog:dry": "bun scripts/generate-changelog.ts --dry-run",
+    "bump": "bun scripts/bump-version.ts"
   }
 }
