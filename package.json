@@ -5,6 +5,7 @@
   "scripts": {
     "api": "bun --filter api",
     "mobile": "bun --filter mobile",
+    "release": "bash apps/mobile/scripts/release-ios.sh",
     "release:ios": "bash apps/mobile/scripts/release-ios.sh",
     "testflight": "bash apps/mobile/scripts/testflight.sh",
     "changelog": "bun scripts/generate-changelog.ts",
