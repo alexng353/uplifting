@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -10,18 +10,21 @@ import {
   FlatList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { KeyboardToolbar } from "react-native-keyboard-controller";
 import { useWorkoutActions } from "../../hooks/useWorkoutActions";
 import { useThemeColors } from "../../hooks/useThemeColors";
 import { useSettings } from "../../hooks/useSettings";
 import { usePreviousSets } from "../../hooks/usePreviousSets";
 import { useExerciseProfiles } from "../../hooks/useExerciseProfiles";
 import { useGymProfileSuggestion } from "../../hooks/useGymProfileSuggestion";
+import { useInputNavigation } from "../../hooks/useInputNavigation";
 import type { StoredSet, StoredWorkoutExercise } from "../../services/storage";
 import RestTimer from "./RestTimer";
 
+export const WORKOUT_INPUT_ACCESSORY_ID = "workout-inputs";
+
 interface ExerciseSlideProps {
   exercise: StoredWorkoutExercise;
+  slideIndex?: number;
 }
 
 interface SetPair {
@@ -46,6 +49,8 @@ function SetRow({
   suggestedReps,
   suggestedWeight,
   isBodyweight,
+  slideIndex,
+  baseOrder,
 }: {
   set: StoredSet;
   setNumber: number;
@@ -60,8 +65,26 @@ function SetRow({
   suggestedReps: number;
   suggestedWeight: number;
   isBodyweight?: boolean;
+  slideIndex?: number;
+  baseOrder?: number;
 }) {
   const colors = useThemeColors();
+  const inputNav = useInputNavigation();
+  const repsRef = useRef<TextInput>(null);
+  const weightRef = useRef<TextInput>(null);
+  const repsId = `${exerciseId}-${set.id}-reps`;
+  const weightId = `${exerciseId}-${set.id}-weight`;
+
+  useEffect(() => {
+    if (!inputNav || slideIndex == null || baseOrder == null) return;
+    inputNav.register(repsId, { ref: repsRef, order: baseOrder, slideIndex });
+    inputNav.register(weightId, { ref: weightRef, order: baseOrder + 1, slideIndex });
+    return () => {
+      inputNav.unregister(repsId);
+      inputNav.unregister(weightId);
+    };
+  }, [inputNav, repsId, weightId, baseOrder, slideIndex]);
+
   return (
     <View className="mb-1 flex-row items-center gap-2 px-2 py-1">
       <Text className="w-8 text-center text-sm font-medium text-zinc-400 dark:text-zinc-500">
@@ -85,10 +108,12 @@ function SetRow({
       )}
       <View className="flex-1">
         <TextInput
+          ref={repsRef}
           keyboardType="numeric"
           value={set.reps != null ? String(set.reps) : ""}
           placeholder={String(suggestedReps)}
           placeholderTextColor={colors.placeholder}
+          onFocus={() => inputNav?.setFocusedId(repsId)}
           onChangeText={(text) =>
             updateSet(exerciseId, set.id, {
               reps: text ? Number(text) : undefined,
@@ -96,6 +121,7 @@ function SetRow({
           }
           className="rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 text-center dark:text-zinc-100"
           style={{ height: INPUT_HEIGHT, fontSize: 16, textAlignVertical: "center" }}
+          inputAccessoryViewID={WORKOUT_INPUT_ACCESSORY_ID}
           selectTextOnFocus
         />
       </View>
@@ -104,10 +130,12 @@ function SetRow({
       )}
       <View className="flex-1">
         <TextInput
+          ref={weightRef}
           keyboardType="numeric"
           value={set.weight != null ? String(set.weight) : ""}
           placeholder={String(suggestedWeight)}
           placeholderTextColor={colors.placeholder}
+          onFocus={() => inputNav?.setFocusedId(weightId)}
           onChangeText={(text) =>
             updateSet(exerciseId, set.id, {
               weight: text ? Number(text) : undefined,
@@ -115,6 +143,7 @@ function SetRow({
           }
           className="rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 text-center dark:text-zinc-100"
           style={{ height: INPUT_HEIGHT, fontSize: 16, textAlignVertical: "center" }}
+          inputAccessoryViewID={WORKOUT_INPUT_ACCESSORY_ID}
           selectTextOnFocus
         />
       </View>
@@ -123,7 +152,7 @@ function SetRow({
   );
 }
 
-export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
+export default function ExerciseSlide({ exercise, slideIndex = 0 }: ExerciseSlideProps) {
   const {
     addSet,
     addUnilateralPair,
@@ -350,6 +379,8 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                         (isBodyweight ? 0 : DEFAULT_WEIGHT)
                       }
                       isBodyweight={isBodyweight}
+                      slideIndex={slideIndex}
+                      baseOrder={(group.setNumber - 1) * 4}
                     />
                   )}
                   {group.leftSet && (
@@ -366,6 +397,8 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                         (isBodyweight ? 0 : DEFAULT_WEIGHT)
                       }
                       isBodyweight={isBodyweight}
+                      slideIndex={slideIndex}
+                      baseOrder={(group.setNumber - 1) * 4 + 2}
                     />
                   )}
                 </View>
@@ -390,6 +423,8 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                     suggestion.weight ?? (isBodyweight ? 0 : DEFAULT_WEIGHT)
                   }
                   isBodyweight={isBodyweight}
+                  slideIndex={slideIndex}
+                  baseOrder={index * 2}
                 />
               );
             })}
@@ -477,7 +512,6 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
         </View>
       </Modal>
 
-      <KeyboardToolbar />
     </View>
   );
 }
