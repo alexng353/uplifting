@@ -271,7 +271,7 @@ function AllTimeTab({
         />
         <StatCard
           label={`Volume (${unit})`}
-          value={formatVolume(allTimeStats.total_volume)}
+          value={formatVolume(convertWeight(Number(allTimeStats.total_volume), 'kg', unit))}
           icon="trending-up-outline"
           color="#22c55e"
         />
@@ -328,7 +328,7 @@ function AllTimeTab({
                 </Text>
                 <Text className="text-sm text-zinc-400 dark:text-zinc-500">
                   {ex.workout_count} workouts · {ex.total_sets} sets ·{" "}
-                  {formatVolume(ex.total_volume)} {unit}
+                  {formatVolume(convertWeight(Number(ex.total_volume), 'kg', unit))} {unit}
                 </Text>
               </View>
             </View>
@@ -359,7 +359,7 @@ function AllTimeTab({
                   {mg.group}
                 </Text>
                 <Text className="text-xs text-zinc-400 dark:text-zinc-500">
-                  {formatVolume(mg.volume)} {unit}
+                  {formatVolume(convertWeight(Number(mg.volume), 'kg', unit))} {unit}
                 </Text>
               </View>
               <View className="h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
