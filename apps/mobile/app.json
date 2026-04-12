@@ -43,7 +43,8 @@
         {
           "locationWhenInUsePermission": "Allow Uplifting to use your location to detect nearby gyms."
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "extra": {
       "router": {},
