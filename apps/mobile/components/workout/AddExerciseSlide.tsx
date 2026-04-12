@@ -209,7 +209,8 @@ export default function AddExerciseSlide({
           onChangeText={setSearchText}
           placeholder="Search exercises..."
           placeholderTextColor={colors.placeholder}
-          className="ml-2 flex-1 py-2.5 text-base dark:text-zinc-100"
+          className="ml-2 flex-1 py-2.5 dark:text-zinc-100"
+          style={{ fontSize: 16 }}
           autoCapitalize="none"
           autoCorrect={false}
         />

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { View, Text, Pressable, Alert } from "react-native";
+import { View, Text, Pressable, Alert, InputAccessoryView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import PagerView from "react-native-pager-view";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,10 +15,58 @@ import {
   setWorkoutLastSlide,
 } from "../../services/storage";
 import { api } from "../../lib/api";
-import ExerciseSlide from "../../components/workout/ExerciseSlide";
+import {
+  InputNavigationProvider,
+  useInputNavigation,
+} from "../../hooks/useInputNavigation";
+import ExerciseSlide, { WORKOUT_INPUT_ACCESSORY_ID } from "../../components/workout/ExerciseSlide";
 import AddExerciseSlide from "../../components/workout/AddExerciseSlide";
 import WorkoutSummary from "../../components/workout/WorkoutSummary";
 import ReorderModal from "../../components/workout/ReorderModal";
+
+function WorkoutKeyboardToolbar() {
+  const inputNav = useInputNavigation();
+  const colors = useThemeColors();
+  if (!inputNav) return null;
+  const { focusPrev, focusNext, dismiss } = inputNav;
+
+  return (
+    <InputAccessoryView nativeID={WORKOUT_INPUT_ACCESSORY_ID}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          paddingHorizontal: 16,
+          paddingVertical: 8,
+          backgroundColor: colors.keyboardToolbarBg,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: colors.keyboardToolbarBorder,
+        }}
+      >
+        <View style={{ flexDirection: "row", gap: 20 }}>
+          <Pressable onPress={focusPrev} hitSlop={8}>
+            <Ionicons name="chevron-up" size={22} color={colors.accentIcon} />
+          </Pressable>
+          <Pressable onPress={focusNext} hitSlop={8}>
+            <Ionicons name="chevron-down" size={22} color={colors.accentIcon} />
+          </Pressable>
+        </View>
+        <Pressable onPress={dismiss} hitSlop={8}>
+          <Text
+            style={{
+              color: colors.accentIcon,
+              fontSize: 16,
+              fontWeight: "600",
+            }}
+          >
+            Done
+          </Text>
+        </Pressable>
+      </View>
+    </InputAccessoryView>
+  );
+}
 
 function formatElapsed(startTime: string): string {
   const ms = Date.now() - new Date(startTime).getTime();
@@ -303,6 +351,7 @@ export default function WorkoutScreen() {
   if (!workout) return null;
 
   return (
+    <InputNavigationProvider activeSlide={activeSlide}>
     <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900" edges={["top"]}>
       {/* Header */}
       <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-3 pb-2 pt-2">
@@ -390,12 +439,12 @@ export default function WorkoutScreen() {
         initialPage={0}
         onPageSelected={handlePageSelected}
       >
-        {workout.exercises.map((exercise) => (
+        {workout.exercises.map((exercise, index) => (
           <View
             key={exercise.exerciseId + (exercise.profileId || "")}
             collapsable={false}
           >
-            <ExerciseSlide exercise={exercise} />
+            <ExerciseSlide exercise={exercise} slideIndex={index} />
           </View>
         ))}
         <View key="add" collapsable={false}>
@@ -417,6 +466,9 @@ export default function WorkoutScreen() {
         visible={showReorder}
         onClose={() => setShowReorder(false)}
       />
+
+      <WorkoutKeyboardToolbar />
     </SafeAreaView>
+    </InputNavigationProvider>
   );
 }

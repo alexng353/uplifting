@@ -50,5 +50,9 @@ export function useThemeColors() {
     tabBarBorder: dark ? "#27272a" : "#e4e4e7",
     tabActiveTint: dark ? "#0a84ff" : "#007AFF",
     tabInactiveTint: dark ? "#636366" : "#8e8e93",
+
+    // Keyboard toolbar
+    keyboardToolbarBg: dark ? "#2c2c2e" : "#d1d5db",
+    keyboardToolbarBorder: dark ? "#3a3a3c" : "#b0b0b5",
   };
 }
