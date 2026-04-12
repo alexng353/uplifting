@@ -28,9 +28,15 @@ bun api db:migrate       # run pending migrations
 bun api db:studio        # open Drizzle Studio GUI
 bun api db:seed          # seed database
 
-# Release
-bun release:ios          # bump, changelog, tag, push, build iOS
-bun release:ios minor    # minor version bump (default: patch)
+# Release (bumps version, generates changelog, tags, builds)
+bun release:ios            # --patch (default)
+bun release:ios --minor    # minor version bump
+bun release:ios --major    # major version bump
+
+# TestFlight (build-only, no version bump, EAS auto-increments build number)
+bun testflight
+
+# Utilities
 bun changelog:dry        # preview changelog without writing
 bun bump patch           # bump version only (patch|minor|major)
 
