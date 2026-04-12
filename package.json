@@ -1,7 +1,9 @@
 {
   "name": "uplifting-2",
   "private": true,
-  "workspaces": ["apps/*"],
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "api": "bun --filter api",
     "mobile": "bun --filter mobile",
@@ -10,6 +12,14 @@
     "testflight": "bash apps/mobile/scripts/testflight.sh",
     "changelog": "bun scripts/generate-changelog.ts",
     "changelog:dry": "bun scripts/generate-changelog.ts --dry-run",
-    "bump": "bun scripts/bump-version.ts"
+    "bump": "bun scripts/bump-version.ts",
+    "lint": "bunx oxlint .",
+    "fmt": "bunx oxfmt --write .",
+    "fmt:check": "bunx oxfmt --check .",
+    "postinstall": "git config core.hooksPath .githooks"
+  },
+  "devDependencies": {
+    "oxfmt": "^0.44.0",
+    "oxlint": "^1.59.0"
   }
 }

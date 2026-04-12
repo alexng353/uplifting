@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+
+echo "Running oxlint..."
+bunx oxlint .
+
+echo "Checking formatting with oxfmt..."
+bunx oxfmt --check .
