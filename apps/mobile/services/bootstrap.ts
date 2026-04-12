@@ -30,13 +30,11 @@ export async function fetchBootstrapData(): Promise<BootstrapData> {
     createdAt: gym.created_at ?? gym.createdAt ?? new Date().toISOString(),
   }));
 
-  const profiles: StoredProfile[] = data.profiles.map(
-    (profile) => ({
-      id: profile.id,
-      exerciseId: profile.exercise_id ?? profile.exerciseId,
-      name: profile.name,
-    }),
-  );
+  const profiles: StoredProfile[] = data.profiles.map((profile) => ({
+    id: profile.id,
+    exerciseId: profile.exercise_id ?? profile.exerciseId,
+    name: profile.name,
+  }));
 
   // Transform gym profile mappings to local format
   const gymProfileMappings: GymProfileMapping = {};
@@ -50,7 +48,13 @@ export async function fetchBootstrapData(): Promise<BootstrapData> {
   for (const [key, sets] of Object.entries(
     data.previous_sets as Record<
       string,
-      { reps: number; weight: string | number; weight_unit?: string; weightUnit?: string; side?: string }[]
+      {
+        reps: number;
+        weight: string | number;
+        weight_unit?: string;
+        weightUnit?: string;
+        side?: string;
+      }[]
     >,
   )) {
     previousSets[key] = sets.map(

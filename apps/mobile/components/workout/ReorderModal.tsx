@@ -81,15 +81,10 @@ export default function ReorderModal({ visible, onClose }: ReorderModalProps) {
                 </Pressable>
                 <Pressable
                   onPress={() => handleMoveDown(index)}
-                  disabled={
-                    !workout || index === workout.exercises.length - 1
-                  }
+                  disabled={!workout || index === workout.exercises.length - 1}
                   className="h-9 w-9 items-center justify-center rounded-md bg-zinc-200 dark:bg-zinc-700 active:bg-zinc-300 dark:active:bg-zinc-600"
                   style={{
-                    opacity:
-                      !workout || index === workout.exercises.length - 1
-                        ? 0.3
-                        : 1,
+                    opacity: !workout || index === workout.exercises.length - 1 ? 0.3 : 1,
                   }}
                 >
                   <Ionicons name="chevron-down" size={20} color={colors.secondaryText} />

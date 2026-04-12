@@ -22,7 +22,16 @@ const MAJOR_GROUP_MAP: Record<string, string[]> = {
   Chest: ["chest"],
   Back: ["upper back", "lats", "lower back", "traps", "rhomboids"],
   Arms: ["biceps", "triceps", "forearms", "brachialis"],
-  Legs: ["quads", "hamstrings", "glutes", "calves", "adductors", "abductors", "hip flexors", "tibialis"],
+  Legs: [
+    "quads",
+    "hamstrings",
+    "glutes",
+    "calves",
+    "adductors",
+    "abductors",
+    "hip flexors",
+    "tibialis",
+  ],
   Core: ["abs", "obliques", "transverse abdominis", "spinal erectors"],
 };
 

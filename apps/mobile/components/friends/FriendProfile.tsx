@@ -48,9 +48,7 @@ function formatVolume(volume: string | number): string {
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
   const now = new Date();
-  const diffDays = Math.floor(
-    (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24),
-  );
+  const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
 
   if (diffDays === 0) return "Today";
   if (diffDays === 1) return "Yesterday";
@@ -61,11 +59,7 @@ function formatDate(dateStr: string): string {
   });
 }
 
-export default function FriendProfile({
-  friend,
-  visible,
-  onClose,
-}: FriendProfileProps) {
+export default function FriendProfile({ friend, visible, onClose }: FriendProfileProps) {
   const { data, isLoading } = useFriendWorkouts(friend.user_id, visible);
   const { getDisplayUnit } = useSettings();
   const unit = getDisplayUnit();
@@ -91,9 +85,7 @@ export default function FriendProfile({
           {/* Profile Header */}
           <View className="items-center px-4 py-6">
             <View className="mb-3 h-20 w-20 items-center justify-center rounded-full bg-blue-500">
-              <Text className="text-2xl font-bold text-white">
-                {getInitials(friend.real_name)}
-              </Text>
+              <Text className="text-2xl font-bold text-white">{getInitials(friend.real_name)}</Text>
             </View>
             <Text className="text-xl font-bold dark:text-zinc-100">{friend.real_name}</Text>
             <Text className="text-sm text-zinc-400 dark:text-zinc-500">@{friend.username}</Text>
@@ -192,21 +184,13 @@ export default function FriendProfile({
                         </Text>
                         <View className="mt-2 flex-row gap-4">
                           <View className="flex-row items-center gap-1">
-                            <Ionicons
-                              name="time-outline"
-                              size={14}
-                              color={colors.secondaryText}
-                            />
+                            <Ionicons name="time-outline" size={14} color={colors.secondaryText} />
                             <Text className="text-sm text-zinc-500 dark:text-zinc-400">
                               {formatDuration(workout.duration_minutes)}
                             </Text>
                           </View>
                           <View className="flex-row items-center gap-1">
-                            <Ionicons
-                              name="trending-up"
-                              size={14}
-                              color={colors.secondaryText}
-                            />
+                            <Ionicons name="trending-up" size={14} color={colors.secondaryText} />
                             <Text className="text-sm text-zinc-500 dark:text-zinc-400">
                               {formatVolume(workout.total_volume)} {unit}
                             </Text>

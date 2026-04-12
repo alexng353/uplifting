@@ -36,8 +36,7 @@ export function suggestWorkoutTitle(
   currentExerciseIds: string[],
   minSimilarity = 0.5,
 ): string | undefined {
-  if (currentExerciseIds.length === 0 || sequences.length === 0)
-    return undefined;
+  if (currentExerciseIds.length === 0 || sequences.length === 0) return undefined;
 
   const currentSet = new Set(currentExerciseIds);
   let bestTitle: string | undefined;

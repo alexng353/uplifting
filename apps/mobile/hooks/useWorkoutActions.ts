@@ -6,17 +6,37 @@ export interface WorkoutActions {
   workout: StoredWorkout | null;
   isActive: boolean;
   mode: "live" | "editing";
-  addExercise: (exerciseId: string, exerciseName: string, profileId?: string, exerciseType?: string) => void;
+  addExercise: (
+    exerciseId: string,
+    exerciseName: string,
+    profileId?: string,
+    exerciseType?: string,
+  ) => void;
   removeExercise: (exerciseId: string) => void;
   reorderExercises: (newOrder: string[]) => void;
-  addSet: (exerciseId: string, weightUnit: string, reps?: number, weight?: number, side?: "L" | "R") => void;
-  addUnilateralPair: (exerciseId: string, weightUnit: string, reps?: number, weight?: number) => void;
+  addSet: (
+    exerciseId: string,
+    weightUnit: string,
+    reps?: number,
+    weight?: number,
+    side?: "L" | "R",
+  ) => void;
+  addUnilateralPair: (
+    exerciseId: string,
+    weightUnit: string,
+    reps?: number,
+    weight?: number,
+  ) => void;
   updateSet: (exerciseId: string, setId: string, updates: Partial<StoredSet>) => void;
   removeSet: (exerciseId: string, setId: string) => void;
   removeLastSet: (exerciseId: string) => void;
   removeLastUnilateralPair: (exerciseId: string) => void;
   toggleUnilateral: (exerciseId: string) => void;
-  changeExerciseProfile: (exerciseId: string, profileId: string | undefined, exerciseName: string) => void;
+  changeExerciseProfile: (
+    exerciseId: string,
+    profileId: string | undefined,
+    exerciseName: string,
+  ) => void;
 }
 
 // EditWorkoutContext — provided by EditWorkoutProvider (created in Task 5).

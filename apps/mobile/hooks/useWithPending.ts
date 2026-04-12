@@ -40,8 +40,7 @@ interface UseWithPendingResult<TUnified> {
 export function useWithPending<TRemote, TLocal, TUnified>(
   options: UseWithPendingOptions<TRemote, TLocal, TUnified>,
 ): UseWithPendingResult<TUnified> {
-  const { query, getPending, transformLocal, transformRemote, isDuplicate } =
-    options;
+  const { query, getPending, transformLocal, transformRemote, isDuplicate } = options;
 
   const [pendingRaw, setPendingRaw] = useState<TLocal[]>(() => {
     const pending = getPending();
@@ -69,23 +68,16 @@ export function useWithPending<TRemote, TLocal, TUnified>(
   }, [query, refreshPending]);
 
   // Transform and combine data
-  const pendingItems = useMemo(
-    () => pendingRaw.map(transformLocal),
-    [pendingRaw, transformLocal],
-  );
+  const pendingItems = useMemo(() => pendingRaw.map(transformLocal), [pendingRaw, transformLocal]);
   const remoteData = query.data ?? [];
-  const syncedItems = useMemo(
-    () => remoteData.map(transformRemote),
-    [remoteData, transformRemote],
-  );
+  const syncedItems = useMemo(() => remoteData.map(transformRemote), [remoteData, transformRemote]);
 
   // Filter out duplicates if isDuplicate is provided
   const filteredPending = useMemo(
     () =>
       isDuplicate
         ? pendingItems.filter(
-            (pending) =>
-              !syncedItems.some((synced) => isDuplicate(pending, synced)),
+            (pending) => !syncedItems.some((synced) => isDuplicate(pending, synced)),
           )
         : pendingItems,
     [pendingItems, syncedItems, isDuplicate],
@@ -94,12 +86,8 @@ export function useWithPending<TRemote, TLocal, TUnified>(
   // Build combined items list with pending status
   const items: MaybesPendingItem<TUnified>[] = useMemo(
     () => [
-      ...filteredPending.map(
-        (data): PendingItem<TUnified> => ({ data, isPending: true }),
-      ),
-      ...syncedItems.map(
-        (data): SyncedItem<TUnified> => ({ data, isPending: false }),
-      ),
+      ...filteredPending.map((data): PendingItem<TUnified> => ({ data, isPending: true })),
+      ...syncedItems.map((data): SyncedItem<TUnified> => ({ data, isPending: false })),
     ],
     [filteredPending, syncedItems],
   );

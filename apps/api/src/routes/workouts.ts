@@ -64,10 +64,9 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
 
   // GET /all-time-stats — aggregate stats across all workouts
   .get("/all-time-stats", async ({ userId }) => {
-    const [totals, timeResult, streakResult, topExercises, muscleVolume] =
-      await Promise.all([
-        // Query 1 — Total stats
-        sql`
+    const [totals, timeResult, streakResult, topExercises, muscleVolume] = await Promise.all([
+      // Query 1 — Total stats
+      sql`
           SELECT
             COUNT(DISTINCT w.id) as total_workouts,
             -- Normalize to kg: lbs * 0.453592
@@ -78,14 +77,14 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
           LEFT JOIN user_sets s ON s.workout_id = w.id
           WHERE w.user_id = ${userId} AND w.kind = 'workout'
         `,
-        // Query 2 — Total time
-        sql`
+      // Query 2 — Total time
+      sql`
           SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (COALESCE(end_time, NOW()) - start_time)) / 60), 0)::bigint as total_time_minutes
           FROM workouts
           WHERE user_id = ${userId} AND kind = 'workout'
         `,
-        // Query 3 — Best streak
-        sql`
+      // Query 3 — Best streak
+      sql`
           WITH workout_dates AS (
             SELECT DISTINCT (start_time AT TIME ZONE 'UTC')::date AS d
             FROM workouts WHERE user_id = ${userId}
@@ -97,8 +96,8 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
           SELECT COALESCE(MAX(cnt), 0)::bigint as best_streak
           FROM (SELECT COUNT(*) as cnt FROM numbered GROUP BY grp) sub
         `,
-        // Query 4 — Top exercises (limit 10)
-        sql`
+      // Query 4 — Top exercises (limit 10)
+      sql`
           SELECT
             e.id, e.name,
             COUNT(DISTINCT s.workout_id) as workout_count,
@@ -111,8 +110,8 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
           ORDER BY COUNT(DISTINCT s.workout_id) DESC
           LIMIT 10
         `,
-        // Query 5 — Muscle group volume
-        sql`
+      // Query 5 — Muscle group volume
+      sql`
           SELECT
             COALESCE(m.major_group, 'Other') as "group",
             COALESCE(SUM((CASE WHEN s.weight_unit = 'lbs' THEN s.weight * 0.453592 ELSE s.weight END) * s.reps), 0) as volume
@@ -122,12 +121,9 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
           WHERE s.user_id = ${userId}
           GROUP BY m.major_group
         `,
-      ]);
+    ]);
 
-    const maxVolume = Math.max(
-      ...muscleVolume.map((r) => Number(r.volume)),
-      1,
-    );
+    const maxVolume = Math.max(...muscleVolume.map((r) => Number(r.volume)), 1);
     const muscleGroupVolumeList = muscleVolume.map((row) => ({
       group: row.group as string,
       volume: Number(row.volume),
@@ -194,9 +190,7 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
     const [workout] = await db
       .select()
       .from(workouts)
-      .where(
-        and(eq(workouts.id, params.workoutId), eq(workouts.userId, userId)),
-      )
+      .where(and(eq(workouts.id, params.workoutId), eq(workouts.userId, userId)))
       .limit(1);
 
     if (!workout) {
@@ -213,7 +207,12 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
     // Group sets by (exercise_id, profile_id)
     const groupMap = new Map<
       string,
-      { exercise_id: string; profile_id: string | null; is_unilateral: boolean; sets: (typeof sets)[number][] }
+      {
+        exercise_id: string;
+        profile_id: string | null;
+        is_unilateral: boolean;
+        sets: (typeof sets)[number][];
+      }
     >();
 
     for (const s of sets) {
@@ -245,9 +244,7 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
     const [workout] = await db
       .select({ id: workouts.id })
       .from(workouts)
-      .where(
-        and(eq(workouts.id, params.workoutId), eq(workouts.userId, userId)),
-      )
+      .where(and(eq(workouts.id, params.workoutId), eq(workouts.userId, userId)))
       .limit(1);
 
     if (!workout) {
@@ -291,12 +288,7 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
       const [existing] = await db
         .select({ id: workouts.id })
         .from(workouts)
-        .where(
-          and(
-            eq(workouts.id, params.workoutId),
-            eq(workouts.userId, userId),
-          ),
-        )
+        .where(and(eq(workouts.id, params.workoutId), eq(workouts.userId, userId)))
         .limit(1);
 
       if (!existing) {
@@ -316,9 +308,17 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
 
           let updated;
           if (Object.keys(updates).length > 0) {
-            [updated] = await tx.update(workouts).set(updates).where(eq(workouts.id, params.workoutId)).returning();
+            [updated] = await tx
+              .update(workouts)
+              .set(updates)
+              .where(eq(workouts.id, params.workoutId))
+              .returning();
           } else {
-            [updated] = await tx.select().from(workouts).where(eq(workouts.id, params.workoutId)).limit(1);
+            [updated] = await tx
+              .select()
+              .from(workouts)
+              .where(eq(workouts.id, params.workoutId))
+              .limit(1);
           }
 
           // 2. Delete all existing sets
@@ -346,13 +346,30 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
         });
 
         // Re-fetch sets and group them (same shape as GET /:workoutId)
-        const sets = await db.select().from(userSets).where(eq(userSets.workoutId, params.workoutId)).orderBy(asc(userSets.createdAt));
+        const sets = await db
+          .select()
+          .from(userSets)
+          .where(eq(userSets.workoutId, params.workoutId))
+          .orderBy(asc(userSets.createdAt));
 
-        const groupMap = new Map<string, { exercise_id: string; profile_id: string | null; is_unilateral: boolean; sets: (typeof sets)[number][] }>();
+        const groupMap = new Map<
+          string,
+          {
+            exercise_id: string;
+            profile_id: string | null;
+            is_unilateral: boolean;
+            sets: (typeof sets)[number][];
+          }
+        >();
         for (const s of sets) {
           const key = `${s.exerciseId}|${s.profileId ?? "null"}`;
           if (!groupMap.has(key)) {
-            groupMap.set(key, { exercise_id: s.exerciseId, profile_id: s.profileId, is_unilateral: false, sets: [] });
+            groupMap.set(key, {
+              exercise_id: s.exerciseId,
+              profile_id: s.profileId,
+              is_unilateral: false,
+              sets: [],
+            });
           }
           const group = groupMap.get(key)!;
           if (s.side !== null) group.is_unilateral = true;
@@ -366,12 +383,9 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
       const updates: Record<string, unknown> = {};
       if (body.name !== undefined) updates.name = body.name;
       if (body.privacy !== undefined) updates.privacy = body.privacy;
-      if (body.gym_location !== undefined)
-        updates.gymLocation = body.gym_location;
-      if (body.start_time !== undefined)
-        updates.startTime = new Date(body.start_time);
-      if (body.end_time !== undefined)
-        updates.endTime = new Date(body.end_time);
+      if (body.gym_location !== undefined) updates.gymLocation = body.gym_location;
+      if (body.start_time !== undefined) updates.startTime = new Date(body.start_time);
+      if (body.end_time !== undefined) updates.endTime = new Date(body.end_time);
 
       const [updated] = await db
         .update(workouts)
@@ -416,12 +430,7 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
     const [existing] = await db
       .select({ id: workouts.id })
       .from(workouts)
-      .where(
-        and(
-          eq(workouts.id, params.workoutId),
-          eq(workouts.userId, userId),
-        ),
-      )
+      .where(and(eq(workouts.id, params.workoutId), eq(workouts.userId, userId)))
       .limit(1);
 
     if (!existing) {
@@ -430,9 +439,7 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
     }
 
     // Delete sets first, then workout
-    await db
-      .delete(userSets)
-      .where(eq(userSets.workoutId, params.workoutId));
+    await db.delete(userSets).where(eq(userSets.workoutId, params.workoutId));
     await db.delete(workouts).where(eq(workouts.id, params.workoutId));
 
     return "deleted";

@@ -12,12 +12,12 @@
 
 ## File Map
 
-| File | Action | Responsibility |
-|------|--------|----------------|
-| `apps/mobile/services/storage.ts` | Modify | Add `TodayRestDay` type, storage key, CRUD helpers, date utility |
-| `apps/api/src/routes/sync.ts` | Modify | Add dedup check for `kind = "rest"` before insert |
-| `apps/mobile/hooks/useWorkout.tsx` | Modify | Add `todayRestDay` state, `cancelRestDay`, `reconcileRestDay`, update `logRestDay` |
-| `apps/mobile/hooks/useSync.tsx` | Modify | Write `syncedWorkoutId` to storage after rest day sync; handle cancel-while-syncing race |
+| File                                 | Action | Responsibility                                                                                                  |
+| ------------------------------------ | ------ | --------------------------------------------------------------------------------------------------------------- |
+| `apps/mobile/services/storage.ts`    | Modify | Add `TodayRestDay` type, storage key, CRUD helpers, date utility                                                |
+| `apps/api/src/routes/sync.ts`        | Modify | Add dedup check for `kind = "rest"` before insert                                                               |
+| `apps/mobile/hooks/useWorkout.tsx`   | Modify | Add `todayRestDay` state, `cancelRestDay`, `reconcileRestDay`, update `logRestDay`                              |
+| `apps/mobile/hooks/useSync.tsx`      | Modify | Write `syncedWorkoutId` to storage after rest day sync; handle cancel-while-syncing race                        |
 | `apps/mobile/app/(tabs)/workout.tsx` | Modify | Add rest day render branch, reconciliation effect, cancel handler, hide rest day button when today has workouts |
 
 ---
@@ -25,6 +25,7 @@
 ### Task 1: Storage Layer — TodayRestDay
 
 **Files:**
+
 - Modify: `apps/mobile/services/storage.ts`
 
 - [ ] **Step 1: Add TodayRestDay type and storage key**
@@ -39,10 +40,10 @@ TODAY_REST_DAY: "today_rest_day",
 ```typescript
 // After the ExerciseSequenceEntry types (around line 167):
 export interface TodayRestDay {
-  workoutId: string;         // local StoredWorkout.id
-  date: string;              // YYYY-MM-DD for staleness check
-  startTime: string;         // ISO timestamp for multi-device dedup
-  syncedWorkoutId?: string;  // server workout ID after sync
+  workoutId: string; // local StoredWorkout.id
+  date: string; // YYYY-MM-DD for staleness check
+  startTime: string; // ISO timestamp for multi-device dedup
+  syncedWorkoutId?: string; // server workout ID after sync
 }
 ```
 
@@ -85,6 +86,7 @@ git commit -m "feat: add TodayRestDay storage type and helpers"
 ### Task 2: Server-Side Dedup
 
 **Files:**
+
 - Modify: `apps/api/src/routes/sync.ts`
 
 - [ ] **Step 1: Add dedup check in POST /sync/workout**
@@ -216,6 +218,7 @@ git commit -m "feat: add server-side dedup for rest days in sync endpoint"
 ### Task 3: WorkoutProvider — Rest Day State
 
 **Files:**
+
 - Modify: `apps/mobile/hooks/useWorkout.tsx`
 
 - [ ] **Step 1: Add imports and types**
@@ -275,11 +278,7 @@ interface WorkoutContextValue {
     reps?: number,
     weight?: number,
   ) => void;
-  updateSet: (
-    exerciseId: string,
-    setId: string,
-    updates: Partial<StoredSet>,
-  ) => void;
+  updateSet: (exerciseId: string, setId: string, updates: Partial<StoredSet>) => void;
   removeSet: (exerciseId: string, setId: string) => void;
   removeLastSet: (exerciseId: string) => void;
   removeLastUnilateralPair: (exerciseId: string) => void;
@@ -306,13 +305,13 @@ const [todayRestDayState, setTodayRestDayState] = useState<TodayRestDay | null>(
 In the existing `useEffect` (the mount effect that loads the current workout), add rest day loading at the end, after the `if (current)` block but still inside the effect:
 
 ```typescript
-    // Load today's rest day from storage
-    const storedRestDay = getTodayRestDay();
-    if (storedRestDay && storedRestDay.date === getLocalDateString()) {
-      setTodayRestDayState(storedRestDay);
-    } else if (storedRestDay) {
-      clearTodayRestDay(); // Stale — different day
-    }
+// Load today's rest day from storage
+const storedRestDay = getTodayRestDay();
+if (storedRestDay && storedRestDay.date === getLocalDateString()) {
+  setTodayRestDayState(storedRestDay);
+} else if (storedRestDay) {
+  clearTodayRestDay(); // Stale — different day
+}
 ```
 
 - [ ] **Step 3: Update logRestDay to save TODAY_REST_DAY**
@@ -320,33 +319,33 @@ In the existing `useEffect` (the mount effect that loads the current workout), a
 Replace the existing `logRestDay` callback:
 
 ```typescript
-  const logRestDay = useCallback((): StoredWorkout | null => {
-    if (todayRestDayState) return null; // Already a rest day today
+const logRestDay = useCallback((): StoredWorkout | null => {
+  if (todayRestDayState) return null; // Already a rest day today
 
-    const settings = getSettings();
-    const now = new Date().toISOString();
-    const restDay: StoredWorkout = {
-      id: generateId(),
-      startTime: now,
-      exercises: [],
-      privacy: settings.defaultPrivacy,
-      kind: "rest",
-      name: "Rest Day",
-    };
+  const settings = getSettings();
+  const now = new Date().toISOString();
+  const restDay: StoredWorkout = {
+    id: generateId(),
+    startTime: now,
+    exercises: [],
+    privacy: settings.defaultPrivacy,
+    kind: "rest",
+    name: "Rest Day",
+  };
 
-    const pointer: TodayRestDay = {
-      workoutId: restDay.id,
-      date: getLocalDateString(),
-      startTime: now,
-    };
-    setTodayRestDay(pointer);
-    setTodayRestDayState(pointer);
+  const pointer: TodayRestDay = {
+    workoutId: restDay.id,
+    date: getLocalDateString(),
+    startTime: now,
+  };
+  setTodayRestDay(pointer);
+  setTodayRestDayState(pointer);
 
-    setPendingWorkout(restDay);
-    setHasPendingWorkout(true);
+  setPendingWorkout(restDay);
+  setHasPendingWorkout(true);
 
-    return restDay;
-  }, [todayRestDayState]);
+  return restDay;
+}, [todayRestDayState]);
 ```
 
 - [ ] **Step 4: Add cancelRestDay**
@@ -354,22 +353,22 @@ Replace the existing `logRestDay` callback:
 Add after `logRestDay`:
 
 ```typescript
-  const cancelRestDay = useCallback((): string | undefined => {
-    const current = getTodayRestDay();
-    const syncedId = current?.syncedWorkoutId;
+const cancelRestDay = useCallback((): string | undefined => {
+  const current = getTodayRestDay();
+  const syncedId = current?.syncedWorkoutId;
 
-    clearTodayRestDay();
-    setTodayRestDayState(null);
+  clearTodayRestDay();
+  setTodayRestDayState(null);
 
-    // Clear pending if not yet synced
-    const pending = getPendingWorkout();
-    if (pending && pending.kind === "rest") {
-      setPendingWorkout(null);
-      setHasPendingWorkout(false);
-    }
+  // Clear pending if not yet synced
+  const pending = getPendingWorkout();
+  if (pending && pending.kind === "rest") {
+    setPendingWorkout(null);
+    setHasPendingWorkout(false);
+  }
 
-    return syncedId;
-  }, []);
+  return syncedId;
+}, []);
 ```
 
 - [ ] **Step 5: Add reconcileRestDay**
@@ -377,36 +376,36 @@ Add after `logRestDay`:
 Add after `cancelRestDay`:
 
 ```typescript
-  const reconcileRestDay = useCallback((serverWorkouts: any[]) => {
-    const today = getLocalDateString();
-    const serverRestDay = serverWorkouts.find((w: any) => {
-      return getLocalDateString(w.startTime) === today && w.kind === "rest";
-    });
+const reconcileRestDay = useCallback((serverWorkouts: any[]) => {
+  const today = getLocalDateString();
+  const serverRestDay = serverWorkouts.find((w: any) => {
+    return getLocalDateString(w.startTime) === today && w.kind === "rest";
+  });
 
-    const local = getTodayRestDay();
+  const local = getTodayRestDay();
 
-    if (serverRestDay && !local) {
-      // Server has rest day, local doesn't — adopt (logged on another device)
-      const pointer: TodayRestDay = {
-        workoutId: serverRestDay.id,
-        date: today,
-        startTime: serverRestDay.startTime,
-        syncedWorkoutId: serverRestDay.id,
-      };
-      setTodayRestDay(pointer);
-      setTodayRestDayState(pointer);
-    } else if (local && serverRestDay && !local.syncedWorkoutId) {
-      // Local was pending, server now has it — update with server ID
-      const updated: TodayRestDay = {
-        ...local,
-        syncedWorkoutId: serverRestDay.id,
-      };
-      setTodayRestDay(updated);
-      setTodayRestDayState(updated);
-    }
-    // If local has rest day but server doesn't → still pending sync, keep local
-    // If neither has rest day → nothing to do
-  }, []);
+  if (serverRestDay && !local) {
+    // Server has rest day, local doesn't — adopt (logged on another device)
+    const pointer: TodayRestDay = {
+      workoutId: serverRestDay.id,
+      date: today,
+      startTime: serverRestDay.startTime,
+      syncedWorkoutId: serverRestDay.id,
+    };
+    setTodayRestDay(pointer);
+    setTodayRestDayState(pointer);
+  } else if (local && serverRestDay && !local.syncedWorkoutId) {
+    // Local was pending, server now has it — update with server ID
+    const updated: TodayRestDay = {
+      ...local,
+      syncedWorkoutId: serverRestDay.id,
+    };
+    setTodayRestDay(updated);
+    setTodayRestDayState(updated);
+  }
+  // If local has rest day but server doesn't → still pending sync, keep local
+  // If neither has rest day → nothing to do
+}, []);
 ```
 
 - [ ] **Step 6: Update startWorkout to guard against rest day**
@@ -414,22 +413,22 @@ Add after `cancelRestDay`:
 Add a guard at the top of the existing `startWorkout` callback:
 
 ```typescript
-  const startWorkout = useCallback(() => {
-    if (todayRestDayState) return; // Can't start workout on a rest day
+const startWorkout = useCallback(() => {
+  if (todayRestDayState) return; // Can't start workout on a rest day
 
-    const settings = getSettings();
-    const newWorkout: StoredWorkout = {
-      id: generateId(),
-      startTime: new Date().toISOString(),
-      exercises: [],
-      privacy: settings.defaultPrivacy,
-      kind: "workout",
-    };
-    saveWorkout(newWorkout);
+  const settings = getSettings();
+  const newWorkout: StoredWorkout = {
+    id: generateId(),
+    startTime: new Date().toISOString(),
+    exercises: [],
+    privacy: settings.defaultPrivacy,
+    kind: "workout",
+  };
+  saveWorkout(newWorkout);
 
-    // Auto-detect nearby gym (fire-and-forget)
-    detectAndSetNearbyGym().catch(() => {});
-  }, [saveWorkout, todayRestDayState]);
+  // Auto-detect nearby gym (fire-and-forget)
+  detectAndSetNearbyGym().catch(() => {});
+}, [saveWorkout, todayRestDayState]);
 ```
 
 - [ ] **Step 7: Update context provider value**
@@ -476,6 +475,7 @@ git commit -m "feat: add rest day state management to WorkoutProvider"
 ### Task 4: Sync Hook — Rest Day Awareness
 
 **Files:**
+
 - Modify: `apps/mobile/hooks/useSync.tsx`
 
 - [ ] **Step 1: Add imports**
@@ -507,54 +507,52 @@ import { api } from "../lib/api";
 Update the `onSyncSuccess` callback to accept the second `localData` argument and handle rest days. Replace the existing `onSyncSuccess`:
 
 ```typescript
-  const onSyncSuccess = useCallback(
-    async (response: any, localData: StoredWorkout) => {
-      // Handle rest day sync completion
-      if (localData.kind === "rest") {
-        const currentRestDay = getTodayRestDay();
-        if (currentRestDay) {
-          // Rest day still active — save the synced server ID
-          setTodayRestDay({
-            ...currentRestDay,
-            syncedWorkoutId: response.workout_id,
-          });
-        } else {
-          // User cancelled while sync was in-flight — delete from server
-          try {
-            await (api.api.v1.workouts as any)[response.workout_id].delete();
-          } catch {
-            // Best-effort cleanup
-          }
+const onSyncSuccess = useCallback(
+  async (response: any, localData: StoredWorkout) => {
+    // Handle rest day sync completion
+    if (localData.kind === "rest") {
+      const currentRestDay = getTodayRestDay();
+      if (currentRestDay) {
+        // Rest day still active — save the synced server ID
+        setTodayRestDay({
+          ...currentRestDay,
+          syncedWorkoutId: response.workout_id,
+        });
+      } else {
+        // User cancelled while sync was in-flight — delete from server
+        try {
+          await (api.api.v1.workouts as any)[response.workout_id].delete();
+        } catch {
+          // Best-effort cleanup
         }
       }
+    }
 
-      if (response.previous_sets) {
-        for (const [key, sets] of Object.entries(
-          response.previous_sets as Record<string, any[]>,
-        )) {
-          const parts = key.split("_");
-          const exerciseId = parts[0];
-          const profileId = parts.slice(1).join("_");
-          updatePreviousSets(
-            exerciseId,
-            profileId === "default" ? null : profileId,
-            (sets as any[]).map((s) => ({
-              id: generateId(),
-              reps: s.reps,
-              weight: Number(s.weight),
-              weightUnit: s.weight_unit ?? s.weightUnit,
-              createdAt: new Date().toISOString(),
-              side: s.side as "L" | "R" | undefined,
-            })),
-          );
-        }
+    if (response.previous_sets) {
+      for (const [key, sets] of Object.entries(response.previous_sets as Record<string, any[]>)) {
+        const parts = key.split("_");
+        const exerciseId = parts[0];
+        const profileId = parts.slice(1).join("_");
+        updatePreviousSets(
+          exerciseId,
+          profileId === "default" ? null : profileId,
+          (sets as any[]).map((s) => ({
+            id: generateId(),
+            reps: s.reps,
+            weight: Number(s.weight),
+            weightUnit: s.weight_unit ?? s.weightUnit,
+            createdAt: new Date().toISOString(),
+            side: s.side as "L" | "R" | undefined,
+          })),
+        );
       }
-      queryClient.invalidateQueries({ queryKey: ["workouts"] });
-      queryClient.invalidateQueries({ queryKey: ["streak"] });
-      queryClient.invalidateQueries({ queryKey: ["all-time-stats"] });
-    },
-    [queryClient],
-  );
+    }
+    queryClient.invalidateQueries({ queryKey: ["workouts"] });
+    queryClient.invalidateQueries({ queryKey: ["streak"] });
+    queryClient.invalidateQueries({ queryKey: ["all-time-stats"] });
+  },
+  [queryClient],
+);
 ```
 
 - [ ] **Step 3: Commit**
@@ -569,6 +567,7 @@ git commit -m "feat: handle rest day sync completion and cancel-while-syncing ra
 ### Task 5: Workout Tab — UI and Reconciliation
 
 **Files:**
+
 - Modify: `apps/mobile/app/(tabs)/workout.tsx`
 
 - [ ] **Step 1: Add imports**
@@ -590,37 +589,37 @@ Update the `useCallback` import on line 1 to also include `useMemo` (it's alread
 Inside `WorkoutScreen`, add after the existing `useThemeColors` call:
 
 ```typescript
-  const queryClient = useQueryClient();
-  const { data: serverWorkouts } = useWorkouts(1, 20);
+const queryClient = useQueryClient();
+const { data: serverWorkouts } = useWorkouts(1, 20);
 ```
 
 Destructure the new context values — update the `useWorkout()` destructure:
 
 ```typescript
-  const {
-    workout,
-    isActive,
-    todayRestDay,
-    startWorkout,
-    logRestDay,
-    cancelRestDay,
-    reconcileRestDay,
-    removeExercise,
-    finishWorkout,
-    cancelWorkout,
-  } = useWorkout();
+const {
+  workout,
+  isActive,
+  todayRestDay,
+  startWorkout,
+  logRestDay,
+  cancelRestDay,
+  reconcileRestDay,
+  removeExercise,
+  finishWorkout,
+  cancelWorkout,
+} = useWorkout();
 ```
 
 Add derived state for whether today has workouts:
 
 ```typescript
-  const todayHasWorkouts = useMemo(() => {
-    if (!serverWorkouts) return false;
-    const today = getLocalDateString();
-    return serverWorkouts.some(
-      (w: any) => getLocalDateString(w.startTime) === today && w.kind === "workout",
-    );
-  }, [serverWorkouts]);
+const todayHasWorkouts = useMemo(() => {
+  if (!serverWorkouts) return false;
+  const today = getLocalDateString();
+  return serverWorkouts.some(
+    (w: any) => getLocalDateString(w.startTime) === today && w.kind === "workout",
+  );
+}, [serverWorkouts]);
 ```
 
 - [ ] **Step 3: Add reconciliation effect**
@@ -628,12 +627,12 @@ Add derived state for whether today has workouts:
 Add after the existing effects (after the `handlePageSelected` declaration is fine, or group with the other effects):
 
 ```typescript
-  // Reconcile local rest day state with server data
-  useEffect(() => {
-    if (serverWorkouts) {
-      reconcileRestDay(serverWorkouts);
-    }
-  }, [serverWorkouts, reconcileRestDay]);
+// Reconcile local rest day state with server data
+useEffect(() => {
+  if (serverWorkouts) {
+    reconcileRestDay(serverWorkouts);
+  }
+}, [serverWorkouts, reconcileRestDay]);
 ```
 
 - [ ] **Step 4: Add cancel rest day handler**
@@ -641,19 +640,19 @@ Add after the existing effects (after the `handlePageSelected` declaration is fi
 Add after the existing `handleLogRestDay`:
 
 ```typescript
-  const handleCancelRestDay = useCallback(async () => {
-    const syncedWorkoutId = cancelRestDay();
-    if (syncedWorkoutId) {
-      try {
-        await (api.api.v1.workouts as any)[syncedWorkoutId].delete();
-      } catch {
-        // Best-effort — server reconciliation will clean up
-      }
+const handleCancelRestDay = useCallback(async () => {
+  const syncedWorkoutId = cancelRestDay();
+  if (syncedWorkoutId) {
+    try {
+      await (api.api.v1.workouts as any)[syncedWorkoutId].delete();
+    } catch {
+      // Best-effort — server reconciliation will clean up
     }
-    queryClient.invalidateQueries({ queryKey: ["workouts"] });
-    queryClient.invalidateQueries({ queryKey: ["streak"] });
-    queryClient.invalidateQueries({ queryKey: ["all-time-stats"] });
-  }, [cancelRestDay, queryClient]);
+  }
+  queryClient.invalidateQueries({ queryKey: ["workouts"] });
+  queryClient.invalidateQueries({ queryKey: ["streak"] });
+  queryClient.invalidateQueries({ queryKey: ["all-time-stats"] });
+}, [cancelRestDay, queryClient]);
 ```
 
 - [ ] **Step 5: Add rest day render branch**

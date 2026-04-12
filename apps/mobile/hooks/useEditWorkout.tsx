@@ -93,8 +93,7 @@ export function useEditWorkoutState(workoutId: string) {
   // Fetch exercise names
   const { data: exerciseList } = useQuery({
     queryKey: ["exercises"],
-    queryFn: async () =>
-      unwrap(await api.api.v1.exercises.get({ query: { limit: "500" } })),
+    queryFn: async () => unwrap(await api.api.v1.exercises.get({ query: { limit: "500" } })),
   });
 
   const exerciseMap = useMemo(
@@ -156,8 +155,7 @@ export function useEditWorkoutState(workoutId: string) {
 
   // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: async () =>
-      unwrap(await api.api.v1.workouts({ workoutId }).delete()),
+    mutationFn: async () => unwrap(await api.api.v1.workouts({ workoutId }).delete()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workouts"] });
       queryClient.invalidateQueries({ queryKey: ["all-time-stats"] });
@@ -177,33 +175,22 @@ export function useEditWorkoutState(workoutId: string) {
         isActive: true,
         mode: "editing",
         addExercise: (exerciseId, exerciseName, profileId?, exerciseType?) =>
-          apply((w) =>
-            addExerciseMutation(w, exerciseId, exerciseName, profileId, exerciseType),
-          ),
-        removeExercise: (exerciseId) =>
-          apply((w) => removeExerciseMutation(w, exerciseId)),
-        reorderExercises: (newOrder) =>
-          apply((w) => reorderExercisesMutation(w, newOrder)),
+          apply((w) => addExerciseMutation(w, exerciseId, exerciseName, profileId, exerciseType)),
+        removeExercise: (exerciseId) => apply((w) => removeExerciseMutation(w, exerciseId)),
+        reorderExercises: (newOrder) => apply((w) => reorderExercisesMutation(w, newOrder)),
         addSet: (exerciseId, weightUnit, reps?, weight?, side?) =>
           apply((w) => addSetMutation(w, exerciseId, weightUnit, reps, weight, side)),
         addUnilateralPair: (exerciseId, weightUnit, reps?, weight?) =>
-          apply((w) =>
-            addUnilateralPairMutation(w, exerciseId, weightUnit, reps, weight),
-          ),
+          apply((w) => addUnilateralPairMutation(w, exerciseId, weightUnit, reps, weight)),
         updateSet: (exerciseId, setId, updates) =>
           apply((w) => updateSetMutation(w, exerciseId, setId, updates)),
-        removeSet: (exerciseId, setId) =>
-          apply((w) => removeSetMutation(w, exerciseId, setId)),
-        removeLastSet: (exerciseId) =>
-          apply((w) => removeLastSetMutation(w, exerciseId)),
+        removeSet: (exerciseId, setId) => apply((w) => removeSetMutation(w, exerciseId, setId)),
+        removeLastSet: (exerciseId) => apply((w) => removeLastSetMutation(w, exerciseId)),
         removeLastUnilateralPair: (exerciseId) =>
           apply((w) => removeLastUnilateralPairMutation(w, exerciseId)),
-        toggleUnilateral: (exerciseId) =>
-          apply((w) => toggleUnilateralMutation(w, exerciseId)),
+        toggleUnilateral: (exerciseId) => apply((w) => toggleUnilateralMutation(w, exerciseId)),
         changeExerciseProfile: (exerciseId, profileId, exerciseName) =>
-          apply((w) =>
-            changeExerciseProfileMutation(w, exerciseId, profileId, exerciseName),
-          ),
+          apply((w) => changeExerciseProfileMutation(w, exerciseId, profileId, exerciseName)),
       }
     : null;
 
@@ -215,8 +202,7 @@ export function useEditWorkoutState(workoutId: string) {
     isLoading,
     fetchError: fetchError?.message ?? null,
     hasChanges,
-    save: () =>
-      workout ? saveMutation.mutateAsync(workout) : Promise.resolve(),
+    save: () => (workout ? saveMutation.mutateAsync(workout) : Promise.resolve()),
     isSaving: saveMutation.isPending,
     saveError: saveMutation.error?.message ?? null,
     deleteWorkout: () => deleteMutation.mutateAsync(),
@@ -237,9 +223,7 @@ export function EditWorkoutProvider({
 
   const meta = {
     workout: state.workout,
-    setWorkout: (
-      w: StoredWorkout | ((prev: StoredWorkout) => StoredWorkout),
-    ) => {
+    setWorkout: (w: StoredWorkout | ((prev: StoredWorkout) => StoredWorkout)) => {
       if (typeof w === "function") {
         state.setWorkout((prev) => (prev ? w(prev) : prev));
       } else {
@@ -258,9 +242,7 @@ export function EditWorkoutProvider({
 
   return (
     <EditWorkoutMetaContext.Provider value={meta}>
-      <EditWorkoutContext.Provider value={state.actions}>
-        {children}
-      </EditWorkoutContext.Provider>
+      <EditWorkoutContext.Provider value={state.actions}>{children}</EditWorkoutContext.Provider>
     </EditWorkoutMetaContext.Provider>
   );
 }

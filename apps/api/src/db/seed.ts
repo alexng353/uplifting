@@ -86,7 +86,7 @@ async function seed() {
 
   if (muscleCount > 0 || exerciseCount > 0) {
     console.log(
-      `Database already has ${muscleCount} muscles and ${exerciseCount} exercises. Skipping seed.`
+      `Database already has ${muscleCount} muscles and ${exerciseCount} exercises. Skipping seed.`,
     );
     await sql.end();
     return;

@@ -29,30 +29,31 @@ PagerView, Elysia, Drizzle ORM, NativeWind
 
 ### New files
 
-| File | Responsibility |
-|------|---------------|
-| `apps/mobile/lib/workout-mutations.ts` | Pure functions: `(workout, args) => workout` for all set/exercise mutations |
-| `apps/mobile/hooks/useEditWorkout.tsx` | `EditWorkoutProvider` + `useEditWorkout` hook — local state for editing, save/delete mutations |
-| `apps/mobile/hooks/useWorkoutActions.ts` | Unified hook that resolves `EditWorkoutContext` or `WorkoutContext` |
-| `apps/mobile/app/(tabs)/stats/workout/edit/[workoutId].tsx` | Edit screen with PagerView, red banner, save/discard/delete |
+| File                                                        | Responsibility                                                                                 |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `apps/mobile/lib/workout-mutations.ts`                      | Pure functions: `(workout, args) => workout` for all set/exercise mutations                    |
+| `apps/mobile/hooks/useEditWorkout.tsx`                      | `EditWorkoutProvider` + `useEditWorkout` hook — local state for editing, save/delete mutations |
+| `apps/mobile/hooks/useWorkoutActions.ts`                    | Unified hook that resolves `EditWorkoutContext` or `WorkoutContext`                            |
+| `apps/mobile/app/(tabs)/stats/workout/edit/[workoutId].tsx` | Edit screen with PagerView, red banner, save/discard/delete                                    |
 
 ### Modified files
 
-| File | Change |
-|------|--------|
-| `apps/mobile/hooks/useWorkout.tsx` | Delegate mutation logic to pure functions from `workout-mutations.ts` |
-| `apps/mobile/components/workout/ExerciseSlide.tsx` | `useWorkout()` → `useWorkoutActions()` |
-| `apps/mobile/components/workout/AddExerciseSlide.tsx` | `useWorkout()` → `useWorkoutActions()` |
-| `apps/mobile/components/workout/ReorderModal.tsx` | `useWorkout()` → `useWorkoutActions()` |
-| ~~`apps/mobile/app/(tabs)/workout.tsx`~~ | Not needed — uses lifecycle actions (start/finish/cancel) not in `WorkoutActions` |
-| `apps/mobile/app/(tabs)/stats/workout/[workoutId].tsx` | Add edit pencil icon in header |
-| `apps/api/src/routes/workouts.ts` | Extend PUT endpoint with optional `exercises` array |
+| File                                                   | Change                                                                            |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| `apps/mobile/hooks/useWorkout.tsx`                     | Delegate mutation logic to pure functions from `workout-mutations.ts`             |
+| `apps/mobile/components/workout/ExerciseSlide.tsx`     | `useWorkout()` → `useWorkoutActions()`                                            |
+| `apps/mobile/components/workout/AddExerciseSlide.tsx`  | `useWorkout()` → `useWorkoutActions()`                                            |
+| `apps/mobile/components/workout/ReorderModal.tsx`      | `useWorkout()` → `useWorkoutActions()`                                            |
+| ~~`apps/mobile/app/(tabs)/workout.tsx`~~               | Not needed — uses lifecycle actions (start/finish/cancel) not in `WorkoutActions` |
+| `apps/mobile/app/(tabs)/stats/workout/[workoutId].tsx` | Add edit pencil icon in header                                                    |
+| `apps/api/src/routes/workouts.ts`                      | Extend PUT endpoint with optional `exercises` array                               |
 
 ---
 
 ## Task 1: Extract pure workout mutation functions
 
 **Files:**
+
 - Create: `apps/mobile/lib/workout-mutations.ts`
 
 - [ ] **Step 1: Create the pure mutations module**
@@ -85,10 +86,7 @@ export function addExerciseMutation(
     id: generateId(),
     weightUnit: unit,
     createdAt: new Date().toISOString(),
-    bodyweight:
-      exerciseType === "Bodyweight"
-        ? (settings.bodyweight ?? undefined)
-        : undefined,
+    bodyweight: exerciseType === "Bodyweight" ? (settings.bodyweight ?? undefined) : undefined,
   };
 
   const newExercise: StoredWorkoutExercise = {
@@ -105,15 +103,10 @@ export function addExerciseMutation(
   };
 }
 
-export function removeExerciseMutation(
-  workout: StoredWorkout,
-  exerciseId: string,
-): StoredWorkout {
+export function removeExerciseMutation(workout: StoredWorkout, exerciseId: string): StoredWorkout {
   return {
     ...workout,
-    exercises: workout.exercises.filter(
-      (e) => e.exerciseId !== exerciseId,
-    ),
+    exercises: workout.exercises.filter((e) => e.exerciseId !== exerciseId),
   };
 }
 
@@ -121,25 +114,16 @@ export function reorderExercisesMutation(
   workout: StoredWorkout,
   newOrder: string[],
 ): StoredWorkout {
-  const exerciseMap = new Map(
-    workout.exercises.map((e) => [e.exerciseId, e]),
-  );
+  const exerciseMap = new Map(workout.exercises.map((e) => [e.exerciseId, e]));
   const reordered = newOrder
     .map((id) => exerciseMap.get(id))
-    .filter(
-      (e): e is StoredWorkoutExercise => e !== undefined,
-    );
+    .filter((e): e is StoredWorkoutExercise => e !== undefined);
 
   return { ...workout, exercises: reordered };
 }
 
-function getBodyweightForExercise(
-  workout: StoredWorkout,
-  exerciseId: string,
-): number | undefined {
-  const exercise = workout.exercises.find(
-    (e) => e.exerciseId === exerciseId,
-  );
+function getBodyweightForExercise(workout: StoredWorkout, exerciseId: string): number | undefined {
+  const exercise = workout.exercises.find((e) => e.exerciseId === exerciseId);
   if (exercise?.exerciseType !== "Bodyweight") return undefined;
   const settings = getSettings();
   return settings.bodyweight ?? undefined;
@@ -153,10 +137,7 @@ export function addSetMutation(
   weight?: number,
   side?: "L" | "R",
 ): StoredWorkout {
-  const bodyweight = getBodyweightForExercise(
-    workout,
-    exerciseId,
-  );
+  const bodyweight = getBodyweightForExercise(workout, exerciseId);
   const newSet: StoredSet = {
     id: generateId(),
     reps,
@@ -170,9 +151,7 @@ export function addSetMutation(
   return {
     ...workout,
     exercises: workout.exercises.map((e) =>
-      e.exerciseId === exerciseId
-        ? { ...e, sets: [...e.sets, newSet] }
-        : e,
+      e.exerciseId === exerciseId ? { ...e, sets: [...e.sets, newSet] } : e,
     ),
   };
 }
@@ -184,10 +163,7 @@ export function addUnilateralPairMutation(
   reps?: number,
   weight?: number,
 ): StoredWorkout {
-  const bodyweight = getBodyweightForExercise(
-    workout,
-    exerciseId,
-  );
+  const bodyweight = getBodyweightForExercise(workout, exerciseId);
   const rightSet: StoredSet = {
     id: generateId(),
     reps,
@@ -211,9 +187,7 @@ export function addUnilateralPairMutation(
   return {
     ...workout,
     exercises: workout.exercises.map((e) =>
-      e.exerciseId === exerciseId
-        ? { ...e, sets: [...e.sets, rightSet, leftSet] }
-        : e,
+      e.exerciseId === exerciseId ? { ...e, sets: [...e.sets, rightSet, leftSet] } : e,
     ),
   };
 }
@@ -230,9 +204,7 @@ export function updateSetMutation(
       e.exerciseId === exerciseId
         ? {
             ...e,
-            sets: e.sets.map((s) =>
-              s.id === setId ? { ...s, ...updates } : s,
-            ),
+            sets: e.sets.map((s) => (s.id === setId ? { ...s, ...updates } : s)),
           }
         : e,
     ),
@@ -257,16 +229,11 @@ export function removeSetMutation(
   };
 }
 
-export function removeLastSetMutation(
-  workout: StoredWorkout,
-  exerciseId: string,
-): StoredWorkout {
+export function removeLastSetMutation(workout: StoredWorkout, exerciseId: string): StoredWorkout {
   return {
     ...workout,
     exercises: workout.exercises.map((e) =>
-      e.exerciseId === exerciseId
-        ? { ...e, sets: e.sets.slice(0, -1) }
-        : e,
+      e.exerciseId === exerciseId ? { ...e, sets: e.sets.slice(0, -1) } : e,
     ),
   };
 }
@@ -275,17 +242,11 @@ export function removeLastUnilateralPairMutation(
   workout: StoredWorkout,
   exerciseId: string,
 ): StoredWorkout {
-  const exercise = workout.exercises.find(
-    (e) => e.exerciseId === exerciseId,
-  );
+  const exercise = workout.exercises.find((e) => e.exerciseId === exerciseId);
   if (!exercise) return workout;
 
-  const rightSets = exercise.sets.filter(
-    (s) => s.side === "R",
-  );
-  const leftSets = exercise.sets.filter(
-    (s) => s.side === "L",
-  );
+  const rightSets = exercise.sets.filter((s) => s.side === "R");
+  const leftSets = exercise.sets.filter((s) => s.side === "L");
   const lastRight = rightSets[rightSets.length - 1];
   const lastLeft = leftSets[leftSets.length - 1];
 
@@ -299,9 +260,7 @@ export function removeLastUnilateralPairMutation(
       e.exerciseId === exerciseId
         ? {
             ...e,
-            sets: e.sets.filter(
-              (s) => !idsToRemove.has(s.id),
-            ),
+            sets: e.sets.filter((s) => !idsToRemove.has(s.id)),
           }
         : e,
     ),
@@ -342,16 +301,9 @@ export function toggleUnilateralMutation(
       }
 
       // Merge L/R pairs into bilateral sets
-      const rightSets = e.sets.filter(
-        (set) => set.side === "R" || !set.side,
-      );
-      const leftSets = e.sets.filter(
-        (set) => set.side === "L",
-      );
-      const maxLen = Math.max(
-        rightSets.length,
-        leftSets.length,
-      );
+      const rightSets = e.sets.filter((set) => set.side === "R" || !set.side);
+      const leftSets = e.sets.filter((set) => set.side === "L");
+      const maxLen = Math.max(rightSets.length, leftSets.length);
       const mergedSets: StoredSet[] = [];
 
       for (let i = 0; i < maxLen; i += 1) {
@@ -365,14 +317,8 @@ export function toggleUnilateralMutation(
           id: rightSet?.id ?? leftSet?.id ?? generateId(),
           reps: rightSet?.reps ?? leftSet?.reps,
           weight: rightSet?.weight ?? leftSet?.weight,
-          weightUnit:
-            rightSet?.weightUnit ??
-            leftSet?.weightUnit ??
-            baseSet.weightUnit,
-          createdAt:
-            rightSet?.createdAt ??
-            leftSet?.createdAt ??
-            baseSet.createdAt,
+          weightUnit: rightSet?.weightUnit ?? leftSet?.weightUnit ?? baseSet.weightUnit,
+          createdAt: rightSet?.createdAt ?? leftSet?.createdAt ?? baseSet.createdAt,
         });
       }
 
@@ -394,9 +340,7 @@ export function changeExerciseProfileMutation(
   return {
     ...workout,
     exercises: workout.exercises.map((e) =>
-      e.exerciseId === exerciseId
-        ? { ...e, profileId, exerciseName }
-        : e,
+      e.exerciseId === exerciseId ? { ...e, profileId, exerciseName } : e,
     ),
   };
 }
@@ -423,6 +367,7 @@ git push
 ## Task 2: Refactor useWorkout to use pure mutations
 
 **Files:**
+
 - Modify: `apps/mobile/hooks/useWorkout.tsx`
 
 - [ ] **Step 1: Import and delegate to pure mutations**
@@ -451,22 +396,9 @@ example, `addExercise` becomes:
 
 ```typescript
 const addExercise = useCallback(
-  (
-    exerciseId: string,
-    exerciseName: string,
-    profileId?: string,
-    exerciseType?: string,
-  ) => {
+  (exerciseId: string, exerciseName: string, profileId?: string, exerciseType?: string) => {
     if (!workout) return;
-    saveWorkout(
-      addExerciseMutation(
-        workout,
-        exerciseId,
-        exerciseName,
-        profileId,
-        exerciseType,
-      ),
-    );
+    saveWorkout(addExerciseMutation(workout, exerciseId, exerciseName, profileId, exerciseType));
   },
   [workout, saveWorkout],
 );
@@ -510,6 +442,7 @@ git push
 ## Task 3: Create useWorkoutActions unified hook
 
 **Files:**
+
 - Create: `apps/mobile/hooks/useWorkoutActions.ts`
 
 - [ ] **Step 1: Create the unified hook**
@@ -520,7 +453,7 @@ that components need. The `EditWorkoutContext` will be created
 in Task 5 — for now, import the context value type and set up
 the fallback.
 
-```typescript
+````typescript
 import { createContext, useContext } from "react";
 import type {
   StoredSet,
@@ -643,13 +576,14 @@ git commit -m "[agent] feat: add useWorkoutActions unified hook
 
 Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>"
 git push
-```
+````
 
 ---
 
 ## Task 4: Switch components to useWorkoutActions
 
 **Files:**
+
 - Modify: `apps/mobile/components/workout/ExerciseSlide.tsx`
 - Modify: `apps/mobile/components/workout/AddExerciseSlide.tsx`
 - Modify: `apps/mobile/components/workout/ReorderModal.tsx`
@@ -659,15 +593,19 @@ git push
 In `apps/mobile/components/workout/ExerciseSlide.tsx`:
 
 Change the import from:
+
 ```typescript
 import { useWorkout } from "../../hooks/useWorkout";
 ```
+
 to:
+
 ```typescript
 import { useWorkoutActions } from "../../hooks/useWorkoutActions";
 ```
 
 Change the destructuring at line 120-128 from:
+
 ```typescript
 const {
   addSet,
@@ -679,7 +617,9 @@ const {
   changeExerciseProfile,
 } = useWorkout();
 ```
+
 to:
+
 ```typescript
 const {
   addSet,
@@ -697,19 +637,25 @@ const {
 In `apps/mobile/components/workout/AddExerciseSlide.tsx`:
 
 Change the import from:
+
 ```typescript
 import { useWorkout } from "../../hooks/useWorkout";
 ```
+
 to:
+
 ```typescript
 import { useWorkoutActions } from "../../hooks/useWorkoutActions";
 ```
 
 Change line 29 from:
+
 ```typescript
 const { addExercise } = useWorkout();
 ```
+
 to:
+
 ```typescript
 const { addExercise } = useWorkoutActions();
 ```
@@ -719,19 +665,25 @@ const { addExercise } = useWorkoutActions();
 In `apps/mobile/components/workout/ReorderModal.tsx`:
 
 Change the import from:
+
 ```typescript
 import { useWorkout } from "../../hooks/useWorkout";
 ```
+
 to:
+
 ```typescript
 import { useWorkoutActions } from "../../hooks/useWorkoutActions";
 ```
 
 Change line 13 from:
+
 ```typescript
 const { workout, reorderExercises } = useWorkout();
 ```
+
 to:
+
 ```typescript
 const { workout, reorderExercises } = useWorkoutActions();
 ```
@@ -759,6 +711,7 @@ git push
 ## Task 5: Create useEditWorkout hook and EditWorkoutProvider
 
 **Files:**
+
 - Create: `apps/mobile/hooks/useEditWorkout.tsx`
 
 - [ ] **Step 1: Create the hook**
@@ -1218,6 +1171,7 @@ git push
 ## Task 6: Add edit pencil to workout details screen
 
 **Files:**
+
 - Modify: `apps/mobile/app/(tabs)/stats/workout/[workoutId].tsx`
 
 - [ ] **Step 1: Add the edit button to the header**
@@ -1246,10 +1200,7 @@ to:
   <Text className="flex-1 text-xl font-bold dark:text-zinc-100" numberOfLines={1}>
     {workout.name || "Workout"}
   </Text>
-  <Pressable
-    onPress={() => router.push(`/stats/workout/edit/${workoutId}`)}
-    className="ml-2 p-1"
-  >
+  <Pressable onPress={() => router.push(`/stats/workout/edit/${workoutId}`)} className="ml-2 p-1">
     <Ionicons name="pencil" size={20} color="#3b82f6" />
   </Pressable>
 </View>
@@ -1276,6 +1227,7 @@ git push
 ## Task 7: Extend PUT API endpoint with exercises support
 
 **Files:**
+
 - Modify: `apps/api/src/routes/workouts.ts`
 
 - [ ] **Step 1: Update the PUT endpoint**
@@ -1327,14 +1279,10 @@ if (body.exercises) {
     // 1. Update workout metadata
     const updates: Record<string, unknown> = {};
     if (body.name !== undefined) updates.name = body.name;
-    if (body.privacy !== undefined)
-      updates.privacy = body.privacy;
-    if (body.gym_location !== undefined)
-      updates.gymLocation = body.gym_location;
-    if (body.start_time !== undefined)
-      updates.startTime = new Date(body.start_time);
-    if (body.end_time !== undefined)
-      updates.endTime = new Date(body.end_time);
+    if (body.privacy !== undefined) updates.privacy = body.privacy;
+    if (body.gym_location !== undefined) updates.gymLocation = body.gym_location;
+    if (body.start_time !== undefined) updates.startTime = new Date(body.start_time);
+    if (body.end_time !== undefined) updates.endTime = new Date(body.end_time);
 
     let updated;
     if (Object.keys(updates).length > 0) {
@@ -1352,9 +1300,7 @@ if (body.exercises) {
     }
 
     // 2. Delete all existing sets for this workout
-    await tx
-      .delete(userSets)
-      .where(eq(userSets.workoutId, params.workoutId));
+    await tx.delete(userSets).where(eq(userSets.workoutId, params.workoutId));
 
     // 3. Insert new sets
     for (const exercise of body.exercises!) {
@@ -1368,12 +1314,8 @@ if (body.exercises) {
           weight: String(s.weight),
           weightUnit: s.weight_unit,
           side: s.side,
-          bodyweight: s.bodyweight
-            ? String(s.bodyweight)
-            : undefined,
-          createdAt: s.created_at
-            ? new Date(s.created_at)
-            : new Date(),
+          bodyweight: s.bodyweight ? String(s.bodyweight) : undefined,
+          createdAt: s.created_at ? new Date(s.created_at) : new Date(),
         });
       }
     }
@@ -1422,14 +1364,10 @@ if (body.exercises) {
 // Metadata-only update (original behavior)
 const updates: Record<string, unknown> = {};
 if (body.name !== undefined) updates.name = body.name;
-if (body.privacy !== undefined)
-  updates.privacy = body.privacy;
-if (body.gym_location !== undefined)
-  updates.gymLocation = body.gym_location;
-if (body.start_time !== undefined)
-  updates.startTime = new Date(body.start_time);
-if (body.end_time !== undefined)
-  updates.endTime = new Date(body.end_time);
+if (body.privacy !== undefined) updates.privacy = body.privacy;
+if (body.gym_location !== undefined) updates.gymLocation = body.gym_location;
+if (body.start_time !== undefined) updates.startTime = new Date(body.start_time);
+if (body.end_time !== undefined) updates.endTime = new Date(body.end_time);
 
 const [updated] = await db
   .update(workouts)
@@ -1461,6 +1399,7 @@ git push
 ## Task 8: Build the edit workout screen
 
 **Files:**
+
 - Create: `apps/mobile/app/(tabs)/stats/workout/edit/[workoutId].tsx`
 
 - [ ] **Step 1: Create the edit screen**
@@ -1489,38 +1428,23 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { useThemeColors } from "../../../../../hooks/useThemeColors";
 import { EditWorkoutProvider } from "../../../../../hooks/useEditWorkout";
-import {
-  useWorkoutActions,
-  useEditWorkoutMeta,
-} from "../../../../../hooks/useWorkoutActions";
+import { useWorkoutActions, useEditWorkoutMeta } from "../../../../../hooks/useWorkoutActions";
 import ExerciseSlide from "../../../../../components/workout/ExerciseSlide";
 import AddExerciseSlide from "../../../../../components/workout/AddExerciseSlide";
 import ReorderModal from "../../../../../components/workout/ReorderModal";
 
-function WorkoutDetailsPage({
-  onDelete,
-}: {
-  onDelete: () => void;
-}) {
+function WorkoutDetailsPage({ onDelete }: { onDelete: () => void }) {
   const { workout } = useWorkoutActions();
   const colors = useThemeColors();
   const meta = useEditWorkoutMeta();
 
   // Local form state derived from workout
   const [name, setName] = useState(workout?.name ?? "");
-  const [gymLocation, setGymLocation] = useState(
-    workout?.gymLocation ?? "",
-  );
+  const [gymLocation, setGymLocation] = useState(workout?.gymLocation ?? "");
   const [startTime, setStartTime] = useState(
-    workout?.startTime
-      ? new Date(workout.startTime)
-      : new Date(),
+    workout?.startTime ? new Date(workout.startTime) : new Date(),
   );
-  const [endTime, setEndTime] = useState(
-    workout?.endTime
-      ? new Date(workout.endTime)
-      : new Date(),
-  );
+  const [endTime, setEndTime] = useState(workout?.endTime ? new Date(workout.endTime) : new Date());
 
   // Sync form changes back to workout state
   useEffect(() => {
@@ -1534,41 +1458,28 @@ function WorkoutDetailsPage({
     });
   }, [name, gymLocation, startTime, endTime]);
 
-  const duration = Math.max(
-    0,
-    Math.round(
-      (endTime.getTime() - startTime.getTime()) / 60000,
-    ),
-  );
+  const duration = Math.max(0, Math.round((endTime.getTime() - startTime.getTime()) / 60000));
 
   const handleDurationChange = useCallback(
     (text: string) => {
       const mins = parseInt(text, 10);
       if (!isNaN(mins) && mins >= 0) {
-        setEndTime(
-          new Date(startTime.getTime() + mins * 60000),
-        );
+        setEndTime(new Date(startTime.getTime() + mins * 60000));
       }
     },
     [startTime],
   );
 
-  const handleStartTimeChange = useCallback(
-    (_: any, date?: Date) => {
-      if (date) {
-        setStartTime(date);
-        // End time stays fixed, duration recalculates
-      }
-    },
-    [],
-  );
+  const handleStartTimeChange = useCallback((_: any, date?: Date) => {
+    if (date) {
+      setStartTime(date);
+      // End time stays fixed, duration recalculates
+    }
+  }, []);
 
-  const handleEndTimeChange = useCallback(
-    (_: any, date?: Date) => {
-      if (date) setEndTime(date);
-    },
-    [],
-  );
+  const handleEndTimeChange = useCallback((_: any, date?: Date) => {
+    if (date) setEndTime(date);
+  }, []);
 
   const handleDelete = useCallback(() => {
     Alert.alert(
@@ -1590,9 +1501,7 @@ function WorkoutDetailsPage({
       className="flex-1 bg-white dark:bg-zinc-900 px-4"
       keyboardShouldPersistTaps="handled"
     >
-      <Text className="mt-4 mb-4 text-xl font-bold dark:text-zinc-100">
-        Workout Details
-      </Text>
+      <Text className="mt-4 mb-4 text-xl font-bold dark:text-zinc-100">Workout Details</Text>
 
       {/* Name */}
       <Text className="mb-1 text-sm font-medium text-zinc-500 dark:text-zinc-400">
@@ -1619,9 +1528,7 @@ function WorkoutDetailsPage({
       />
 
       {/* Start Time */}
-      <Text className="mb-1 text-sm font-medium text-zinc-500 dark:text-zinc-400">
-        Start Time
-      </Text>
+      <Text className="mb-1 text-sm font-medium text-zinc-500 dark:text-zinc-400">Start Time</Text>
       <View className="mb-4">
         <DateTimePicker
           value={startTime}
@@ -1633,9 +1540,7 @@ function WorkoutDetailsPage({
       </View>
 
       {/* End Time */}
-      <Text className="mb-1 text-sm font-medium text-zinc-500 dark:text-zinc-400">
-        End Time
-      </Text>
+      <Text className="mb-1 text-sm font-medium text-zinc-500 dark:text-zinc-400">End Time</Text>
       <View className="mb-4">
         <DateTimePicker
           value={endTime}
@@ -1662,11 +1567,7 @@ function WorkoutDetailsPage({
         onPress={handleDelete}
         className="mb-8 flex-row items-center justify-center gap-2 rounded-lg border border-red-300 dark:border-red-800 py-3.5 active:bg-red-50 dark:active:bg-red-950"
       >
-        <Ionicons
-          name="trash-outline"
-          size={18}
-          color={colors.dangerIcon}
-        />
+        <Ionicons name="trash-outline" size={18} color={colors.dangerIcon} />
         <Text className="text-base font-semibold text-red-500 dark:text-red-400">
           Delete Workout
         </Text>
@@ -1686,25 +1587,16 @@ function EditWorkoutContent() {
   const [showReorder, setShowReorder] = useState(false);
 
   const exerciseCount = workout?.exercises.length ?? 0;
-  const isOnExerciseSlide =
-    workout !== null &&
-    activeSlide > 0 &&
-    activeSlide <= exerciseCount;
+  const isOnExerciseSlide = workout !== null && activeSlide > 0 && activeSlide <= exerciseCount;
 
-  const handlePageSelected = useCallback(
-    (e: { nativeEvent: { position: number } }) => {
-      setActiveSlide(e.nativeEvent.position);
-    },
-    [],
-  );
+  const handlePageSelected = useCallback((e: { nativeEvent: { position: number } }) => {
+    setActiveSlide(e.nativeEvent.position);
+  }, []);
 
   const handleExerciseAdded = useCallback(() => {
     if (workout) {
       const newIndex = workout.exercises.length;
-      setTimeout(
-        () => pagerRef.current?.setPage(newIndex),
-        100,
-      );
+      setTimeout(() => pagerRef.current?.setPage(newIndex), 100);
     }
   }, [workout]);
 
@@ -1714,10 +1606,7 @@ function EditWorkoutContent() {
       router.back();
       router.back();
     } catch {
-      Alert.alert(
-        "Save Failed",
-        "Could not save workout. Please try again.",
-      );
+      Alert.alert("Save Failed", "Could not save workout. Please try again.");
     }
   }, [meta, router]);
 
@@ -1728,10 +1617,7 @@ function EditWorkoutContent() {
       router.back();
       router.back();
     } catch {
-      Alert.alert(
-        "Delete Failed",
-        "Could not delete workout. Please try again.",
-      );
+      Alert.alert("Delete Failed", "Could not delete workout. Please try again.");
     }
   }, [meta, router]);
 
@@ -1759,35 +1645,23 @@ function EditWorkoutContent() {
     // activeSlide 0 is details page, exercises start at 1
     const exercise = workout.exercises[activeSlide - 1];
     if (!exercise) return;
-    Alert.alert(
-      "Remove Exercise",
-      `Remove ${exercise.exerciseName} from this workout?`,
-      [
-        { text: "No", style: "cancel" },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: () =>
-            meta.actions?.removeExercise(
-              exercise.exerciseId,
-            ),
-        },
-      ],
-    );
+    Alert.alert("Remove Exercise", `Remove ${exercise.exerciseName} from this workout?`, [
+      { text: "No", style: "cancel" },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: () => meta.actions?.removeExercise(exercise.exerciseId),
+      },
+    ]);
   }, [workout, activeSlide, meta.actions]);
 
   if (!workout) return null;
 
   return (
-    <SafeAreaView
-      className="flex-1 bg-white dark:bg-zinc-900"
-      edges={["top"]}
-    >
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900" edges={["top"]}>
       {/* Red editing banner */}
       <View className="bg-red-500 px-4 py-2">
-        <Text className="text-center text-sm font-bold text-white">
-          Editing Workout
-        </Text>
+        <Text className="text-center text-sm font-bold text-white">Editing Workout</Text>
       </View>
 
       {/* Header */}
@@ -1798,22 +1672,14 @@ function EditWorkoutContent() {
             onPress={handleBack}
             className="h-9 w-9 items-center justify-center rounded-md active:bg-zinc-100 dark:active:bg-zinc-800"
           >
-            <Ionicons
-              name="chevron-back"
-              size={22}
-              color={colors.accentIcon}
-            />
+            <Ionicons name="chevron-back" size={22} color={colors.accentIcon} />
           </Pressable>
           {/* Reorder */}
           <Pressable
             onPress={() => setShowReorder(true)}
             className="h-9 w-9 items-center justify-center rounded-md active:bg-zinc-100 dark:active:bg-zinc-800"
           >
-            <Ionicons
-              name="reorder-four"
-              size={22}
-              color={colors.secondaryText}
-            />
+            <Ionicons name="reorder-four" size={22} color={colors.secondaryText} />
           </Pressable>
           {/* Remove current exercise */}
           {isOnExerciseSlide && (
@@ -1821,11 +1687,7 @@ function EditWorkoutContent() {
               onPress={handleRemoveCurrentExercise}
               className="h-9 w-9 items-center justify-center rounded-md active:bg-red-50 dark:active:bg-red-950"
             >
-              <Ionicons
-                name="trash-outline"
-                size={20}
-                color={colors.dangerIcon}
-              />
+              <Ionicons name="trash-outline" size={20} color={colors.dangerIcon} />
             </Pressable>
           )}
         </View>
@@ -1839,9 +1701,7 @@ function EditWorkoutContent() {
             opacity: meta.isSaving ? 0.5 : 1,
           }}
         >
-          <Text className="font-semibold text-white">
-            {meta.isSaving ? "Saving..." : "Save"}
-          </Text>
+          <Text className="font-semibold text-white">{meta.isSaving ? "Saving..." : "Save"}</Text>
         </Pressable>
       </View>
 
@@ -1852,10 +1712,7 @@ function EditWorkoutContent() {
           className="h-1.5 rounded-full"
           style={{
             width: activeSlide === 0 ? 16 : 6,
-            backgroundColor:
-              activeSlide === 0
-                ? colors.activeIndicator
-                : colors.inactiveIndicator,
+            backgroundColor: activeSlide === 0 ? colors.activeIndicator : colors.inactiveIndicator,
           }}
         />
         {/* Exercise dots */}
@@ -1866,9 +1723,7 @@ function EditWorkoutContent() {
             style={{
               width: i + 1 === activeSlide ? 16 : 6,
               backgroundColor:
-                i + 1 === activeSlide
-                  ? colors.activeIndicator
-                  : colors.inactiveIndicator,
+                i + 1 === activeSlide ? colors.activeIndicator : colors.inactiveIndicator,
             }}
           />
         ))}
@@ -1876,12 +1731,9 @@ function EditWorkoutContent() {
         <View
           className="h-1.5 rounded-full"
           style={{
-            width:
-              activeSlide === exerciseCount + 1 ? 16 : 6,
+            width: activeSlide === exerciseCount + 1 ? 16 : 6,
             backgroundColor:
-              activeSlide === exerciseCount + 1
-                ? colors.activeIndicator
-                : colors.inactiveIndicator,
+              activeSlide === exerciseCount + 1 ? colors.activeIndicator : colors.inactiveIndicator,
           }}
         />
       </View>
@@ -1900,30 +1752,19 @@ function EditWorkoutContent() {
 
         {/* Pages 1..n: Exercises */}
         {workout.exercises.map((exercise) => (
-          <View
-            key={
-              exercise.exerciseId +
-              (exercise.profileId || "")
-            }
-            collapsable={false}
-          >
+          <View key={exercise.exerciseId + (exercise.profileId || "")} collapsable={false}>
             <ExerciseSlide exercise={exercise} />
           </View>
         ))}
 
         {/* Page n+1: Add Exercise */}
         <View key="add" collapsable={false}>
-          <AddExerciseSlide
-            onExerciseAdded={handleExerciseAdded}
-          />
+          <AddExerciseSlide onExerciseAdded={handleExerciseAdded} />
         </View>
       </PagerView>
 
       {/* Reorder Modal */}
-      <ReorderModal
-        visible={showReorder}
-        onClose={() => setShowReorder(false)}
-      />
+      <ReorderModal visible={showReorder} onClose={() => setShowReorder(false)} />
     </SafeAreaView>
   );
 }
@@ -1971,6 +1812,7 @@ If not installed, run:
 Run: `cd apps/mobile && npx tsc --noEmit --pretty 2>&1 | head -50`
 
 Fix any type errors. Common ones:
+
 - The `exercises` field on the PUT body might need the Eden
   Treaty types to regenerate. Run `cd apps/api && bun run build`
   or restart the TS server if needed.
@@ -1990,6 +1832,7 @@ git push
 ## Task 9: Wire up profiles query for EditWorkoutProvider
 
 **Files:**
+
 - Modify: `apps/mobile/hooks/useEditWorkout.tsx`
   (if needed)
 

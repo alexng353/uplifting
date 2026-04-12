@@ -15,10 +15,7 @@ import {
   setWorkoutLastSlide,
 } from "../../services/storage";
 import { api } from "../../lib/api";
-import {
-  InputNavigationProvider,
-  useInputNavigation,
-} from "../../hooks/useInputNavigation";
+import { InputNavigationProvider, useInputNavigation } from "../../hooks/useInputNavigation";
 import ExerciseSlide, { WORKOUT_INPUT_ACCESSORY_ID } from "../../components/workout/ExerciseSlide";
 import AddExerciseSlide from "../../components/workout/AddExerciseSlide";
 import WorkoutSummary from "../../components/workout/WorkoutSummary";
@@ -102,8 +99,7 @@ export default function WorkoutScreen() {
     if (!serverWorkouts) return false;
     const today = getLocalDateString();
     return serverWorkouts.some(
-      (w: any) =>
-        getLocalDateString(w.startTime) === today && w.kind === "workout",
+      (w: any) => getLocalDateString(w.startTime) === today && w.kind === "workout",
     );
   }, [serverWorkouts]);
 
@@ -209,18 +205,14 @@ export default function WorkoutScreen() {
     if (!workout) return;
     const exercise = workout.exercises[activeSlide];
     if (!exercise) return;
-    Alert.alert(
-      "Remove Exercise",
-      `Remove ${exercise.exerciseName} from this workout?`,
-      [
-        { text: "No", style: "cancel" },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: () => removeExercise(exercise.exerciseId),
-        },
-      ],
-    );
+    Alert.alert("Remove Exercise", `Remove ${exercise.exerciseName} from this workout?`, [
+      { text: "No", style: "cancel" },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: () => removeExercise(exercise.exerciseId),
+      },
+    ]);
   }, [workout, activeSlide, removeExercise]);
 
   const handleLogRestDay = useCallback(() => {
@@ -229,36 +221,30 @@ export default function WorkoutScreen() {
   }, [logRestDay, forceSync]);
 
   const handleCancelRestDay = useCallback(() => {
-    Alert.alert(
-      "Cancel Rest Day",
-      "Are you sure you want to cancel your rest day?",
-      [
-        { text: "No", style: "cancel" },
-        {
-          text: "Cancel Rest Day",
-          style: "destructive",
-          onPress: async () => {
-            const syncedWorkoutId = cancelRestDay();
-            if (syncedWorkoutId) {
-              // Optimistically remove from query cache to prevent reconciliation re-adoption
-              queryClient.setQueryData(
-                ["workouts", 1, 20],
-                (old: any[] | undefined) =>
-                  old?.filter((w: any) => w.id !== syncedWorkoutId),
-              );
-              try {
-                await api.api.v1.workouts({ workoutId: syncedWorkoutId }).delete();
-              } catch {
-                // Best-effort
-              }
+    Alert.alert("Cancel Rest Day", "Are you sure you want to cancel your rest day?", [
+      { text: "No", style: "cancel" },
+      {
+        text: "Cancel Rest Day",
+        style: "destructive",
+        onPress: async () => {
+          const syncedWorkoutId = cancelRestDay();
+          if (syncedWorkoutId) {
+            // Optimistically remove from query cache to prevent reconciliation re-adoption
+            queryClient.setQueryData(["workouts", 1, 20], (old: any[] | undefined) =>
+              old?.filter((w: any) => w.id !== syncedWorkoutId),
+            );
+            try {
+              await api.api.v1.workouts({ workoutId: syncedWorkoutId }).delete();
+            } catch {
+              // Best-effort
             }
-            queryClient.invalidateQueries({ queryKey: ["workouts"] });
-            queryClient.invalidateQueries({ queryKey: ["streak"] });
-            queryClient.invalidateQueries({ queryKey: ["all-time-stats"] });
-          },
+          }
+          queryClient.invalidateQueries({ queryKey: ["workouts"] });
+          queryClient.invalidateQueries({ queryKey: ["streak"] });
+          queryClient.invalidateQueries({ queryKey: ["all-time-stats"] });
         },
-      ],
-    );
+      },
+    ]);
   }, [cancelRestDay, queryClient]);
 
   const isOnExerciseSlide = workout !== null && activeSlide < exerciseCount;
@@ -266,14 +252,9 @@ export default function WorkoutScreen() {
   // --- Rest day state ---
   if (!isActive && todayRestDay) {
     return (
-      <SafeAreaView
-        className="flex-1 bg-white dark:bg-zinc-900"
-        edges={["top"]}
-      >
+      <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900" edges={["top"]}>
         <View className="px-4 pb-2 pt-4">
-          <Text className="text-3xl font-bold dark:text-zinc-100">
-            Rest Day
-          </Text>
+          <Text className="text-3xl font-bold dark:text-zinc-100">Rest Day</Text>
         </View>
         <View className="flex-1 items-center justify-center px-6">
           <Ionicons name="bed-outline" size={64} color={colors.secondaryText} />
@@ -287,11 +268,7 @@ export default function WorkoutScreen() {
             onPress={handleCancelRestDay}
             className="w-full flex-row items-center justify-center gap-2 rounded-lg border border-red-300 dark:border-red-800 py-3.5 active:bg-red-50 dark:active:bg-red-950"
           >
-            <Ionicons
-              name="close-circle-outline"
-              size={18}
-              color={colors.dangerIcon}
-            />
+            <Ionicons name="close-circle-outline" size={18} color={colors.dangerIcon} />
             <Text className="text-base font-semibold text-red-500 dark:text-red-400">
               Cancel Rest Day
             </Text>
@@ -304,17 +281,12 @@ export default function WorkoutScreen() {
   // --- Idle state (no active workout) ---
   if (!isActive) {
     return (
-      <SafeAreaView
-        className="flex-1 bg-white dark:bg-zinc-900"
-        edges={["top"]}
-      >
+      <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900" edges={["top"]}>
         <View className="px-4 pb-2 pt-4">
           <Text className="text-3xl font-bold dark:text-zinc-100">Workout</Text>
         </View>
         <View className="flex-1 items-center justify-center px-6">
-          <Text className="mb-2 text-xl font-semibold dark:text-zinc-100">
-            Ready to train?
-          </Text>
+          <Text className="mb-2 text-xl font-semibold dark:text-zinc-100">Ready to train?</Text>
           <Text className="mb-6 text-center text-base text-zinc-500 dark:text-zinc-400">
             Start a new workout session to begin logging your exercises.
           </Text>
@@ -322,20 +294,14 @@ export default function WorkoutScreen() {
             onPress={startWorkout}
             className="mb-3 w-full items-center rounded-lg bg-blue-500 py-3.5 active:bg-blue-600"
           >
-            <Text className="text-base font-semibold text-white">
-              Start Workout
-            </Text>
+            <Text className="text-base font-semibold text-white">Start Workout</Text>
           </Pressable>
           {!todayHasWorkouts && (
             <Pressable
               onPress={handleLogRestDay}
               className="w-full flex-row items-center justify-center gap-2 rounded-lg border border-zinc-300 dark:border-zinc-600 py-3.5 active:bg-zinc-50 dark:active:bg-zinc-800"
             >
-              <Ionicons
-                name="bed-outline"
-                size={18}
-                color={colors.secondaryText}
-              />
+              <Ionicons name="bed-outline" size={18} color={colors.secondaryText} />
               <Text className="text-base font-semibold text-zinc-600 dark:text-zinc-300">
                 Log Rest Day
               </Text>
@@ -352,123 +318,105 @@ export default function WorkoutScreen() {
 
   return (
     <InputNavigationProvider activeSlide={activeSlide}>
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900" edges={["top"]}>
-      {/* Header */}
-      <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-3 pb-2 pt-2">
-        <View className="flex-row items-center gap-2">
-          {/* Reorder button */}
-          <Pressable
-            onPress={() => setShowReorder(true)}
-            className="h-9 w-9 items-center justify-center rounded-md active:bg-zinc-100 dark:active:bg-zinc-800"
-          >
-            <Ionicons
-              name="reorder-four"
-              size={22}
-              color={colors.secondaryText}
-            />
-          </Pressable>
-          {/* Remove current exercise button */}
-          {isOnExerciseSlide && (
+      <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900" edges={["top"]}>
+        {/* Header */}
+        <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-3 pb-2 pt-2">
+          <View className="flex-row items-center gap-2">
+            {/* Reorder button */}
             <Pressable
-              onPress={handleRemoveCurrentExercise}
+              onPress={() => setShowReorder(true)}
+              className="h-9 w-9 items-center justify-center rounded-md active:bg-zinc-100 dark:active:bg-zinc-800"
+            >
+              <Ionicons name="reorder-four" size={22} color={colors.secondaryText} />
+            </Pressable>
+            {/* Remove current exercise button */}
+            {isOnExerciseSlide && (
+              <Pressable
+                onPress={handleRemoveCurrentExercise}
+                className="h-9 w-9 items-center justify-center rounded-md active:bg-red-50 dark:active:bg-red-950"
+              >
+                <Ionicons name="trash-outline" size={20} color={colors.dangerIcon} />
+              </Pressable>
+            )}
+          </View>
+
+          {/* Timer */}
+          <Text className="font-mono text-base font-semibold text-zinc-600 dark:text-zinc-300">
+            {elapsedTime}
+          </Text>
+
+          <View className="flex-row items-center gap-2">
+            {/* Cancel button */}
+            <Pressable
+              onPress={handleCancelWorkout}
               className="h-9 w-9 items-center justify-center rounded-md active:bg-red-50 dark:active:bg-red-950"
             >
-              <Ionicons
-                name="trash-outline"
-                size={20}
-                color={colors.dangerIcon}
-              />
+              <Ionicons name="close" size={22} color={colors.dangerIcon} />
             </Pressable>
-          )}
+            {/* Finish button */}
+            <Pressable
+              onPress={handleFinish}
+              className="h-9 w-9 items-center justify-center rounded-md active:bg-green-50 dark:active:bg-green-950"
+            >
+              <Ionicons name="checkmark" size={22} color={colors.successIcon} />
+            </Pressable>
+          </View>
         </View>
 
-        {/* Timer */}
-        <Text className="font-mono text-base font-semibold text-zinc-600 dark:text-zinc-300">
-          {elapsedTime}
-        </Text>
-
-        <View className="flex-row items-center gap-2">
-          {/* Cancel button */}
-          <Pressable
-            onPress={handleCancelWorkout}
-            className="h-9 w-9 items-center justify-center rounded-md active:bg-red-50 dark:active:bg-red-950"
-          >
-            <Ionicons name="close" size={22} color={colors.dangerIcon} />
-          </Pressable>
-          {/* Finish button */}
-          <Pressable
-            onPress={handleFinish}
-            className="h-9 w-9 items-center justify-center rounded-md active:bg-green-50 dark:active:bg-green-950"
-          >
-            <Ionicons name="checkmark" size={22} color={colors.successIcon} />
-          </Pressable>
-        </View>
-      </View>
-
-      {/* Slide indicator */}
-      <View className="flex-row items-center justify-center gap-1 py-1.5">
-        {workout.exercises.map((_, i) => (
+        {/* Slide indicator */}
+        <View className="flex-row items-center justify-center gap-1 py-1.5">
+          {workout.exercises.map((_, i) => (
+            <View
+              key={i}
+              className="h-1.5 rounded-full"
+              style={{
+                width: i === activeSlide ? 16 : 6,
+                backgroundColor:
+                  i === activeSlide ? colors.activeIndicator : colors.inactiveIndicator,
+              }}
+            />
+          ))}
           <View
-            key={i}
             className="h-1.5 rounded-full"
             style={{
-              width: i === activeSlide ? 16 : 6,
+              width: activeSlide === exerciseCount ? 16 : 6,
               backgroundColor:
-                i === activeSlide
-                  ? colors.activeIndicator
-                  : colors.inactiveIndicator,
+                activeSlide === exerciseCount ? colors.activeIndicator : colors.inactiveIndicator,
             }}
           />
-        ))}
-        <View
-          className="h-1.5 rounded-full"
-          style={{
-            width: activeSlide === exerciseCount ? 16 : 6,
-            backgroundColor:
-              activeSlide === exerciseCount
-                ? colors.activeIndicator
-                : colors.inactiveIndicator,
-          }}
-        />
-      </View>
-
-      {/* PagerView */}
-      <PagerView
-        ref={pagerRef}
-        style={{ flex: 1 }}
-        initialPage={0}
-        onPageSelected={handlePageSelected}
-      >
-        {workout.exercises.map((exercise, index) => (
-          <View
-            key={exercise.exerciseId + (exercise.profileId || "")}
-            collapsable={false}
-          >
-            <ExerciseSlide exercise={exercise} slideIndex={index} />
-          </View>
-        ))}
-        <View key="add" collapsable={false}>
-          <AddExerciseSlide onExerciseAdded={handleExerciseAdded} />
         </View>
-      </PagerView>
 
-      {/* Modals */}
-      {workout && (
-        <WorkoutSummary
-          visible={showSummary}
-          workout={workout}
-          onSave={handleSave}
-          onCancel={handleCancelSummary}
-        />
-      )}
+        {/* PagerView */}
+        <PagerView
+          ref={pagerRef}
+          style={{ flex: 1 }}
+          initialPage={0}
+          onPageSelected={handlePageSelected}
+        >
+          {workout.exercises.map((exercise, index) => (
+            <View key={exercise.exerciseId + (exercise.profileId || "")} collapsable={false}>
+              <ExerciseSlide exercise={exercise} slideIndex={index} />
+            </View>
+          ))}
+          <View key="add" collapsable={false}>
+            <AddExerciseSlide onExerciseAdded={handleExerciseAdded} />
+          </View>
+        </PagerView>
 
-      <ReorderModal
-        visible={showReorder}
-        onClose={() => setShowReorder(false)}
-      />
+        {/* Modals */}
+        {workout && (
+          <WorkoutSummary
+            visible={showSummary}
+            workout={workout}
+            onSave={handleSave}
+            onCancel={handleCancelSummary}
+          />
+        )}
 
-      <WorkoutKeyboardToolbar />
-    </SafeAreaView>
+        <ReorderModal visible={showReorder} onClose={() => setShowReorder(false)} />
+
+        <WorkoutKeyboardToolbar />
+      </SafeAreaView>
     </InputNavigationProvider>
   );
 }

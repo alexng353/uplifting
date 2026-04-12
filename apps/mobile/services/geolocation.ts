@@ -63,10 +63,7 @@ export function haversineDistance(a: Coordinates, b: Coordinates): number {
   const sinDLon = Math.sin(dLon / 2);
   const h =
     sinDLat * sinDLat +
-    Math.cos(toRad(a.latitude)) *
-      Math.cos(toRad(b.latitude)) *
-      sinDLon *
-      sinDLon;
+    Math.cos(toRad(a.latitude)) * Math.cos(toRad(b.latitude)) * sinDLon * sinDLon;
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 

@@ -19,10 +19,7 @@ export function unwrap<T extends { data: unknown; error: unknown }>(
   response: T,
 ): NonNullable<Exclude<T["data"], { error: string }>> {
   if (response.error || !response.data) {
-    const msg =
-      response.error instanceof Error
-        ? response.error.message
-        : "API request failed";
+    const msg = response.error instanceof Error ? response.error.message : "API request failed";
     throw new Error(typeof msg === "string" ? msg : "API request failed");
   }
   return response.data as NonNullable<Exclude<T["data"], { error: string }>>;

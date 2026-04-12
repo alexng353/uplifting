@@ -1,12 +1,5 @@
 import { useCallback, useState } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  Pressable,
-  RefreshControl,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, FlatList, Pressable, RefreshControl, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -42,8 +35,7 @@ export default function FriendsScreen() {
     isFetchingNextPage,
   } = useFeed();
   const { data: friendsData, refetch: refetchFriends } = useFriendsList();
-  const { data: pendingRequests = [], refetch: refetchRequests } =
-    usePendingFriendRequests();
+  const { data: pendingRequests = [], refetch: refetchRequests } = usePendingFriendRequests();
   const { getDisplayUnit } = useSettings();
   const unit = getDisplayUnit();
   const colors = useThemeColors();
@@ -113,9 +105,7 @@ export default function FriendsScreen() {
                 }`}
               >
                 {tab.label}
-                {tab.key === "friends" && friendsCount > 0
-                  ? ` (${friendsCount})`
-                  : ""}
+                {tab.key === "friends" && friendsCount > 0 ? ` (${friendsCount})` : ""}
               </Text>
               {/* Badge for requests */}
               {tab.key === "requests" && pendingCount > 0 && (
@@ -136,17 +126,11 @@ export default function FriendsScreen() {
           {feedLoading && feed.length === 0 ? (
             <View className="flex-1 items-center justify-center">
               <ActivityIndicator size="large" />
-              <Text className="mt-2 text-sm text-zinc-400 dark:text-zinc-500">
-                Loading feed...
-              </Text>
+              <Text className="mt-2 text-sm text-zinc-400 dark:text-zinc-500">Loading feed...</Text>
             </View>
           ) : feed.length === 0 ? (
             <View className="flex-1 items-center justify-center px-8">
-              <Ionicons
-                name="newspaper-outline"
-                size={48}
-                color={colors.mutedIcon}
-              />
+              <Ionicons name="newspaper-outline" size={48} color={colors.mutedIcon} />
               <Text className="mt-3 text-lg font-semibold text-zinc-500 dark:text-zinc-400">
                 No workouts yet
               </Text>
@@ -158,26 +142,17 @@ export default function FriendsScreen() {
                 className="mt-4 flex-row items-center gap-2 rounded-lg bg-blue-500 px-5 py-2.5 active:bg-blue-600"
               >
                 <Ionicons name="person-add" size={16} color="white" />
-                <Text className="text-base font-semibold text-white">
-                  Find Friends
-                </Text>
+                <Text className="text-base font-semibold text-white">Find Friends</Text>
               </Pressable>
             </View>
           ) : (
             <FlatList
               data={feed}
               keyExtractor={(item: any) => item.workout_id}
-              renderItem={({ item }: { item: any }) => (
-                <FeedCard item={item} unit={unit} />
-              )}
+              renderItem={({ item }: { item: any }) => <FeedCard item={item} unit={unit} />}
               onEndReached={handleEndReached}
               onEndReachedThreshold={0.5}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={handleRefresh}
-                />
-              }
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
               contentContainerClassName="pt-2 pb-24"
               ListFooterComponent={
                 isFetchingNextPage ? (
@@ -219,10 +194,7 @@ export default function FriendsScreen() {
       </Pressable>
 
       {/* Friend Search Modal */}
-      <FriendSearch
-        visible={showSearch}
-        onClose={() => setShowSearch(false)}
-      />
+      <FriendSearch visible={showSearch} onClose={() => setShowSearch(false)} />
     </SafeAreaView>
   );
 }

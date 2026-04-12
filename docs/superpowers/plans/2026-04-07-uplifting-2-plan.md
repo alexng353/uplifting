@@ -13,6 +13,7 @@
 ## Task 1: Monorepo & Infrastructure Setup
 
 **Files:**
+
 - Create: `package.json`
 - Create: `bunfig.toml`
 - Create: `docker-compose.yml`
@@ -214,6 +215,7 @@ Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>"
 ## Task 2: Drizzle Schema
 
 **Files:**
+
 - Create: `apps/api/src/db/schema.ts`
 - Create: `apps/api/src/db/index.ts`
 - Create: `apps/api/drizzle.config.ts`
@@ -303,40 +305,60 @@ export const exercises = pgTable("exercises", {
 
 export const exerciseMuscleRelations = pgTable("exercise_muscle_relations", {
   id: uuid().primaryKey().defaultRandom(),
-  exerciseId: uuid("exercise_id").notNull().references(() => exercises.id),
-  muscleId: uuid("muscle_id").notNull().references(() => muscles.id),
+  exerciseId: uuid("exercise_id")
+    .notNull()
+    .references(() => exercises.id),
+  muscleId: uuid("muscle_id")
+    .notNull()
+    .references(() => muscles.id),
   isPrimary: boolean("is_primary").notNull(),
 });
 
-export const workouts = pgTable("workouts", {
-  id: uuid().primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id),
-  name: varchar({ length: 255 }),
-  startTime: timestamp("start_time", { withTimezone: true }).notNull(),
-  endTime: timestamp("end_time", { withTimezone: true }),
-  privacy: varchar({ length: 20 }).notNull().default("friends"),
-  gymLocation: varchar("gym_location", { length: 255 }),
-  kind: varchar({ length: 20 }).notNull().default("workout"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [
-  index("idx_workouts_user_kind").on(t.userId, t.kind),
-]);
+export const workouts = pgTable(
+  "workouts",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    name: varchar({ length: 255 }),
+    startTime: timestamp("start_time", { withTimezone: true }).notNull(),
+    endTime: timestamp("end_time", { withTimezone: true }),
+    privacy: varchar({ length: 20 }).notNull().default("friends"),
+    gymLocation: varchar("gym_location", { length: 255 }),
+    kind: varchar({ length: 20 }).notNull().default("workout"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("idx_workouts_user_kind").on(t.userId, t.kind)],
+);
 
-export const exerciseProfiles = pgTable("exercise_profiles", {
-  id: uuid().primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  exerciseId: uuid("exercise_id").notNull().references(() => exercises.id),
-  name: varchar({ length: 255 }).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [
-  unique().on(t.userId, t.exerciseId, t.name),
-]);
+export const exerciseProfiles = pgTable(
+  "exercise_profiles",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    exerciseId: uuid("exercise_id")
+      .notNull()
+      .references(() => exercises.id),
+    name: varchar({ length: 255 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique().on(t.userId, t.exerciseId, t.name)],
+);
 
 export const userSets = pgTable("user_sets", {
   id: uuid().primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id),
-  exerciseId: uuid("exercise_id").notNull().references(() => exercises.id),
-  workoutId: uuid("workout_id").notNull().references(() => workouts.id),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id),
+  exerciseId: uuid("exercise_id")
+    .notNull()
+    .references(() => exercises.id),
+  workoutId: uuid("workout_id")
+    .notNull()
+    .references(() => workouts.id),
   profileId: uuid("profile_id").references(() => exerciseProfiles.id),
   reps: integer().notNull(),
   weight: decimal({ precision: 10, scale: 2 }).notNull(),
@@ -346,18 +368,26 @@ export const userSets = pgTable("user_sets", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const friendships = pgTable("friendships", {
-  id: uuid().primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  friendId: uuid("friend_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  status: varchar({ length: 20 }).notNull().default("pending"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [
-  unique().on(t.userId, t.friendId),
-]);
+export const friendships = pgTable(
+  "friendships",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    friendId: uuid("friend_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: varchar({ length: 20 }).notNull().default("pending"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique().on(t.userId, t.friendId)],
+);
 
 export const userSettings = pgTable("user_settings", {
-  userId: uuid("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
   displayUnit: varchar("display_unit", { length: 3 }),
   maxWorkoutDurationMinutes: integer("max_workout_duration_minutes").notNull().default(120),
   defaultRestTimerSeconds: integer("default_rest_timer_seconds").notNull().default(90),
@@ -369,68 +399,106 @@ export const userSettings = pgTable("user_settings", {
   currentGymId: uuid("current_gym_id").references(() => userGyms.id, { onDelete: "set null" }),
 });
 
-export const favouriteExercises = pgTable("favourite_exercises", {
-  id: uuid().primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  exerciseId: uuid("exercise_id").notNull().references(() => exercises.id),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [
-  unique().on(t.userId, t.exerciseId),
-]);
+export const favouriteExercises = pgTable(
+  "favourite_exercises",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    exerciseId: uuid("exercise_id")
+      .notNull()
+      .references(() => exercises.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique().on(t.userId, t.exerciseId)],
+);
 
-export const emailVerificationTokens = pgTable("email_verification_tokens", {
-  id: uuid().primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  token: varchar({ length: 6 }).notNull(),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [
-  index("idx_email_verification_tokens_user_id").on(t.userId),
-  index("idx_email_verification_tokens_token").on(t.token),
-]);
+export const emailVerificationTokens = pgTable(
+  "email_verification_tokens",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    token: varchar({ length: 6 }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_email_verification_tokens_user_id").on(t.userId),
+    index("idx_email_verification_tokens_token").on(t.token),
+  ],
+);
 
-export const passwordResetTokens = pgTable("password_reset_tokens", {
-  id: uuid().primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  token: varchar({ length: 6 }).notNull(),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [
-  index("idx_password_reset_tokens_user_id").on(t.userId),
-  index("idx_password_reset_tokens_token").on(t.token),
-]);
+export const passwordResetTokens = pgTable(
+  "password_reset_tokens",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    token: varchar({ length: 6 }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_password_reset_tokens_user_id").on(t.userId),
+    index("idx_password_reset_tokens_token").on(t.token),
+  ],
+);
 
-export const userActivity = pgTable("user_activity", {
-  userId: uuid("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
-  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
-  currentWorkoutId: uuid("current_workout_id").references(() => workouts.id, { onDelete: "set null" }),
-  currentWorkoutStartedAt: timestamp("current_workout_started_at", { withTimezone: true }),
-}, (t) => [
-  index("idx_user_activity_last_seen").on(t.lastSeenAt),
-]);
+export const userActivity = pgTable(
+  "user_activity",
+  {
+    userId: uuid("user_id")
+      .primaryKey()
+      .references(() => users.id, { onDelete: "cascade" }),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    currentWorkoutId: uuid("current_workout_id").references(() => workouts.id, {
+      onDelete: "set null",
+    }),
+    currentWorkoutStartedAt: timestamp("current_workout_started_at", { withTimezone: true }),
+  },
+  (t) => [index("idx_user_activity_last_seen").on(t.lastSeenAt)],
+);
 
-export const userGyms = pgTable("user_gyms", {
-  id: uuid().primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  name: varchar({ length: 255 }).notNull(),
-  latitude: doublePrecision(),
-  longitude: doublePrecision(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [
-  index("idx_user_gyms_user_id").on(t.userId),
-]);
+export const userGyms = pgTable(
+  "user_gyms",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: varchar({ length: 255 }).notNull(),
+    latitude: doublePrecision(),
+    longitude: doublePrecision(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("idx_user_gyms_user_id").on(t.userId)],
+);
 
-export const userGymProfileMappings = pgTable("user_gym_profile_mappings", {
-  id: uuid().primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  gymId: uuid("gym_id").notNull().references(() => userGyms.id, { onDelete: "cascade" }),
-  exerciseId: uuid("exercise_id").notNull().references(() => exercises.id, { onDelete: "cascade" }),
-  profileId: uuid("profile_id").notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [
-  unique().on(t.userId, t.gymId, t.exerciseId),
-  index("idx_gym_profile_mappings_user_gym").on(t.userId, t.gymId),
-]);
+export const userGymProfileMappings = pgTable(
+  "user_gym_profile_mappings",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    gymId: uuid("gym_id")
+      .notNull()
+      .references(() => userGyms.id, { onDelete: "cascade" }),
+    exerciseId: uuid("exercise_id")
+      .notNull()
+      .references(() => exercises.id, { onDelete: "cascade" }),
+    profileId: uuid("profile_id").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique().on(t.userId, t.gymId, t.exerciseId),
+    index("idx_gym_profile_mappings_user_gym").on(t.userId, t.gymId),
+  ],
+);
 ```
 
 - [ ] **Step 3: Create apps/api/src/db/index.ts**
@@ -467,6 +535,7 @@ Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>"
 ## Task 3: Seed Data (Official Exercises + Muscles)
 
 **Files:**
+
 - Create: `apps/api/src/db/seed.ts`
 
 The original app has ~60 muscles and ~160+ official exercises with muscle relations. Copy the seed data from the original migrations (migrations 1, 5, 10-13).
@@ -500,6 +569,7 @@ Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>"
 ## Task 4: Elysia App Core (Entry Point, Auth Middleware, Error Handling)
 
 **Files:**
+
 - Create: `apps/api/src/index.ts`
 - Create: `apps/api/src/lib/auth.ts`
 - Create: `apps/api/src/lib/errors.ts`
@@ -558,7 +628,7 @@ export const jwtPlugin = new Elysia({ name: "jwt" })
       name: "jwt",
       secret: process.env.JWT_SECRET!,
       exp: "7d",
-    })
+    }),
   )
   .use(bearer());
 
@@ -633,11 +703,13 @@ import { muscleRoutes } from "./routes/muscles";
 import { syncRoutes } from "./routes/sync";
 
 const app = new Elysia()
-  .use(cors({
-    origin: process.env.MOBILE_FRONTEND_URL || "http://localhost:8081",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  }))
+  .use(
+    cors({
+      origin: process.env.MOBILE_FRONTEND_URL || "http://localhost:8081",
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+    }),
+  )
   .get("/", () => "ok 200")
   .get("/.well-known/health-check", () => "ok")
   .group("/api/v1", (app) =>
@@ -650,7 +722,7 @@ const app = new Elysia()
       .use(userRoutes)
       .use(gymRoutes)
       .use(muscleRoutes)
-      .use(syncRoutes)
+      .use(syncRoutes),
   )
   .listen(Number(process.env.PORT) || 8080);
 
@@ -690,6 +762,7 @@ Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>"
 ## Task 5: Auth Routes
 
 **Files:**
+
 - Modify: `apps/api/src/routes/auth.ts`
 
 - [ ] **Step 1: Implement all 6 auth endpoints**
@@ -706,104 +779,161 @@ import { sendEmail, generateVerificationCode } from "../lib/mailgun";
 export const authRoutes = new Elysia({ prefix: "/auth" })
   .use(jwtPlugin)
   // POST /signup
-  .post("/signup", async ({ jwt, body }) => {
-    const passwordHash = await hashPassword(body.password);
-    const [user] = await db.insert(users).values({
-      realName: body.real_name,
-      username: body.username,
-      email: body.email,
-      passwordHash,
-    }).returning();
-    const token = await jwt.sign({
-      sub: user.id,
-      username: user.username,
-      real_name: user.realName,
-      email: user.email,
-    });
-    return token;
-  }, {
-    body: t.Object({
-      real_name: t.String(),
-      username: t.String(),
-      email: t.String(),
-      password: t.String(),
-    }),
-  })
+  .post(
+    "/signup",
+    async ({ jwt, body }) => {
+      const passwordHash = await hashPassword(body.password);
+      const [user] = await db
+        .insert(users)
+        .values({
+          realName: body.real_name,
+          username: body.username,
+          email: body.email,
+          passwordHash,
+        })
+        .returning();
+      const token = await jwt.sign({
+        sub: user.id,
+        username: user.username,
+        real_name: user.realName,
+        email: user.email,
+      });
+      return token;
+    },
+    {
+      body: t.Object({
+        real_name: t.String(),
+        username: t.String(),
+        email: t.String(),
+        password: t.String(),
+      }),
+    },
+  )
   // POST /login
-  .post("/login", async ({ jwt, body, set }) => {
-    const [user] = await db.select().from(users)
-      .where(eq(users.username, body.username)).limit(1);
-    if (!user) { set.status = 401; return { error: "Invalid credentials" }; }
-    const valid = await verifyPassword(body.password, user.passwordHash);
-    if (!valid) { set.status = 401; return { error: "Invalid credentials" }; }
-    const token = await jwt.sign({
-      sub: user.id,
-      username: user.username,
-      real_name: user.realName,
-      email: user.email,
-    });
-    return token;
-  }, {
-    body: t.Object({ username: t.String(), password: t.String() }),
-  })
+  .post(
+    "/login",
+    async ({ jwt, body, set }) => {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.username, body.username))
+        .limit(1);
+      if (!user) {
+        set.status = 401;
+        return { error: "Invalid credentials" };
+      }
+      const valid = await verifyPassword(body.password, user.passwordHash);
+      if (!valid) {
+        set.status = 401;
+        return { error: "Invalid credentials" };
+      }
+      const token = await jwt.sign({
+        sub: user.id,
+        username: user.username,
+        real_name: user.realName,
+        email: user.email,
+      });
+      return token;
+    },
+    {
+      body: t.Object({ username: t.String(), password: t.String() }),
+    },
+  )
   // POST /send-verification (auth required)
   .use(authPlugin)
   .post("/send-verification", async ({ userId }) => {
-    const [user] = await db.select({ email: users.email, emailVerified: users.emailVerified })
-      .from(users).where(eq(users.id, userId));
+    const [user] = await db
+      .select({ email: users.email, emailVerified: users.emailVerified })
+      .from(users)
+      .where(eq(users.id, userId));
     if (user.emailVerified) return "Email already verified";
     await db.delete(emailVerificationTokens).where(eq(emailVerificationTokens.userId, userId));
     const code = generateVerificationCode();
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
     await db.insert(emailVerificationTokens).values({ userId, token: code, expiresAt });
-    await sendEmail(user.email, "Verify Your Email Address",
-      `Your verification code is: ${code}\n\nThis code expires in 30 minutes.`);
+    await sendEmail(
+      user.email,
+      "Verify Your Email Address",
+      `Your verification code is: ${code}\n\nThis code expires in 30 minutes.`,
+    );
     return "Verification code sent";
   })
   // POST /verify-email
-  .post("/verify-email", async ({ userId, body, set }) => {
-    const [token] = await db.select().from(emailVerificationTokens)
-      .where(and(
-        eq(emailVerificationTokens.userId, userId),
-        eq(emailVerificationTokens.token, body.code),
-        gt(emailVerificationTokens.expiresAt, new Date()),
-      )).limit(1);
-    if (!token) { set.status = 401; return { error: "Invalid or expired code" }; }
-    await db.update(users).set({ emailVerified: true }).where(eq(users.id, userId));
-    await db.delete(emailVerificationTokens).where(eq(emailVerificationTokens.userId, userId));
-    return "Email verified successfully";
-  }, {
-    body: t.Object({ code: t.String() }),
-  })
+  .post(
+    "/verify-email",
+    async ({ userId, body, set }) => {
+      const [token] = await db
+        .select()
+        .from(emailVerificationTokens)
+        .where(
+          and(
+            eq(emailVerificationTokens.userId, userId),
+            eq(emailVerificationTokens.token, body.code),
+            gt(emailVerificationTokens.expiresAt, new Date()),
+          ),
+        )
+        .limit(1);
+      if (!token) {
+        set.status = 401;
+        return { error: "Invalid or expired code" };
+      }
+      await db.update(users).set({ emailVerified: true }).where(eq(users.id, userId));
+      await db.delete(emailVerificationTokens).where(eq(emailVerificationTokens.userId, userId));
+      return "Email verified successfully";
+    },
+    {
+      body: t.Object({ code: t.String() }),
+    },
+  )
   // POST /request-password-change
   .post("/request-password-change", async ({ userId, set }) => {
-    const [user] = await db.select({ email: users.email, emailVerified: users.emailVerified })
-      .from(users).where(eq(users.id, userId));
-    if (!user.emailVerified) { set.status = 401; return { error: "Email not verified" }; }
+    const [user] = await db
+      .select({ email: users.email, emailVerified: users.emailVerified })
+      .from(users)
+      .where(eq(users.id, userId));
+    if (!user.emailVerified) {
+      set.status = 401;
+      return { error: "Email not verified" };
+    }
     await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
     const code = generateVerificationCode();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
     await db.insert(passwordResetTokens).values({ userId, token: code, expiresAt });
-    await sendEmail(user.email, "Password Change Verification Code",
-      `Your verification code is: ${code}\n\nThis code expires in 15 minutes.`);
+    await sendEmail(
+      user.email,
+      "Password Change Verification Code",
+      `Your verification code is: ${code}\n\nThis code expires in 15 minutes.`,
+    );
     return "Verification code sent";
   })
   // POST /change-password
-  .post("/change-password", async ({ userId, body, set }) => {
-    const [token] = await db.select().from(passwordResetTokens)
-      .where(and(
-        eq(passwordResetTokens.userId, userId),
-        eq(passwordResetTokens.token, body.code),
-        gt(passwordResetTokens.expiresAt, new Date()),
-      )).limit(1);
-    if (!token) { set.status = 401; return { error: "Invalid or expired code" }; }
-    const passwordHash = await hashPassword(body.new_password);
-    await db.update(users).set({ passwordHash }).where(eq(users.id, userId));
-    await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
-    return "Password changed successfully";
-  }, {
-    body: t.Object({ code: t.String(), new_password: t.String() }),
-  });
+  .post(
+    "/change-password",
+    async ({ userId, body, set }) => {
+      const [token] = await db
+        .select()
+        .from(passwordResetTokens)
+        .where(
+          and(
+            eq(passwordResetTokens.userId, userId),
+            eq(passwordResetTokens.token, body.code),
+            gt(passwordResetTokens.expiresAt, new Date()),
+          ),
+        )
+        .limit(1);
+      if (!token) {
+        set.status = 401;
+        return { error: "Invalid or expired code" };
+      }
+      const passwordHash = await hashPassword(body.new_password);
+      await db.update(users).set({ passwordHash }).where(eq(users.id, userId));
+      await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
+      return "Password changed successfully";
+    },
+    {
+      body: t.Object({ code: t.String(), new_password: t.String() }),
+    },
+  );
 ```
 
 - [ ] **Step 2: Verify endpoints**
@@ -825,6 +955,7 @@ Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>"
 ## Task 6: User Routes
 
 **Files:**
+
 - Modify: `apps/api/src/routes/users.ts`
 
 - [ ] **Step 1: Implement all user endpoints**
@@ -832,6 +963,7 @@ Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>"
 GET /me, PUT /me, DELETE /me, GET /settings, PUT /settings, GET /search
 
 Port the exact SQL logic from the Rust handlers. Key details:
+
 - GET /settings: if no row exists, INSERT defaults and return
 - PUT /settings: UPSERT with ON CONFLICT
 - GET /search: case-insensitive LIKE on username, exclude self, limit 20
@@ -848,6 +980,7 @@ Run: `curl -H 'Authorization: Bearer <token>' http://localhost:8080/api/v1/users
 ## Task 7: Workout Routes
 
 **Files:**
+
 - Modify: `apps/api/src/routes/workouts.ts`
 
 - [ ] **Step 1: Implement all workout endpoints**
@@ -855,8 +988,9 @@ Run: `curl -H 'Authorization: Bearer <token>' http://localhost:8080/api/v1/users
 POST create, GET list (paginated), GET :id (with sets grouped by exercise), PUT :id, DELETE :id, GET :id/summary, GET /streak, GET /all-time-stats
 
 Key SQL to port carefully:
+
 - **GET :id**: Fetch workout + all sets, group by (exercise_id, profile_id), detect is_unilateral
-- **GET :id/summary**: Aggregate query with volume = SUM(weight * reps), sets filtered by side
+- **GET :id/summary**: Aggregate query with volume = SUM(weight \* reps), sets filtered by side
 - **GET /streak**: Gaps-and-islands algorithm with DENSE_RANK
 - **GET /all-time-stats**: Multiple queries - totals, top exercises, muscle group volume with category mapping
 
@@ -871,6 +1005,7 @@ All queries use raw SQL via `db.execute(sql\`...\`)` for the complex window func
 ## Task 8: Set Routes
 
 **Files:**
+
 - Modify: `apps/api/src/routes/sets.ts`
 
 - [ ] **Step 1: Implement set CRUD**
@@ -886,6 +1021,7 @@ Each operation checks ownership. Create inserts with all fields (exercise_id, pr
 ## Task 9: Exercise Routes
 
 **Files:**
+
 - Modify: `apps/api/src/routes/exercises.ts`
 
 - [ ] **Step 1: Implement all exercise endpoints**
@@ -897,6 +1033,7 @@ Profile sub-routes: GET /profiles, GET /:id/profiles, POST /:id/profiles, PUT /:
 Favourite sub-routes: GET /favourites, POST /:id/favourite, DELETE /:id/favourite
 
 Key details:
+
 - GET list: LEFT JOIN to muscles for filtering, show official + user-authored
 - GET :id: 5 separate queries (exercise, primary muscles, secondary muscles, is_favourite, personal_record)
 - GET :id/history: Group sets by workout, ordered by date
@@ -908,6 +1045,7 @@ Key details:
 ## Task 10: Friend Routes
 
 **Files:**
+
 - Modify: `apps/api/src/routes/friends.ts`
 
 - [ ] **Step 1: Implement all friend endpoints**
@@ -915,6 +1053,7 @@ Key details:
 POST /send, GET / (with status), GET /requests, PUT /respond/:id, DELETE /:id, GET /feed, POST /activity, GET /workouts/:userId
 
 Key complexity:
+
 - GET /: UNION query for bidirectional friendships + JOIN user_activity + user_settings for online/workout status
 - GET /feed: Join workouts where privacy='friends' and friendship exists, with aggregate stats
 - POST /activity: UPSERT into user_activity with last_seen_at and current_workout info
@@ -927,6 +1066,7 @@ Key complexity:
 ## Task 11: Gym Routes
 
 **Files:**
+
 - Modify: `apps/api/src/routes/gyms.ts`
 
 - [ ] **Step 1: Implement gym CRUD + profile mappings**
@@ -942,6 +1082,7 @@ Profile mappings use UPSERT (ON CONFLICT DO UPDATE).
 ## Task 12: Muscle Routes
 
 **Files:**
+
 - Modify: `apps/api/src/routes/muscles.ts`
 
 - [ ] **Step 1: Implement muscle endpoints**
@@ -955,6 +1096,7 @@ GET /all, GET /groups (distinct major_group + minor_group), POST /create (admin 
 ## Task 13: Sync Routes
 
 **Files:**
+
 - Modify: `apps/api/src/routes/sync.ts`
 
 - [ ] **Step 1: Implement sync endpoints**
@@ -962,10 +1104,12 @@ GET /all, GET /groups (distinct major_group + minor_group), POST /create (admin 
 GET /bootstrap, POST /workout
 
 Key complexity:
+
 - **GET /bootstrap**: Fetch gyms + profiles + gym_profile_mappings + previous_sets (window function: DENSE_RANK to get most recent workout's sets per exercise+profile)
 - **POST /workout**: Transaction that creates workout + inserts all sets, returns updated previous_sets
 
 The previous_sets query uses:
+
 ```sql
 WITH ranked_sets AS (
   SELECT s.exercise_id, s.profile_id, s.reps, s.weight, s.weight_unit, s.side, s.created_at,
@@ -993,6 +1137,7 @@ Run: `curl -H 'Authorization: Bearer <token>' http://localhost:8080/api/v1/sync/
 ## Task 14: Expo Mobile App Setup
 
 **Files:**
+
 - Create: `apps/mobile/` (Expo project)
 - Create: `apps/mobile/app.json`
 - Create: `apps/mobile/package.json`
@@ -1062,9 +1207,12 @@ module.exports = withNativeWind(config, { input: "./global.css" });
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      ["expo-location", {
-        "locationWhenInUsePermission": "Allow Uplifting to use your location to detect nearby gyms."
-      }]
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow Uplifting to use your location to detect nearby gyms."
+        }
+      ]
     ]
   }
 }
@@ -1081,6 +1229,7 @@ Run: `cd apps/mobile && bunx expo start`
 ## Task 15: Mobile Storage & API Client
 
 **Files:**
+
 - Create: `apps/mobile/services/storage.ts`
 - Create: `apps/mobile/services/auth-storage.ts`
 - Create: `apps/mobile/lib/api.ts`
@@ -1154,6 +1303,7 @@ export const api = treaty<App>(API_URL, {
 ## Task 16: Mobile Root Layout & Auth
 
 **Files:**
+
 - Create: `apps/mobile/app/_layout.tsx`
 - Create: `apps/mobile/app/login.tsx`
 - Create: `apps/mobile/hooks/useAuth.tsx`
@@ -1162,7 +1312,7 @@ export const api = treaty<App>(API_URL, {
 
 Port from original. Context provider with isAuthenticated, isLoading, login, logout. Uses SecureStore for token persistence.
 
-- [ ] **Step 2: Create _layout.tsx (root layout)**
+- [ ] **Step 2: Create \_layout.tsx (root layout)**
 
 ```tsx
 import "../global.css";
@@ -1187,7 +1337,11 @@ function AuthGate() {
   }, [isAuthenticated, isLoading, segments]);
 
   if (isLoading) {
-    return <View className="flex-1 items-center justify-center"><ActivityIndicator size="large" /></View>;
+    return (
+      <View className="flex-1 items-center justify-center">
+        <ActivityIndicator size="large" />
+      </View>
+    );
   }
   return <Slot />;
 }
@@ -1214,6 +1368,7 @@ Port the Login page. Two forms (login + signup) toggled by state. Uses TextInput
 ## Task 17: Tab Navigation
 
 **Files:**
+
 - Create: `apps/mobile/app/(tabs)/_layout.tsx`
 - Create: `apps/mobile/app/(tabs)/me.tsx` (stub)
 - Create: `apps/mobile/app/(tabs)/friends.tsx` (stub)
@@ -1230,26 +1385,43 @@ import { Ionicons } from "@expo/vector-icons";
 export default function TabLayout() {
   return (
     <Tabs screenOptions={{ headerShown: false }}>
-      <Tabs.Screen name="me" options={{
-        title: "Me",
-        tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} />,
-      }} />
-      <Tabs.Screen name="friends" options={{
-        title: "Friends",
-        tabBarIcon: ({ color, size }) => <Ionicons name="people" size={size} color={color} />,
-      }} />
-      <Tabs.Screen name="workout" options={{
-        title: "Workout",
-        tabBarIcon: ({ color, size }) => <Ionicons name="barbell" size={size} color={color} />,
-      }} />
-      <Tabs.Screen name="stats" options={{
-        title: "Stats",
-        tabBarIcon: ({ color, size }) => <Ionicons name="stats-chart" size={size} color={color} />,
-      }} />
-      <Tabs.Screen name="settings" options={{
-        title: "Settings",
-        tabBarIcon: ({ color, size }) => <Ionicons name="settings" size={size} color={color} />,
-      }} />
+      <Tabs.Screen
+        name="me"
+        options={{
+          title: "Me",
+          tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="friends"
+        options={{
+          title: "Friends",
+          tabBarIcon: ({ color, size }) => <Ionicons name="people" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="workout"
+        options={{
+          title: "Workout",
+          tabBarIcon: ({ color, size }) => <Ionicons name="barbell" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="stats"
+        options={{
+          title: "Stats",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="stats-chart" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: "Settings",
+          tabBarIcon: ({ color, size }) => <Ionicons name="settings" size={size} color={color} />,
+        }}
+      />
     </Tabs>
   );
 }
@@ -1264,6 +1436,7 @@ export default function TabLayout() {
 ## Task 18: Port All Hooks
 
 **Files:**
+
 - Create: `apps/mobile/hooks/useWorkout.tsx`
 - Create: `apps/mobile/hooks/useSettings.tsx`
 - Create: `apps/mobile/hooks/useBootstrap.ts`
@@ -1358,6 +1531,7 @@ Replace Capacitor Geolocation with expo-location.
 ## Task 19: Me Screen
 
 **Files:**
+
 - Modify: `apps/mobile/app/(tabs)/me.tsx`
 - Create: `apps/mobile/components/WeekStreak.tsx`
 - Create: `apps/mobile/components/SyncBanner.tsx`
@@ -1365,6 +1539,7 @@ Replace Capacitor Geolocation with expo-location.
 - [ ] **Step 1: Implement Me screen**
 
 Port from original Me.tsx. Shows:
+
 - User profile (name, avatar)
 - This week's stats (workouts, rest days, total minutes)
 - WeekStreak component (7-day visual)
@@ -1373,6 +1548,7 @@ Port from original Me.tsx. Shows:
 - Recent workout list
 
 Use NativeWind classes. Replace Ionic components:
+
 - `IonPage/IonContent` → `SafeAreaView + ScrollView`
 - `IonRefresher` → `RefreshControl`
 - `IonCard` → `View` with shadow styling
@@ -1392,6 +1568,7 @@ Shows offline indicator + sync button when pending workouts exist.
 ## Task 20: Workout Screen
 
 **Files:**
+
 - Modify: `apps/mobile/app/(tabs)/workout.tsx`
 - Create: `apps/mobile/components/workout/ExerciseSlide.tsx`
 - Create: `apps/mobile/components/workout/AddExerciseSlide.tsx`
@@ -1402,6 +1579,7 @@ Shows offline indicator + sync button when pending workouts exist.
 - [ ] **Step 1: Implement workout screen with PagerView**
 
 Replace Swiper with `react-native-pager-view`. Same slide structure:
+
 - Slides 0..N-1: ExerciseSlide for each exercise
 - Slide N: AddExerciseSlide
 
@@ -1425,7 +1603,7 @@ import PagerView from "react-native-pager-view";
   <View key="add">
     <AddExerciseSlide />
   </View>
-</PagerView>
+</PagerView>;
 ```
 
 - [ ] **Step 2: Implement ExerciseSlide**
@@ -1455,6 +1633,7 @@ Drag-to-reorder exercise list. Use `react-native-gesture-handler` + `react-nativ
 ## Task 21: Friends Screen
 
 **Files:**
+
 - Modify: `apps/mobile/app/(tabs)/friends.tsx`
 - Create: `apps/mobile/components/friends/FeedCard.tsx`
 - Create: `apps/mobile/components/friends/FriendSearch.tsx`
@@ -1483,6 +1662,7 @@ TextInput + FlatList of search results. Send friend request button.
 ## Task 22: Stats Screen
 
 **Files:**
+
 - Modify: `apps/mobile/app/(tabs)/stats/index.tsx`
 - Create: `apps/mobile/app/(tabs)/stats/workout/[workoutId].tsx`
 - Create: `apps/mobile/app/(tabs)/stats/exercise/[exerciseId].tsx`
@@ -1490,6 +1670,7 @@ TextInput + FlatList of search results. Send friend request button.
 - [ ] **Step 1: Implement Stats index**
 
 Three tabs: This Week, All Time, Exercises. Uses segmented control.
+
 - This Week: workouts/rest days, total time, exercise count
 - All Time: total volume, sets, reps, workouts, time, top exercises, muscle groups
 - Exercises: FlatList of favourite exercises with set counts, infinite scroll
@@ -1509,6 +1690,7 @@ Shows exercise PR history, per-session breakdown. Chart with victory-native or s
 ## Task 23: Settings Screen
 
 **Files:**
+
 - Modify: `apps/mobile/app/(tabs)/settings/index.tsx`
 - Create: `apps/mobile/app/(tabs)/settings/exercise-profiles.tsx`
 - Create: `apps/mobile/app/(tabs)/settings/rep-ranges.tsx`
@@ -1517,6 +1699,7 @@ Shows exercise PR history, per-session breakdown. Chart with victory-native or s
 - [ ] **Step 1: Implement Settings screen**
 
 Scrollable list of settings sections:
+
 - Display: unit (kg/lbs picker), rest timer, max workout duration, default privacy
 - Privacy: toggles for sharing gym location, online status, workout status, workout history
 - Gyms: list + manage modal
@@ -1545,6 +1728,7 @@ Customizable rep range colors. List of ranges with color pickers.
 ## Task 24: ActivityTracker Component
 
 **Files:**
+
 - Create: `apps/mobile/components/ActivityTracker.tsx`
 
 - [ ] **Step 1: Implement ActivityTracker**
@@ -1562,6 +1746,7 @@ Render `<ActivityTracker />` inside the authenticated section of the app.
 ## Task 25: Final Integration & Polish
 
 **Files:**
+
 - Various touch-ups across all screens
 
 - [ ] **Step 1: Wire up WorkoutProvider in (tabs) layout**

@@ -105,7 +105,13 @@ export function useSync() {
         for (const [key, sets] of Object.entries(
           response.previous_sets as Record<
             string,
-            { reps: number; weight: string | number; weight_unit?: string; weightUnit?: string; side?: string }[]
+            {
+              reps: number;
+              weight: string | number;
+              weight_unit?: string;
+              weightUnit?: string;
+              side?: string;
+            }[]
           >,
         )) {
           const parts = key.split("_");

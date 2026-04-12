@@ -1,11 +1,5 @@
 import { useMemo } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, ScrollView, Pressable, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
@@ -74,18 +68,13 @@ export default function WorkoutDetailScreen() {
     const start = workout?.startTime;
     const end = workout?.endTime;
     if (!start || !end) return 0;
-    return Math.round(
-      (new Date(end).getTime() - new Date(start).getTime()) / 60000,
-    );
+    return Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000);
   };
 
   const getTotalSets = (): number => {
     return exerciseGroups.reduce((total: number, group: any) => {
       if (group.is_unilateral) {
-        return (
-          total +
-          group.sets.filter((s: any) => s.side === "R" || !s.side).length
-        );
+        return total + group.sets.filter((s: any) => s.side === "R" || !s.side).length;
       }
       return total + group.sets.length;
     }, 0);
@@ -99,8 +88,7 @@ export default function WorkoutDetailScreen() {
         total +
         group.sets.reduce((sum: number, s: any) => {
           const weight = Number.parseFloat(s.weight);
-          const bw =
-            isBw && s.bodyweight ? Number.parseFloat(s.bodyweight) : 0;
+          const bw = isBw && s.bodyweight ? Number.parseFloat(s.bodyweight) : 0;
           return sum + s.reps * (weight + bw);
         }, 0)
       );
@@ -155,9 +143,7 @@ export default function WorkoutDetailScreen() {
       <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900">
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" />
-          <Text className="mt-2 text-sm text-zinc-400 dark:text-zinc-500">
-            Loading workout...
-          </Text>
+          <Text className="mt-2 text-sm text-zinc-400 dark:text-zinc-500">Loading workout...</Text>
         </View>
       </SafeAreaView>
     );

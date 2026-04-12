@@ -34,9 +34,7 @@ function flag(name: string): string | undefined {
 
 const dryRun = args.includes("--dry-run");
 
-const root = execSync("git rev-parse --show-toplevel")
-  .toString()
-  .trim();
+const root = execSync("git rev-parse --show-toplevel").toString().trim();
 
 // ── Resolve from/to refs ────────────────────────────────────────
 
@@ -54,25 +52,19 @@ const fromRef = flag("from") ?? latestTag();
 const toRef = flag("to") ?? "HEAD";
 
 if (!fromRef) {
-  console.error(
-    "Error: no git tags found and --from not specified."
-  );
+  console.error("Error: no git tags found and --from not specified.");
   process.exit(1);
 }
 
 // ── Resolve version ─────────────────────────────────────────────
 
 function readAppVersion(): string {
-  const appJson = JSON.parse(
-    readFileSync(join(root, "apps/mobile/app.json"), "utf-8")
-  );
+  const appJson = JSON.parse(readFileSync(join(root, "apps/mobile/app.json"), "utf-8"));
   return appJson.expo.version;
 }
 
 const version = flag("version") ?? readAppVersion();
-const date =
-  flag("date") ??
-  new Date().toISOString().split("T")[0];
+const date = flag("date") ?? new Date().toISOString().split("T")[0];
 
 // ── Parse commits ───────────────────────────────────────────────
 
@@ -84,15 +76,13 @@ interface Commit {
   breaking: boolean;
 }
 
-const CONVENTIONAL_RE =
-  /^(?:\[agent\]\s*)?(\w+)(?:\(([^)]+)\))?(!)?:\s*(.+)$/;
+const CONVENTIONAL_RE = /^(?:\[agent\]\s*)?(\w+)(?:\(([^)]+)\))?(!)?:\s*(.+)$/;
 
 function parseCommits(from: string, to: string): Commit[] {
   const range = `${from}..${to}`;
-  const raw = execSync(
-    `git log ${range} --format="%h %s" --no-merges`,
-    { encoding: "utf-8" }
-  ).trim();
+  const raw = execSync(`git log ${range} --format="%h %s" --no-merges`, {
+    encoding: "utf-8",
+  }).trim();
 
   if (!raw) return [];
 
@@ -131,12 +121,7 @@ const TYPE_LABELS: Record<string, string> = {
 
 // Types to include in the changelog (skip docs, style, test,
 // build, ci, chore by default).
-const VISIBLE_TYPES = new Set([
-  "feat",
-  "fix",
-  "perf",
-  "refactor",
-]);
+const VISIBLE_TYPES = new Set(["feat", "fix", "perf", "refactor"]);
 
 function render(commits: Commit[]): string {
   const groups = new Map<string, Commit[]>();
@@ -152,12 +137,7 @@ function render(commits: Commit[]): string {
     return `## [${version}] - ${date}\n\n_No notable changes._\n`;
   }
 
-  const order = [
-    "feat",
-    "fix",
-    "perf",
-    "refactor",
-  ];
+  const order = ["feat", "fix", "perf", "refactor"];
 
   const sections: string[] = [`## [${version}] - ${date}`];
 
@@ -183,8 +163,7 @@ function render(commits: Commit[]): string {
 function prependToChangelog(entry: string): void {
   const changelogPath = join(root, "CHANGELOG.md");
   const UNRELEASED_MARKER = "## [Unreleased]";
-  const UNRELEASED_SECTION =
-    /## \[Unreleased\]\n+(?:_[^_]+_\n+)?/;
+  const UNRELEASED_SECTION = /## \[Unreleased\]\n+(?:_[^_]+_\n+)?/;
 
   if (!existsSync(changelogPath)) {
     console.error("Error: CHANGELOG.md not found at", root);
@@ -194,31 +173,20 @@ function prependToChangelog(entry: string): void {
   let content = readFileSync(changelogPath, "utf-8");
 
   // Replace the Unreleased section with a fresh one + the new entry
-  const freshUnreleased =
-    `${UNRELEASED_MARKER}\n\n_No unreleased changes._\n\n`;
+  const freshUnreleased = `${UNRELEASED_MARKER}\n\n_No unreleased changes._\n\n`;
 
   if (UNRELEASED_SECTION.test(content)) {
-    content = content.replace(
-      UNRELEASED_SECTION,
-      freshUnreleased + entry + "\n"
-    );
+    content = content.replace(UNRELEASED_SECTION, freshUnreleased + entry + "\n");
   } else if (content.includes(UNRELEASED_MARKER)) {
     // Unreleased header exists but format is unexpected —
     // insert after it
-    content = content.replace(
-      UNRELEASED_MARKER,
-      freshUnreleased + entry + "\n"
-    );
+    content = content.replace(UNRELEASED_MARKER, freshUnreleased + entry + "\n");
   } else {
     // No Unreleased section — prepend after the first heading
     const firstH2 = content.indexOf("\n## ");
     if (firstH2 !== -1) {
       content =
-        content.slice(0, firstH2 + 1) +
-        freshUnreleased +
-        entry +
-        "\n" +
-        content.slice(firstH2 + 1);
+        content.slice(0, firstH2 + 1) + freshUnreleased + entry + "\n" + content.slice(firstH2 + 1);
     } else {
       content += "\n" + entry;
     }

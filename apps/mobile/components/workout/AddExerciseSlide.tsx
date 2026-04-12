@@ -1,20 +1,10 @@
 import { useCallback, useMemo, useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  SectionList,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, TextInput, Pressable, SectionList, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeColors } from "../../hooks/useThemeColors";
 import { useExercises, type Exercise } from "../../hooks/useExercises";
 import { useExerciseSuggestions } from "../../hooks/useExerciseSuggestions";
-import {
-  useFavouriteExercises,
-  useToggleFavourite,
-} from "../../hooks/useFavouriteExercises";
+import { useFavouriteExercises, useToggleFavourite } from "../../hooks/useFavouriteExercises";
 import { useAllExerciseProfiles } from "../../hooks/useExerciseProfiles";
 import { useGymProfileSuggestion } from "../../hooks/useGymProfileSuggestion";
 import { useWorkoutActions } from "../../hooks/useWorkoutActions";
@@ -23,9 +13,7 @@ interface AddExerciseSlideProps {
   onExerciseAdded?: () => void;
 }
 
-export default function AddExerciseSlide({
-  onExerciseAdded,
-}: AddExerciseSlideProps) {
+export default function AddExerciseSlide({ onExerciseAdded }: AddExerciseSlideProps) {
   const { addExercise } = useWorkoutActions();
   const colors = useThemeColors();
   const [searchText, setSearchText] = useState("");
@@ -34,8 +22,7 @@ export default function AddExerciseSlide({
   const { data: allProfiles } = useAllExerciseProfiles();
   const { data: favourites } = useFavouriteExercises();
   const toggleFavourite = useToggleFavourite();
-  const { getSuggestedProfile, recordProfileUsage } =
-    useGymProfileSuggestion();
+  const { getSuggestedProfile, recordProfileUsage } = useGymProfileSuggestion();
   const suggestedExerciseIds = useExerciseSuggestions();
 
   const handleToggleFavourite = useCallback(
@@ -51,8 +38,7 @@ export default function AddExerciseSlide({
       const profiles = allProfiles?.get(exerciseId);
       if (!profiles || profiles.length === 0) return null;
       if (profiles.length === 1) return profiles[0].name as string;
-      if (profiles.length === 2)
-        return `${profiles[0].name}, ${profiles[1].name}`;
+      if (profiles.length === 2) return `${profiles[0].name}, ${profiles[1].name}`;
       return `${profiles[0].name}, +${profiles.length - 1}`;
     },
     [allProfiles],
@@ -68,9 +54,7 @@ export default function AddExerciseSlide({
         ? profiles?.find((p: any) => p.id === suggestedProfileId)
         : undefined;
 
-      const displayName = profileToUse
-        ? `${exercise.name} (${profileToUse.name})`
-        : exercise.name;
+      const displayName = profileToUse ? `${exercise.name} (${profileToUse.name})` : exercise.name;
       addExercise(
         exercise.id,
         displayName,
@@ -85,13 +69,7 @@ export default function AddExerciseSlide({
       setSearchText("");
       onExerciseAdded?.();
     },
-    [
-      allProfiles,
-      addExercise,
-      onExerciseAdded,
-      getSuggestedProfile,
-      recordProfileUsage,
-    ],
+    [allProfiles, addExercise, onExerciseAdded, getSuggestedProfile, recordProfileUsage],
   );
 
   // Build a lookup map for suggested exercises
@@ -182,9 +160,7 @@ export default function AddExerciseSlide({
                 {exercise.exercise_type}
               </Text>
               {profilesLabel && (
-                <Text className="text-xs text-zinc-400 dark:text-zinc-500">
-                  ({profilesLabel})
-                </Text>
+                <Text className="text-xs text-zinc-400 dark:text-zinc-500">({profilesLabel})</Text>
               )}
             </View>
           </View>

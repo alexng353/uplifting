@@ -42,7 +42,10 @@ export default function GymManagerModal({
   const [editingGymId, setEditingGymId] = useState<string | null>(null);
   const [editingGymName, setEditingGymName] = useState("");
   const [isAdding, setIsAdding] = useState(false);
-  const [capturedLocation, setCapturedLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [capturedLocation, setCapturedLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const [capturingLocation, setCapturingLocation] = useState(false);
 
   const handleCaptureLocation = async () => {
@@ -181,8 +184,7 @@ export default function GymManagerModal({
           <View className="flex-1 items-center justify-center px-8">
             <Ionicons name="business-outline" size={48} color={colors.mutedIcon} />
             <Text className="mt-3 text-center text-base text-zinc-400 dark:text-zinc-500">
-              No gyms added yet. Add a gym to track profile preferences by
-              location.
+              No gyms added yet. Add a gym to track profile preferences by location.
             </Text>
           </View>
         ) : (
@@ -203,25 +205,11 @@ export default function GymManagerModal({
                       autoFocus
                       returnKeyType="done"
                     />
-                    <Pressable
-                      onPress={handleSaveEdit}
-                      className="active:opacity-60"
-                    >
-                      <Ionicons
-                        name="checkmark-circle"
-                        size={28}
-                        color={colors.successIcon}
-                      />
+                    <Pressable onPress={handleSaveEdit} className="active:opacity-60">
+                      <Ionicons name="checkmark-circle" size={28} color={colors.successIcon} />
                     </Pressable>
-                    <Pressable
-                      onPress={handleCancelEdit}
-                      className="active:opacity-60"
-                    >
-                      <Ionicons
-                        name="close-circle"
-                        size={28}
-                        color={colors.mutedIcon}
-                      />
+                    <Pressable onPress={handleCancelEdit} className="active:opacity-60">
+                      <Ionicons name="close-circle" size={28} color={colors.mutedIcon} />
                     </Pressable>
                   </View>
                 ) : (
@@ -235,16 +223,10 @@ export default function GymManagerModal({
                       )}
                     </View>
                     <View className="flex-row items-center gap-3">
-                      <Pressable
-                        onPress={() => handleStartEdit(gym)}
-                        className="active:opacity-60"
-                      >
+                      <Pressable onPress={() => handleStartEdit(gym)} className="active:opacity-60">
                         <Ionicons name="pencil" size={20} color={colors.accentIcon} />
                       </Pressable>
-                      <Pressable
-                        onPress={() => handleDelete(gym)}
-                        className="active:opacity-60"
-                      >
+                      <Pressable onPress={() => handleDelete(gym)} className="active:opacity-60">
                         <Ionicons name="trash" size={20} color={colors.dangerIcon} />
                       </Pressable>
                     </View>

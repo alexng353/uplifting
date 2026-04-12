@@ -23,9 +23,9 @@ A lightweight pointer that survives after `PENDING_WORKOUT` is cleared by sync:
 
 ```typescript
 interface TodayRestDay {
-  workoutId: string          // StoredWorkout.id (local)
-  date: string               // YYYY-MM-DD for staleness check
-  syncedWorkoutId?: string   // server-side workout ID after sync
+  workoutId: string; // StoredWorkout.id (local)
+  date: string; // YYYY-MM-DD for staleness check
+  syncedWorkoutId?: string; // server-side workout ID after sync
 }
 ```
 
@@ -80,10 +80,10 @@ This is the safety net. Even if two devices race, the server only creates one re
 
 ## Files to Change
 
-| File | Change |
-|------|--------|
-| `apps/mobile/services/storage.ts` | Add `TODAY_REST_DAY` key, `TodayRestDay` type, getter/setter/clear functions |
-| `apps/mobile/hooks/useWorkout.tsx` | Add `todayRestDay` state, `cancelRestDay` function, mount reconciliation, expose `todayHasWorkouts`. Update `logRestDay` to save `TODAY_REST_DAY` pointer and check for duplicates. |
-| `apps/mobile/app/(tabs)/workout.tsx` | Add rest day render branch (third state). Hide "Log Rest Day" when today has workouts. |
-| `apps/mobile/hooks/useSync.tsx` | After sync success for rest days, update `syncedWorkoutId` in `TODAY_REST_DAY` storage. |
-| `apps/api/src/routes/sync.ts` | Add dedup check: if `kind = "rest"`, query for existing rest day on same user+date before inserting. |
+| File                                 | Change                                                                                                                                                                              |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/mobile/services/storage.ts`    | Add `TODAY_REST_DAY` key, `TodayRestDay` type, getter/setter/clear functions                                                                                                        |
+| `apps/mobile/hooks/useWorkout.tsx`   | Add `todayRestDay` state, `cancelRestDay` function, mount reconciliation, expose `todayHasWorkouts`. Update `logRestDay` to save `TODAY_REST_DAY` pointer and check for duplicates. |
+| `apps/mobile/app/(tabs)/workout.tsx` | Add rest day render branch (third state). Hide "Log Rest Day" when today has workouts.                                                                                              |
+| `apps/mobile/hooks/useSync.tsx`      | After sync success for rest days, update `syncedWorkoutId` in `TODAY_REST_DAY` storage.                                                                                             |
+| `apps/api/src/routes/sync.ts`        | Add dedup check: if `kind = "rest"`, query for existing rest day on same user+date before inserting.                                                                                |

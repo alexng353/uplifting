@@ -57,11 +57,7 @@ function SetRow({
   sideLabel?: "R" | "L";
   exerciseId: string;
   displayUnit: string;
-  updateSet: (
-    exerciseId: string,
-    setId: string,
-    updates: Partial<StoredSet>,
-  ) => void;
+  updateSet: (exerciseId: string, setId: string, updates: Partial<StoredSet>) => void;
   suggestedReps: number;
   suggestedWeight: number;
   isBodyweight?: boolean;
@@ -125,9 +121,7 @@ function SetRow({
           selectTextOnFocus
         />
       </View>
-      {isBodyweight && (
-        <Text className="text-xs text-zinc-400 dark:text-zinc-500">BW +</Text>
-      )}
+      {isBodyweight && <Text className="text-xs text-zinc-400 dark:text-zinc-500">BW +</Text>}
       <View className="flex-1">
         <TextInput
           ref={weightRef}
@@ -166,12 +160,10 @@ export default function ExerciseSlide({ exercise, slideIndex = 0 }: ExerciseSlid
   const { getDisplayUnit } = useSettings();
   const { getSuggestion } = usePreviousSets();
   const { data: profiles = [] } = useExerciseProfiles(exercise.exerciseId);
-  const { getSuggestedProfile, recordProfileUsage, currentGymId } =
-    useGymProfileSuggestion();
+  const { getSuggestedProfile, recordProfileUsage, currentGymId } = useGymProfileSuggestion();
   const isBodyweight = exercise.exerciseType === "Bodyweight";
   const scrollRef = useRef<ScrollView>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
-
 
   const displayUnit = getDisplayUnit();
 
@@ -249,12 +241,7 @@ export default function ExerciseSlide({ exercise, slideIndex = 0 }: ExerciseSlid
     } else {
       removeLastSet(exercise.exerciseId);
     }
-  }, [
-    exercise.exerciseId,
-    exercise.isUnilateral,
-    removeLastSet,
-    removeLastUnilateralPair,
-  ]);
+  }, [exercise.exerciseId, exercise.isUnilateral, removeLastSet, removeLastUnilateralPair]);
 
   const handleToggleUnilateral = useCallback(() => {
     toggleUnilateral(exercise.exerciseId);
@@ -270,9 +257,7 @@ export default function ExerciseSlide({ exercise, slideIndex = 0 }: ExerciseSlid
 
   const handleChangeProfile = useCallback(
     (profileId?: string, profileName?: string) => {
-      const displayName = profileName
-        ? `${baseName} (${profileName})`
-        : baseName;
+      const displayName = profileName ? `${baseName} (${profileName})` : baseName;
       changeExerciseProfile(exercise.exerciseId, profileId, displayName);
 
       if (profileId) {
@@ -285,9 +270,7 @@ export default function ExerciseSlide({ exercise, slideIndex = 0 }: ExerciseSlid
   );
 
   const hasProfiles = profiles.length > 0;
-  const canRemove = exercise.isUnilateral
-    ? setGroups.length > 1
-    : exercise.sets.length > 1;
+  const canRemove = exercise.isUnilateral ? setGroups.length > 1 : exercise.sets.length > 1;
   const canDuplicate = exercise.sets.length > 0;
 
   const suggestedProfileId = getSuggestedProfile(exercise.exerciseId);
@@ -302,14 +285,15 @@ export default function ExerciseSlide({ exercise, slideIndex = 0 }: ExerciseSlid
         >
           <Text className="text-xl font-bold dark:text-zinc-100">
             {exercise.exerciseName}
-            {hasProfiles && (
-              <Text className="text-blue-500"> ...</Text>
-            )}
+            {hasProfiles && <Text className="text-blue-500"> ...</Text>}
           </Text>
         </Pressable>
         {exercise.exerciseType && (
           <View className="mt-1 flex-row items-center gap-2">
-            <View className="items-center justify-center rounded bg-zinc-200 dark:bg-zinc-700 px-2" style={{ height: SIDE_BADGE_HEIGHT }}>
+            <View
+              className="items-center justify-center rounded bg-zinc-200 dark:bg-zinc-700 px-2"
+              style={{ height: SIDE_BADGE_HEIGHT }}
+            >
               <Text className="text-xs font-medium text-zinc-600 dark:text-zinc-300">
                 {exercise.exerciseType}
               </Text>
@@ -375,8 +359,7 @@ export default function ExerciseSlide({ exercise, slideIndex = 0 }: ExerciseSlid
                       updateSet={updateSet}
                       suggestedReps={rightSuggestion.reps ?? DEFAULT_REPS}
                       suggestedWeight={
-                        rightSuggestion.weight ??
-                        (isBodyweight ? 0 : DEFAULT_WEIGHT)
+                        rightSuggestion.weight ?? (isBodyweight ? 0 : DEFAULT_WEIGHT)
                       }
                       isBodyweight={isBodyweight}
                       slideIndex={slideIndex}
@@ -392,10 +375,7 @@ export default function ExerciseSlide({ exercise, slideIndex = 0 }: ExerciseSlid
                       displayUnit={displayUnit}
                       updateSet={updateSet}
                       suggestedReps={leftSuggestion.reps ?? DEFAULT_REPS}
-                      suggestedWeight={
-                        leftSuggestion.weight ??
-                        (isBodyweight ? 0 : DEFAULT_WEIGHT)
-                      }
+                      suggestedWeight={leftSuggestion.weight ?? (isBodyweight ? 0 : DEFAULT_WEIGHT)}
                       isBodyweight={isBodyweight}
                       slideIndex={slideIndex}
                       baseOrder={(group.setNumber - 1) * 4 + 2}
@@ -405,11 +385,7 @@ export default function ExerciseSlide({ exercise, slideIndex = 0 }: ExerciseSlid
               );
             })
           : exercise.sets.map((set, index) => {
-              const suggestion = getSuggestion(
-                exercise.exerciseId,
-                exercise.profileId,
-                index + 1,
-              );
+              const suggestion = getSuggestion(exercise.exerciseId, exercise.profileId, index + 1);
               return (
                 <SetRow
                   key={set.id}
@@ -419,9 +395,7 @@ export default function ExerciseSlide({ exercise, slideIndex = 0 }: ExerciseSlid
                   displayUnit={displayUnit}
                   updateSet={updateSet}
                   suggestedReps={suggestion.reps ?? DEFAULT_REPS}
-                  suggestedWeight={
-                    suggestion.weight ?? (isBodyweight ? 0 : DEFAULT_WEIGHT)
-                  }
+                  suggestedWeight={suggestion.weight ?? (isBodyweight ? 0 : DEFAULT_WEIGHT)}
                   isBodyweight={isBodyweight}
                   slideIndex={slideIndex}
                   baseOrder={index * 2}
@@ -468,16 +442,12 @@ export default function ExerciseSlide({ exercise, slideIndex = 0 }: ExerciseSlid
       >
         <View className="flex-1 bg-white dark:bg-zinc-900">
           <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-4 pb-3 pt-4">
-            <Text className="text-lg font-bold dark:text-zinc-100">
-              Profile for {baseName}
-            </Text>
+            <Text className="text-lg font-bold dark:text-zinc-100">Profile for {baseName}</Text>
             <Pressable
               onPress={() => setShowProfileModal(false)}
               className="rounded-lg px-3 py-1.5 active:bg-zinc-100 dark:active:bg-zinc-800"
             >
-              <Text className="text-base font-medium text-blue-500">
-                Cancel
-              </Text>
+              <Text className="text-base font-medium text-blue-500">Cancel</Text>
             </Pressable>
           </View>
           <FlatList
@@ -494,24 +464,20 @@ export default function ExerciseSlide({ exercise, slideIndex = 0 }: ExerciseSlid
             keyExtractor={(item) => item.id ?? "default"}
             renderItem={({ item }) => {
               const isCurrent =
-                item.id === exercise.profileId ||
-                (item.id === undefined && !exercise.profileId);
+                item.id === exercise.profileId || (item.id === undefined && !exercise.profileId);
               return (
                 <Pressable
                   onPress={() => handleChangeProfile(item.id, item.id ? item.name : undefined)}
                   className="flex-row items-center justify-between border-b border-zinc-100 dark:border-zinc-800 px-4 py-3.5 active:bg-zinc-50 dark:active:bg-zinc-800"
                 >
                   <Text className="text-base dark:text-zinc-100">{item.name}</Text>
-                  {isCurrent && (
-                    <Ionicons name="checkmark" size={20} color={colors.accentIcon} />
-                  )}
+                  {isCurrent && <Ionicons name="checkmark" size={20} color={colors.accentIcon} />}
                 </Pressable>
               );
             }}
           />
         </View>
       </Modal>
-
     </View>
   );
 }

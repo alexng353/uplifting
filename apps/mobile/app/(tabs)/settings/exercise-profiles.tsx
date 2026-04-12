@@ -95,10 +95,7 @@ export default function ExerciseProfilesScreen() {
     });
 
     // Group by exercise
-    const groups = new Map<
-      string,
-      { exerciseName: string; profiles: ProfileItem[] }
-    >();
+    const groups = new Map<string, { exerciseName: string; profiles: ProfileItem[] }>();
 
     for (const item of filtered) {
       const existing = groups.get(item.exerciseId);
@@ -122,13 +119,11 @@ export default function ExerciseProfilesScreen() {
       }
     }
 
-    return Array.from(groups.entries()).map(
-      ([exerciseId, { exerciseName, profiles }]) => ({
-        title: exerciseName,
-        exerciseId,
-        data: profiles,
-      }),
-    );
+    return Array.from(groups.entries()).map(([exerciseId, { exerciseName, profiles }]) => ({
+      title: exerciseName,
+      exerciseId,
+      data: profiles,
+    }));
   }, [allProfiles, exercises, searchText]);
 
   const handleOpenRename = useCallback(
@@ -188,9 +183,7 @@ export default function ExerciseProfilesScreen() {
         <View className="flex-1 items-center justify-center px-8">
           <Ionicons name="barbell-outline" size={48} color={colors.mutedIcon} />
           <Text className="mt-3 text-center text-base text-zinc-400 dark:text-zinc-500">
-            {searchText.trim()
-              ? "No profiles match your search."
-              : "No exercise profiles yet."}
+            {searchText.trim() ? "No profiles match your search." : "No exercise profiles yet."}
           </Text>
         </View>
       ) : (
@@ -207,13 +200,7 @@ export default function ExerciseProfilesScreen() {
           )}
           renderItem={({ item, index, section }) => (
             <Pressable
-              onPress={() =>
-                handleOpenRename(
-                  item.exerciseId,
-                  item.profileId,
-                  item.profileName,
-                )
-              }
+              onPress={() => handleOpenRename(item.exerciseId, item.profileId, item.profileName)}
               className={`flex-row items-center bg-white dark:bg-zinc-900 px-4 py-3 active:bg-zinc-50 dark:active:bg-zinc-800 ${
                 index < section.data.length - 1
                   ? "border-b border-zinc-100 dark:border-zinc-800"
@@ -241,10 +228,7 @@ export default function ExerciseProfilesScreen() {
         >
           <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-4 pb-3 pt-4">
             <Text className="text-xl font-bold dark:text-zinc-100">Rename Profile</Text>
-            <Pressable
-              onPress={() => setShowRenameModal(false)}
-              className="active:opacity-60"
-            >
+            <Pressable onPress={() => setShowRenameModal(false)} className="active:opacity-60">
               <Text className="text-base text-zinc-400 dark:text-zinc-500">Cancel</Text>
             </Pressable>
           </View>
@@ -261,9 +245,7 @@ export default function ExerciseProfilesScreen() {
             />
             <Pressable
               onPress={handleSaveProfileName}
-              disabled={
-                renameProfileMutation.isPending || !newProfileName.trim()
-              }
+              disabled={renameProfileMutation.isPending || !newProfileName.trim()}
               className={`mt-4 items-center rounded-lg py-3 ${
                 renameProfileMutation.isPending || !newProfileName.trim()
                   ? "bg-zinc-200 dark:bg-zinc-700"

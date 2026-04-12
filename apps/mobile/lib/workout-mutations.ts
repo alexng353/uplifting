@@ -16,10 +16,7 @@ import {
 
 // --- Private helpers ---
 
-function getBodyweightForExercise(
-  workout: StoredWorkout,
-  exerciseId: string,
-): number | undefined {
+function getBodyweightForExercise(workout: StoredWorkout, exerciseId: string): number | undefined {
   const exercise = workout.exercises.find((e) => e.exerciseId === exerciseId);
   if (exercise?.exerciseType !== "Bodyweight") return undefined;
   const settings = getSettings();
@@ -42,10 +39,7 @@ export function addExerciseMutation(
     id: generateId(),
     weightUnit: unit,
     createdAt: new Date().toISOString(),
-    bodyweight:
-      exerciseType === "Bodyweight"
-        ? (settings.bodyweight ?? undefined)
-        : undefined,
+    bodyweight: exerciseType === "Bodyweight" ? (settings.bodyweight ?? undefined) : undefined,
   };
 
   const newExercise: StoredWorkoutExercise = {
@@ -62,10 +56,7 @@ export function addExerciseMutation(
   };
 }
 
-export function removeExerciseMutation(
-  workout: StoredWorkout,
-  exerciseId: string,
-): StoredWorkout {
+export function removeExerciseMutation(workout: StoredWorkout, exerciseId: string): StoredWorkout {
   return {
     ...workout,
     exercises: workout.exercises.filter((e) => e.exerciseId !== exerciseId),
@@ -76,9 +67,7 @@ export function reorderExercisesMutation(
   workout: StoredWorkout,
   newOrder: string[],
 ): StoredWorkout {
-  const exerciseMap = new Map(
-    workout.exercises.map((e) => [e.exerciseId, e]),
-  );
+  const exerciseMap = new Map(workout.exercises.map((e) => [e.exerciseId, e]));
   const reordered = newOrder
     .map((id) => exerciseMap.get(id))
     .filter((e): e is StoredWorkoutExercise => e !== undefined);
@@ -144,9 +133,7 @@ export function addUnilateralPairMutation(
   return {
     ...workout,
     exercises: workout.exercises.map((e) =>
-      e.exerciseId === exerciseId
-        ? { ...e, sets: [...e.sets, rightSet, leftSet] }
-        : e,
+      e.exerciseId === exerciseId ? { ...e, sets: [...e.sets, rightSet, leftSet] } : e,
     ),
   };
 }
@@ -178,17 +165,12 @@ export function removeSetMutation(
   return {
     ...workout,
     exercises: workout.exercises.map((e) =>
-      e.exerciseId === exerciseId
-        ? { ...e, sets: e.sets.filter((s) => s.id !== setId) }
-        : e,
+      e.exerciseId === exerciseId ? { ...e, sets: e.sets.filter((s) => s.id !== setId) } : e,
     ),
   };
 }
 
-export function removeLastSetMutation(
-  workout: StoredWorkout,
-  exerciseId: string,
-): StoredWorkout {
+export function removeLastSetMutation(workout: StoredWorkout, exerciseId: string): StoredWorkout {
   return {
     ...workout,
     exercises: workout.exercises.map((e) =>
@@ -272,10 +254,8 @@ export function toggleUnilateralMutation(
           id: rightSet?.id ?? leftSet?.id ?? generateId(),
           reps: rightSet?.reps ?? leftSet?.reps,
           weight: rightSet?.weight ?? leftSet?.weight,
-          weightUnit:
-            rightSet?.weightUnit ?? leftSet?.weightUnit ?? baseSet.weightUnit,
-          createdAt:
-            rightSet?.createdAt ?? leftSet?.createdAt ?? baseSet.createdAt,
+          weightUnit: rightSet?.weightUnit ?? leftSet?.weightUnit ?? baseSet.weightUnit,
+          createdAt: rightSet?.createdAt ?? leftSet?.createdAt ?? baseSet.createdAt,
         });
       }
 

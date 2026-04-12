@@ -1,21 +1,11 @@
 import { useState } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  TextInput,
-  Alert,
-} from "react-native";
+import { View, Text, ScrollView, Pressable, TextInput, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useSettings } from "../../../hooks/useSettings";
-import {
-  DEFAULT_REP_RANGES,
-  type RepRangeConfig,
-} from "../../../services/storage";
+import { DEFAULT_REP_RANGES, type RepRangeConfig } from "../../../services/storage";
 import { useThemeColors } from "../../../hooks/useThemeColors";
 
 type RangeWithId = RepRangeConfig & { _id: number };
@@ -46,11 +36,7 @@ export default function RepRangesScreen() {
   );
   const [hasChanges, setHasChanges] = useState(false);
 
-  const updateRange = (
-    index: number,
-    field: keyof RepRangeConfig,
-    value: string | number,
-  ) => {
+  const updateRange = (index: number, field: keyof RepRangeConfig, value: string | number) => {
     setRanges((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], [field]: value };
@@ -89,21 +75,17 @@ export default function RepRangesScreen() {
   };
 
   const reset = () => {
-    Alert.alert(
-      "Reset to Defaults",
-      "Are you sure you want to reset all rep ranges to defaults?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Reset",
-          onPress: () => {
-            setRanges([...DEFAULT_REP_RANGES].map(withId));
-            updateSettings({ repRanges: null });
-            setHasChanges(false);
-          },
+    Alert.alert("Reset to Defaults", "Are you sure you want to reset all rep ranges to defaults?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Reset",
+        onPress: () => {
+          setRanges([...DEFAULT_REP_RANGES].map(withId));
+          updateSettings({ repRanges: null });
+          setHasChanges(false);
         },
-      ],
-    );
+      },
+    ]);
   };
 
   return (
@@ -111,10 +93,7 @@ export default function RepRangesScreen() {
       {/* Header */}
       <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 pb-3 pt-4">
         <View className="flex-row items-center gap-3">
-          <Pressable
-            onPress={() => router.back()}
-            className="active:opacity-60"
-          >
+          <Pressable onPress={() => router.back()} className="active:opacity-60">
             <Ionicons name="arrow-back" size={24} color={colors.primaryText} />
           </Pressable>
           <Text className="text-xl font-bold dark:text-zinc-100">Rep Range Colors</Text>
@@ -126,7 +105,10 @@ export default function RepRangesScreen() {
 
       <ScrollView className="flex-1" contentContainerClassName="pb-8">
         {ranges.map((range, i) => (
-          <View key={range._id} className="mx-4 mt-4 overflow-hidden rounded-xl bg-white dark:bg-zinc-900">
+          <View
+            key={range._id}
+            className="mx-4 mt-4 overflow-hidden rounded-xl bg-white dark:bg-zinc-900"
+          >
             {/* Range header */}
             <View className="flex-row items-center justify-between border-b border-zinc-100 dark:border-zinc-800 px-4 py-3">
               <View className="flex-row items-center gap-2">
@@ -139,10 +121,7 @@ export default function RepRangesScreen() {
                 </Text>
               </View>
               {ranges.length > 1 && (
-                <Pressable
-                  onPress={() => removeRange(i)}
-                  className="active:opacity-60"
-                >
+                <Pressable onPress={() => removeRange(i)} className="active:opacity-60">
                   <Text className="text-sm text-red-500">Remove</Text>
                 </Pressable>
               )}
@@ -166,9 +145,7 @@ export default function RepRangesScreen() {
               <TextInput
                 className="flex-1 text-base dark:text-zinc-100"
                 value={String(range.min)}
-                onChangeText={(v) =>
-                  updateRange(i, "min", parseInt(v, 10) || 0)
-                }
+                onChangeText={(v) => updateRange(i, "min", parseInt(v, 10) || 0)}
                 keyboardType="number-pad"
               />
             </View>
@@ -179,9 +156,7 @@ export default function RepRangesScreen() {
               <TextInput
                 className="flex-1 text-base dark:text-zinc-100"
                 value={range.max >= 9999 ? "" : String(range.max)}
-                onChangeText={(v) =>
-                  updateRange(i, "max", v ? parseInt(v, 10) || 0 : 9999)
-                }
+                onChangeText={(v) => updateRange(i, "max", v ? parseInt(v, 10) || 0 : 9999)}
                 keyboardType="number-pad"
                 placeholder="No limit"
                 placeholderTextColor={colors.placeholder}
@@ -216,9 +191,7 @@ export default function RepRangesScreen() {
             className="flex-row items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 py-3 active:bg-zinc-50 dark:active:bg-zinc-800"
           >
             <Ionicons name="add-circle-outline" size={20} color={colors.accentIcon} />
-            <Text className="text-base font-medium text-blue-500">
-              Add Range
-            </Text>
+            <Text className="text-base font-medium text-blue-500">Add Range</Text>
           </Pressable>
         </View>
 
@@ -229,9 +202,7 @@ export default function RepRangesScreen() {
               onPress={save}
               className="items-center rounded-xl bg-blue-500 py-3 active:bg-blue-600"
             >
-              <Text className="text-base font-semibold text-white">
-                Save Changes
-              </Text>
+              <Text className="text-base font-semibold text-white">Save Changes</Text>
             </Pressable>
           </View>
         )}

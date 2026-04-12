@@ -1,12 +1,5 @@
 import { useState } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  Pressable,
-  ActivityIndicator,
-  RefreshControl,
-} from "react-native";
+import { View, Text, FlatList, Pressable, ActivityIndicator, RefreshControl } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { usePendingFriendRequests } from "../../hooks/usePendingFriendRequests";
 import { useRespondFriendRequest } from "../../hooks/useRespondFriendRequest";
@@ -22,11 +15,7 @@ function getInitials(name: string): string {
 }
 
 export default function PendingRequests() {
-  const {
-    data: requests = [],
-    isLoading,
-    refetch,
-  } = usePendingFriendRequests();
+  const { data: requests = [], isLoading, refetch } = usePendingFriendRequests();
   const respondMutation = useRespondFriendRequest();
   const [refreshing, setRefreshing] = useState(false);
   const colors = useThemeColors();
@@ -71,9 +60,7 @@ export default function PendingRequests() {
     <FlatList
       data={requests}
       keyExtractor={(item) => item.friendship_id}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-      }
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
       contentContainerClassName="px-4"
       renderItem={({ item: request }) => (
         <View className="flex-row items-center border-b border-zinc-100 dark:border-zinc-800 py-3">

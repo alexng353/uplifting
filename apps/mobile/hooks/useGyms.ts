@@ -68,11 +68,7 @@ export function useGyms() {
               : new Date().toISOString(),
           };
           deleteGymStorage(newGym.id);
-          addGymStorage(
-            updatedGym.name,
-            updatedGym.latitude,
-            updatedGym.longitude,
-          );
+          addGymStorage(updatedGym.name, updatedGym.latitude, updatedGym.longitude);
           return updatedGym;
         } catch {
           // Keep local version if server fails

@@ -63,9 +63,7 @@ export default function FeedCard({ item, unit }: FeedCardProps) {
       {/* Header: avatar + name */}
       <View className="mb-3 flex-row items-center gap-3">
         <View className="h-10 w-10 items-center justify-center rounded-full bg-blue-500">
-          <Text className="text-sm font-bold text-white">
-            {getInitials(item.real_name)}
-          </Text>
+          <Text className="text-sm font-bold text-white">{getInitials(item.real_name)}</Text>
         </View>
         <View>
           <Text className="text-base font-semibold dark:text-zinc-100">{item.real_name}</Text>
@@ -99,9 +97,7 @@ export default function FeedCard({ item, unit }: FeedCardProps) {
         )}
         {item.total_sets != null && item.total_sets > 0 && (
           <View className="rounded-md bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1">
-            <Text className="text-sm text-zinc-600 dark:text-zinc-300">
-              {item.total_sets} sets
-            </Text>
+            <Text className="text-sm text-zinc-600 dark:text-zinc-300">{item.total_sets} sets</Text>
           </View>
         )}
       </View>

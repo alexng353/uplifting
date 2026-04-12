@@ -78,12 +78,8 @@
           "name": "email_verification_tokens_user_id_users_id_fk",
           "tableFrom": "email_verification_tokens",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -130,12 +126,8 @@
           "name": "exercise_muscle_relations_exercise_id_exercises_id_fk",
           "tableFrom": "exercise_muscle_relations",
           "tableTo": "exercises",
-          "columnsFrom": [
-            "exercise_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["exercise_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -143,12 +135,8 @@
           "name": "exercise_muscle_relations_muscle_id_muscles_id_fk",
           "tableFrom": "exercise_muscle_relations",
           "tableTo": "muscles",
-          "columnsFrom": [
-            "muscle_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["muscle_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -202,12 +190,8 @@
           "name": "exercise_profiles_user_id_users_id_fk",
           "tableFrom": "exercise_profiles",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -215,12 +199,8 @@
           "name": "exercise_profiles_exercise_id_exercises_id_fk",
           "tableFrom": "exercise_profiles",
           "tableTo": "exercises",
-          "columnsFrom": [
-            "exercise_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["exercise_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -230,11 +210,7 @@
         "exercise_profiles_user_id_exercise_id_name_unique": {
           "name": "exercise_profiles_user_id_exercise_id_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id",
-            "exercise_id",
-            "name"
-          ]
+          "columns": ["user_id", "exercise_id", "name"]
         }
       },
       "policies": {},
@@ -310,12 +286,8 @@
           "name": "exercises_author_id_users_id_fk",
           "tableFrom": "exercises",
           "tableTo": "users",
-          "columnsFrom": [
-            "author_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["author_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -363,12 +335,8 @@
           "name": "favourite_exercises_user_id_users_id_fk",
           "tableFrom": "favourite_exercises",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -376,12 +344,8 @@
           "name": "favourite_exercises_exercise_id_exercises_id_fk",
           "tableFrom": "favourite_exercises",
           "tableTo": "exercises",
-          "columnsFrom": [
-            "exercise_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["exercise_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -391,10 +355,7 @@
         "favourite_exercises_user_id_exercise_id_unique": {
           "name": "favourite_exercises_user_id_exercise_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id",
-            "exercise_id"
-          ]
+          "columns": ["user_id", "exercise_id"]
         }
       },
       "policies": {},
@@ -445,12 +406,8 @@
           "name": "friendships_user_id_users_id_fk",
           "tableFrom": "friendships",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -458,12 +415,8 @@
           "name": "friendships_friend_id_users_id_fk",
           "tableFrom": "friendships",
           "tableTo": "users",
-          "columnsFrom": [
-            "friend_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["friend_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -473,10 +426,7 @@
         "friendships_user_id_friend_id_unique": {
           "name": "friendships_user_id_friend_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id",
-            "friend_id"
-          ]
+          "columns": ["user_id", "friend_id"]
         }
       },
       "policies": {},
@@ -601,12 +551,8 @@
           "name": "password_reset_tokens_user_id_users_id_fk",
           "tableFrom": "password_reset_tokens",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -669,12 +615,8 @@
           "name": "user_activity_user_id_users_id_fk",
           "tableFrom": "user_activity",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -682,12 +624,8 @@
           "name": "user_activity_current_workout_id_workouts_id_fk",
           "tableFrom": "user_activity",
           "tableTo": "workouts",
-          "columnsFrom": [
-            "current_workout_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["current_workout_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -769,12 +707,8 @@
           "name": "user_gym_profile_mappings_user_id_users_id_fk",
           "tableFrom": "user_gym_profile_mappings",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -782,12 +716,8 @@
           "name": "user_gym_profile_mappings_gym_id_user_gyms_id_fk",
           "tableFrom": "user_gym_profile_mappings",
           "tableTo": "user_gyms",
-          "columnsFrom": [
-            "gym_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["gym_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -795,12 +725,8 @@
           "name": "user_gym_profile_mappings_exercise_id_exercises_id_fk",
           "tableFrom": "user_gym_profile_mappings",
           "tableTo": "exercises",
-          "columnsFrom": [
-            "exercise_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["exercise_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -810,11 +736,7 @@
         "user_gym_profile_mappings_user_id_gym_id_exercise_id_unique": {
           "name": "user_gym_profile_mappings_user_id_gym_id_exercise_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id",
-            "gym_id",
-            "exercise_id"
-          ]
+          "columns": ["user_id", "gym_id", "exercise_id"]
         }
       },
       "policies": {},
@@ -886,12 +808,8 @@
           "name": "user_gyms_user_id_users_id_fk",
           "tableFrom": "user_gyms",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -982,12 +900,8 @@
           "name": "user_sets_user_id_users_id_fk",
           "tableFrom": "user_sets",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -995,12 +909,8 @@
           "name": "user_sets_exercise_id_exercises_id_fk",
           "tableFrom": "user_sets",
           "tableTo": "exercises",
-          "columnsFrom": [
-            "exercise_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["exercise_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1008,12 +918,8 @@
           "name": "user_sets_workout_id_workouts_id_fk",
           "tableFrom": "user_sets",
           "tableTo": "workouts",
-          "columnsFrom": [
-            "workout_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workout_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1021,12 +927,8 @@
           "name": "user_sets_profile_id_exercise_profiles_id_fk",
           "tableFrom": "user_sets",
           "tableTo": "exercise_profiles",
-          "columnsFrom": [
-            "profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1115,12 +1017,8 @@
           "name": "user_settings_user_id_users_id_fk",
           "tableFrom": "user_settings",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1128,12 +1026,8 @@
           "name": "user_settings_current_gym_id_user_gyms_id_fk",
           "tableFrom": "user_settings",
           "tableTo": "user_gyms",
-          "columnsFrom": [
-            "current_gym_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["current_gym_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1214,9 +1108,7 @@
         "users_username_unique": {
           "name": "users_username_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "username"
-          ]
+          "columns": ["username"]
         }
       },
       "policies": {},
@@ -1307,12 +1199,8 @@
           "name": "workouts_user_id_users_id_fk",
           "tableFrom": "workouts",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }

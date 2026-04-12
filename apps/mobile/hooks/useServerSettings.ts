@@ -19,10 +19,8 @@ export function useUpdateSettings() {
     mutationFn: async (settings: Partial<StoredSettings>) => {
       const { error } = await api.api.v1.users.settings.put({
         display_unit: settings.displayUnit ?? undefined,
-        max_workout_duration_minutes:
-          settings.maxWorkoutDurationMinutes ?? undefined,
-        default_rest_timer_seconds:
-          settings.defaultRestTimerSeconds ?? undefined,
+        max_workout_duration_minutes: settings.maxWorkoutDurationMinutes ?? undefined,
+        default_rest_timer_seconds: settings.defaultRestTimerSeconds ?? undefined,
         default_privacy: settings.defaultPrivacy ?? undefined,
         share_gym_location: settings.shareGymLocation ?? undefined,
         share_online_status: settings.shareOnlineStatus ?? undefined,

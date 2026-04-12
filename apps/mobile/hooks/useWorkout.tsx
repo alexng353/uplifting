@@ -1,11 +1,4 @@
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
 import { detectAndSetNearbyGym } from "../services/geolocation";
 import {
   addExerciseSequence,
@@ -67,11 +60,7 @@ interface WorkoutContextValue {
     reps?: number,
     weight?: number,
   ) => void;
-  updateSet: (
-    exerciseId: string,
-    setId: string,
-    updates: Partial<StoredSet>,
-  ) => void;
+  updateSet: (exerciseId: string, setId: string, updates: Partial<StoredSet>) => void;
   removeSet: (exerciseId: string, setId: string) => void;
   removeLastSet: (exerciseId: string) => void;
   removeLastUnilateralPair: (exerciseId: string) => void;
@@ -91,8 +80,7 @@ const WorkoutContext = createContext<WorkoutContextValue | null>(null);
 export function WorkoutProvider({ children }: { children: ReactNode }) {
   const [workout, setWorkout] = useState<StoredWorkout | null>(null);
   const [hasPendingWorkout, setHasPendingWorkout] = useState(false);
-  const [todayRestDayState, setTodayRestDayState] =
-    useState<TodayRestDay | null>(null);
+  const [todayRestDayState, setTodayRestDayState] = useState<TodayRestDay | null>(null);
 
   // Load current workout on mount (MMKV is synchronous)
   useEffect(() => {
@@ -247,12 +235,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addExercise = useCallback(
-    (
-      exerciseId: string,
-      exerciseName: string,
-      profileId?: string,
-      exerciseType?: string,
-    ) => {
+    (exerciseId: string, exerciseName: string, profileId?: string, exerciseType?: string) => {
       if (!workout) return;
       saveWorkout(addExerciseMutation(workout, exerciseId, exerciseName, profileId, exerciseType));
     },
@@ -276,13 +259,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   );
 
   const addSet = useCallback(
-    (
-      exerciseId: string,
-      weightUnit: string,
-      reps?: number,
-      weight?: number,
-      side?: "L" | "R",
-    ) => {
+    (exerciseId: string, weightUnit: string, reps?: number, weight?: number, side?: "L" | "R") => {
       if (!workout) return;
       saveWorkout(addSetMutation(workout, exerciseId, weightUnit, reps, weight, side));
     },
@@ -290,12 +267,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   );
 
   const addUnilateralPair = useCallback(
-    (
-      exerciseId: string,
-      weightUnit: string,
-      reps?: number,
-      weight?: number,
-    ) => {
+    (exerciseId: string, weightUnit: string, reps?: number, weight?: number) => {
       if (!workout) return;
       saveWorkout(addUnilateralPairMutation(workout, exerciseId, weightUnit, reps, weight));
     },
@@ -311,11 +283,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   );
 
   const changeExerciseProfile = useCallback(
-    (
-      exerciseId: string,
-      profileId: string | undefined,
-      exerciseName: string,
-    ) => {
+    (exerciseId: string, profileId: string | undefined, exerciseName: string) => {
       if (!workout) return;
       saveWorkout(changeExerciseProfileMutation(workout, exerciseId, profileId, exerciseName));
     },
@@ -372,11 +340,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 
       // Save previous sets for each exercise
       for (const exercise of finishedWorkout.exercises) {
-        updatePreviousSets(
-          exercise.exerciseId,
-          exercise.profileId ?? null,
-          exercise.sets,
-        );
+        updatePreviousSets(exercise.exerciseId, exercise.profileId ?? null, exercise.sets);
       }
 
       // Save exercise sequence

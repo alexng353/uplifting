@@ -83,8 +83,7 @@ export const friendRoutes = new Elysia({ prefix: "/friends" })
         : 0;
       const maxDuration = Number(r.max_workout_duration_minutes ?? 120);
 
-      const isOnline =
-        r.share_online_status && lastSeen > 0 && now - lastSeen < 5 * 60 * 1000;
+      const isOnline = r.share_online_status && lastSeen > 0 && now - lastSeen < 5 * 60 * 1000;
       const isInWorkout =
         r.share_workout_status &&
         workoutStarted > 0 &&

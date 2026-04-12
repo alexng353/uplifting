@@ -1,11 +1,5 @@
 import { useMemo, useCallback, useState } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  RefreshControl,
-} from "react-native";
+import { View, Text, ScrollView, Pressable, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -27,8 +21,7 @@ export default function MeScreen() {
   const { data: me } = useMe();
   const { data: workouts } = useWorkouts(1, 20);
   const streak = useStreak();
-  const { isOnline, hasPendingWorkout, isSyncing, lastSyncTime, forceSync } =
-    useSync();
+  const { isOnline, hasPendingWorkout, isSyncing, lastSyncTime, forceSync } = useSync();
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -104,9 +97,7 @@ export default function MeScreen() {
 
   const formatDuration = (start: string | Date, end?: string | Date | null): string => {
     if (!end) return "In progress";
-    const mins = Math.round(
-      (new Date(end).getTime() - new Date(start).getTime()) / 60000,
-    );
+    const mins = Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000);
     if (mins < 60) return `${mins}m`;
     return `${Math.floor(mins / 60)}h ${mins % 60}m`;
   };
@@ -123,17 +114,14 @@ export default function MeScreen() {
       .slice(0, 2);
   }, [me]);
 
-  const displayName =
-    me?.real_name || me?.username || "User";
+  const displayName = me?.real_name || me?.username || "User";
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900" edges={["top"]}>
       <ScrollView
         className="flex-1"
         contentContainerClassName="pb-8"
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {/* Header */}
         <View className="px-4 pb-2 pt-4">
@@ -157,9 +145,7 @@ export default function MeScreen() {
             <View>
               <Text className="text-xl font-semibold dark:text-zinc-100">{displayName}</Text>
               {me?.username && me?.real_name && (
-                <Text className="text-sm text-zinc-500 dark:text-zinc-400">
-                  @{me.username}
-                </Text>
+                <Text className="text-sm text-zinc-500 dark:text-zinc-400">@{me.username}</Text>
               )}
             </View>
           </View>
@@ -187,8 +173,7 @@ export default function MeScreen() {
           <View className="mb-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4">
             <Text className="mb-3 text-lg font-semibold dark:text-zinc-100">Week Stats</Text>
 
-            {!weekStats ||
-            (weekStats.workouts.length === 0 && weekStats.restDays === 0) ? (
+            {!weekStats || (weekStats.workouts.length === 0 && weekStats.restDays === 0) ? (
               <Text className="text-center text-zinc-400 dark:text-zinc-500">
                 No activity this week
               </Text>
@@ -229,9 +214,7 @@ export default function MeScreen() {
                     <Pressable
                       key={w.id}
                       className="flex-row items-center justify-between border-b border-zinc-50 dark:border-zinc-800 py-3 active:bg-zinc-50 dark:active:bg-zinc-800"
-                      onPress={() =>
-                        router.push(`/(tabs)/stats/workout/${w.id}`)
-                      }
+                      onPress={() => router.push(`/(tabs)/stats/workout/${w.id}`)}
                     >
                       <View className="flex-1">
                         <Text className="text-base font-medium dark:text-zinc-100">
@@ -246,11 +229,7 @@ export default function MeScreen() {
                         <Text className="text-sm text-zinc-400 dark:text-zinc-500">
                           {formatDuration(w.startTime, w.endTime)}
                         </Text>
-                        <Ionicons
-                          name="chevron-forward"
-                          size={16}
-                          color={colors.chevron}
-                        />
+                        <Ionicons name="chevron-forward" size={16} color={colors.chevron} />
                       </View>
                     </Pressable>
                   ))}
@@ -262,16 +241,12 @@ export default function MeScreen() {
           {/* Recent Workouts */}
           {workouts && workouts.length > 0 && (
             <View className="mb-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4">
-              <Text className="mb-3 text-lg font-semibold dark:text-zinc-100">
-                Recent Workouts
-              </Text>
+              <Text className="mb-3 text-lg font-semibold dark:text-zinc-100">Recent Workouts</Text>
               {workouts.slice(0, 5).map((w) => (
                 <Pressable
                   key={w.id}
                   className="flex-row items-center justify-between border-b border-zinc-50 dark:border-zinc-800 py-3 active:bg-zinc-50 dark:active:bg-zinc-800"
-                  onPress={() =>
-                    router.push(`/(tabs)/stats/workout/${w.id}`)
-                  }
+                  onPress={() => router.push(`/(tabs)/stats/workout/${w.id}`)}
                 >
                   <View className="flex-1">
                     <Text className="text-base font-medium dark:text-zinc-100">
@@ -290,11 +265,7 @@ export default function MeScreen() {
                     <Text className="text-sm text-zinc-400 dark:text-zinc-500">
                       {formatDuration(w.startTime, w.endTime)}
                     </Text>
-                    <Ionicons
-                      name="chevron-forward"
-                      size={16}
-                      color={colors.chevron}
-                    />
+                    <Ionicons name="chevron-forward" size={16} color={colors.chevron} />
                   </View>
                 </Pressable>
               ))}

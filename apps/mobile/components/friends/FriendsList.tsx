@@ -1,12 +1,5 @@
 import { useState, useMemo } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  Pressable,
-  ActivityIndicator,
-  RefreshControl,
-} from "react-native";
+import { View, Text, FlatList, Pressable, ActivityIndicator, RefreshControl } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFriendsList } from "../../hooks/useFriendsList";
 import { useThemeColors } from "../../hooks/useThemeColors";
@@ -37,9 +30,7 @@ export default function FriendsList() {
   const [refreshing, setRefreshing] = useState(false);
   const colors = useThemeColors();
 
-  const selectedFriend = friends.find(
-    (f) => f.user_id === selectedFriendId,
-  );
+  const selectedFriend = friends.find((f) => f.user_id === selectedFriendId);
 
   const sortedFriends = useMemo(() => {
     return [...friends].sort((a, b) => {
@@ -84,9 +75,7 @@ export default function FriendsList() {
       <FlatList
         data={sortedFriends}
         keyExtractor={(item) => item.friendship_id}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
         contentContainerClassName="px-4"
         renderItem={({ item: friend }) => (
           <Pressable
@@ -108,9 +97,7 @@ export default function FriendsList() {
             {/* Name + status */}
             <View className="ml-3 flex-1">
               <Text className="text-base font-medium dark:text-zinc-100">{friend.real_name}</Text>
-              <Text className="text-sm text-zinc-400 dark:text-zinc-500">
-                @{friend.username}
-              </Text>
+              <Text className="text-sm text-zinc-400 dark:text-zinc-500">@{friend.username}</Text>
               {friend.is_in_workout === true && (
                 <View className="mt-0.5 flex-row items-center gap-1">
                   <Ionicons name="barbell-outline" size={12} color={colors.accentIcon} />

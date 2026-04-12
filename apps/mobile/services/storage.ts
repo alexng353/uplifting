@@ -236,10 +236,7 @@ export function getWorkoutLastSlide(): StoredWorkoutLastSlide | null {
   return getJSON<StoredWorkoutLastSlide>(STORAGE_KEYS.WORKOUT_LAST_SLIDE);
 }
 
-export function setWorkoutLastSlide(
-  workoutId: string,
-  slideIndex: number,
-): void {
+export function setWorkoutLastSlide(workoutId: string, slideIndex: number): void {
   setJSON(STORAGE_KEYS.WORKOUT_LAST_SLIDE, { workoutId, slideIndex });
 }
 
@@ -324,11 +321,7 @@ export function generateId(): string {
 }
 
 // Helper for weight conversion (display only)
-export function convertWeight(
-  weight: number,
-  fromUnit: string,
-  toUnit: string,
-): number {
+export function convertWeight(weight: number, fromUnit: string, toUnit: string): number {
   if (fromUnit === toUnit) return weight;
   if (fromUnit === "kg" && toUnit === "lbs") {
     return Math.round(weight * 2.20462 * 10) / 10;
@@ -440,8 +433,7 @@ export function getExerciseSequences(): StoredExerciseSequences {
     const newResult = newSequenceFormat.safeParse(parsed);
     if (newResult.success) return newResult.data;
     const oldResult = oldSequenceFormat.safeParse(parsed);
-    if (oldResult.success)
-      return oldResult.data.map((ids) => ({ exerciseIds: ids }));
+    if (oldResult.success) return oldResult.data.map((ids) => ({ exerciseIds: ids }));
     return [];
   } catch {
     return [];
@@ -459,10 +451,7 @@ export function addExerciseSequence(sequence: string[], title?: string): void {
   setJSON(STORAGE_KEYS.EXERCISE_SEQUENCES, sequences);
 }
 
-export function getLastProfileForExerciseAtGym(
-  exerciseId: string,
-  gymId: string,
-): string | null {
+export function getLastProfileForExerciseAtGym(exerciseId: string, gymId: string): string | null {
   const map = getGymProfileMap();
   const key = `${exerciseId}_${gymId}`;
   return map[key] ?? null;
@@ -471,11 +460,7 @@ export function getLastProfileForExerciseAtGym(
 // --- Date helpers ---
 
 export function getLocalDateString(date?: Date | string): string {
-  const d = date
-    ? typeof date === "string"
-      ? new Date(date)
-      : date
-    : new Date();
+  const d = date ? (typeof date === "string" ? new Date(date) : date) : new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 

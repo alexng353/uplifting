@@ -34,9 +34,7 @@ export const logger = new Elysia({ name: "logger" })
   })
   .onError({ as: "global" }, ({ request, requestStartedAt, set, code, error }) => {
     const url = new URL(request.url);
-    const ms = requestStartedAt
-      ? (performance.now() - requestStartedAt).toFixed(1)
-      : "?";
+    const ms = requestStartedAt ? (performance.now() - requestStartedAt).toFixed(1) : "?";
     const status = set.status ?? (code === "NOT_FOUND" ? 404 : 500);
 
     console.log(

@@ -130,9 +130,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
            JOIN muscles m ON m.id = emr.muscle_id`
         : "";
 
-      const whereClause = conditions.length
-        ? `WHERE ${conditions.join(" AND ")}`
-        : "";
+      const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
       params.push(limit);
       const limitIdx = paramIdx;
@@ -264,34 +262,33 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
 
   // GET /:exerciseId — exercise details
   .get("/:exerciseId", async ({ userId, params, set }) => {
-    const [exercise, primaryMuscles, secondaryMuscles, favourite, pr] =
-      await Promise.all([
-        // 1. Exercise
-        sql`SELECT * FROM exercises WHERE id = ${params.exerciseId}`,
-        // 2. Primary muscles
-        sql`
+    const [exercise, primaryMuscles, secondaryMuscles, favourite, pr] = await Promise.all([
+      // 1. Exercise
+      sql`SELECT * FROM exercises WHERE id = ${params.exerciseId}`,
+      // 2. Primary muscles
+      sql`
           SELECT m.name FROM muscles m
           JOIN exercise_muscle_relations emr ON emr.muscle_id = m.id
           WHERE emr.exercise_id = ${params.exerciseId} AND emr.is_primary = true
         `,
-        // 3. Secondary muscles
-        sql`
+      // 3. Secondary muscles
+      sql`
           SELECT m.name FROM muscles m
           JOIN exercise_muscle_relations emr ON emr.muscle_id = m.id
           WHERE emr.exercise_id = ${params.exerciseId} AND emr.is_primary = false
         `,
-        // 4. Is favourite
-        sql`
+      // 4. Is favourite
+      sql`
           SELECT id FROM favourite_exercises
           WHERE user_id = ${userId} AND exercise_id = ${params.exerciseId}
         `,
-        // 5. Personal record
-        sql`
+      // 5. Personal record
+      sql`
           SELECT weight, weight_unit, reps, created_at FROM user_sets
           WHERE user_id = ${userId} AND exercise_id = ${params.exerciseId}
           ORDER BY weight DESC, reps DESC LIMIT 1
         `,
-      ]);
+    ]);
 
     if (!exercise.length) {
       set.status = 404;
@@ -328,9 +325,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
       const profileId = query.profile_id ?? null;
       const monthsBack = query.months ? Number(query.months) : null;
       const sinceDate = monthsBack
-        ? new Date(
-            Date.now() - monthsBack * 30 * 24 * 60 * 60 * 1000,
-          ).toISOString()
+        ? new Date(Date.now() - monthsBack * 30 * 24 * 60 * 60 * 1000).toISOString()
         : null;
 
       const rows = await sql`
@@ -429,12 +424,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
       const [existing] = await db
         .select()
         .from(exerciseProfiles)
-        .where(
-          and(
-            eq(exerciseProfiles.id, params.profileId),
-            eq(exerciseProfiles.userId, userId),
-          ),
-        )
+        .where(and(eq(exerciseProfiles.id, params.profileId), eq(exerciseProfiles.userId, userId)))
         .limit(1);
 
       if (!existing) {

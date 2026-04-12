@@ -10,9 +10,7 @@ import { useServerSettings, useUpdateSettings } from "./useServerSettings";
 
 export function useCurrentGym() {
   const { isAuthenticated } = useAuth();
-  const [currentGymId, setCurrentGymIdState] = useState<string | null>(() =>
-    getCurrentGymId(),
-  );
+  const [currentGymId, setCurrentGymIdState] = useState<string | null>(() => getCurrentGymId());
   const [currentGym, setCurrentGym] = useState<StoredGym | null>(() => {
     const gymId = getCurrentGymId();
     if (!gymId) return null;

@@ -36,20 +36,16 @@ export const userRoutes = new Elysia({ prefix: "/users" })
       if (body.real_name !== undefined) updates.realName = body.real_name;
       if (body.avatar_url !== undefined) updates.avatarUrl = body.avatar_url;
 
-      const [updated] = await db
-        .update(users)
-        .set(updates)
-        .where(eq(users.id, userId))
-        .returning({
-          id: users.id,
-          username: users.username,
-          real_name: users.realName,
-          email: users.email,
-          avatar_url: users.avatarUrl,
-          email_verified: users.emailVerified,
-          is_admin: users.isAdmin,
-          created_at: users.createdAt,
-        });
+      const [updated] = await db.update(users).set(updates).where(eq(users.id, userId)).returning({
+        id: users.id,
+        username: users.username,
+        real_name: users.realName,
+        email: users.email,
+        avatar_url: users.avatarUrl,
+        email_verified: users.emailVerified,
+        is_admin: users.isAdmin,
+        created_at: users.createdAt,
+      });
 
       return updated;
     },
@@ -78,10 +74,7 @@ export const userRoutes = new Elysia({ prefix: "/users" })
 
     if (existing) return existing;
 
-    const [created] = await db
-      .insert(userSettings)
-      .values({ userId })
-      .returning();
+    const [created] = await db.insert(userSettings).values({ userId }).returning();
 
     return created;
   })
@@ -173,12 +166,7 @@ export const userRoutes = new Elysia({ prefix: "/users" })
           avatar_url: users.avatarUrl,
         })
         .from(users)
-        .where(
-          and(
-            ne(users.id, userId),
-            ilike(users.username, `%${query.q}%`),
-          ),
-        )
+        .where(and(ne(users.id, userId), ilike(users.username, `%${query.q}%`)))
         .limit(20);
 
       return results;

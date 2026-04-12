@@ -10,12 +10,8 @@ import { useSetServerGymProfileMapping } from "./useServerGyms";
 
 export function useGymProfileSuggestion() {
   const { isAuthenticated } = useAuth();
-  const [currentGymId, setCurrentGymIdState] = useState<string | null>(() =>
-    getCurrentGymId(),
-  );
-  const [profileMap, setProfileMap] = useState<GymProfileMapping>(() =>
-    getGymProfileMap(),
-  );
+  const [currentGymId, setCurrentGymIdState] = useState<string | null>(() => getCurrentGymId());
+  const [profileMap, setProfileMap] = useState<GymProfileMapping>(() => getGymProfileMap());
 
   const setServerMapping = useSetServerGymProfileMapping();
 

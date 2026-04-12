@@ -10,21 +10,16 @@ export async function sendEmail(to: string, subject: string, text: string) {
   form.append("subject", subject);
   form.append("text", text);
 
-  const response = await fetch(
-    `${MAILGUN_BASE_URL}/v3/${MAILGUN_DOMAIN}/messages`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${btoa(`api:${MAILGUN_API_KEY}`)}`,
-      },
-      body: form,
+  const response = await fetch(`${MAILGUN_BASE_URL}/v3/${MAILGUN_DOMAIN}/messages`, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${btoa(`api:${MAILGUN_API_KEY}`)}`,
     },
-  );
+    body: form,
+  });
 
   if (!response.ok) {
-    throw new Error(
-      `Mailgun error: ${response.status} ${await response.text()}`,
-    );
+    throw new Error(`Mailgun error: ${response.status} ${await response.text()}`);
   }
 }
 

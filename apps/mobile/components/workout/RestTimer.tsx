@@ -58,11 +58,7 @@ export default function RestTimer() {
         className="h-10 w-10 items-center justify-center rounded-full active:opacity-70"
         style={{ backgroundColor: isRunning ? "#f59e0b" : "#3b82f6" }}
       >
-        <Ionicons
-          name={isRunning ? "pause" : "play"}
-          size={18}
-          color="white"
-        />
+        <Ionicons name={isRunning ? "pause" : "play"} size={18} color="white" />
       </Pressable>
     </View>
   );

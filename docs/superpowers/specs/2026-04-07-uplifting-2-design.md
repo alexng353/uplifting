@@ -113,15 +113,16 @@ Exact same routes as original Axum API:
 5-tab layout: Me, Friends, Workout, Stats, Settings + Login
 
 ### Tech Mapping
-| Original | New |
-|---|---|
-| Ionic components | React Native + NativeWind |
-| Swiper (horizontal pager) | PagerView |
-| idb-keyval (IndexedDB) | react-native-mmkv |
-| React Router v5 | Expo Router |
-| Recharts | Victory Native |
-| Capacitor | Expo modules |
-| @hey-api/openapi-ts client | Eden Treaty |
+
+| Original                   | New                       |
+| -------------------------- | ------------------------- |
+| Ionic components           | React Native + NativeWind |
+| Swiper (horizontal pager)  | PagerView                 |
+| idb-keyval (IndexedDB)     | react-native-mmkv         |
+| React Router v5            | Expo Router               |
+| Recharts                   | Victory Native            |
+| Capacitor                  | Expo modules              |
+| @hey-api/openapi-ts client | Eden Treaty               |
 
 ## Auth Flow
 

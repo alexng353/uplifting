@@ -1,11 +1,7 @@
 import { Elysia, t } from "elysia";
 import { eq, and, gt } from "drizzle-orm";
 import { db } from "../db";
-import {
-  users,
-  emailVerificationTokens,
-  passwordResetTokens,
-} from "../db/schema";
+import { users, emailVerificationTokens, passwordResetTokens } from "../db/schema";
 import { jwtPlugin, authPlugin } from "../lib/auth";
 import { hashPassword, verifyPassword } from "../lib/password";
 import { sendEmail, generateVerificationCode } from "../lib/mailgun";
@@ -91,9 +87,7 @@ const protectedAuthRoutes = new Elysia({ prefix: "/auth" })
       return "Email already verified";
     }
 
-    await db
-      .delete(emailVerificationTokens)
-      .where(eq(emailVerificationTokens.userId, userId));
+    await db.delete(emailVerificationTokens).where(eq(emailVerificationTokens.userId, userId));
 
     const code = generateVerificationCode();
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
@@ -104,11 +98,7 @@ const protectedAuthRoutes = new Elysia({ prefix: "/auth" })
       expiresAt,
     });
 
-    await sendEmail(
-      user.email,
-      "Email Verification Code",
-      `Your verification code is: ${code}`,
-    );
+    await sendEmail(user.email, "Email Verification Code", `Your verification code is: ${code}`);
 
     return "Verification code sent";
   })
@@ -133,14 +123,9 @@ const protectedAuthRoutes = new Elysia({ prefix: "/auth" })
         return { error: "Invalid or expired verification code" };
       }
 
-      await db
-        .update(users)
-        .set({ emailVerified: true })
-        .where(eq(users.id, userId));
+      await db.update(users).set({ emailVerified: true }).where(eq(users.id, userId));
 
-      await db
-        .delete(emailVerificationTokens)
-        .where(eq(emailVerificationTokens.userId, userId));
+      await db.delete(emailVerificationTokens).where(eq(emailVerificationTokens.userId, userId));
 
       return "Email verified successfully";
     },
@@ -157,9 +142,7 @@ const protectedAuthRoutes = new Elysia({ prefix: "/auth" })
       return { error: "Email not verified" };
     }
 
-    await db
-      .delete(passwordResetTokens)
-      .where(eq(passwordResetTokens.userId, userId));
+    await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
 
     const code = generateVerificationCode();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
@@ -170,11 +153,7 @@ const protectedAuthRoutes = new Elysia({ prefix: "/auth" })
       expiresAt,
     });
 
-    await sendEmail(
-      user.email,
-      "Password Reset Code",
-      `Your password reset code is: ${code}`,
-    );
+    await sendEmail(user.email, "Password Reset Code", `Your password reset code is: ${code}`);
 
     return "Verification code sent";
   })
@@ -201,14 +180,9 @@ const protectedAuthRoutes = new Elysia({ prefix: "/auth" })
 
       const newHash = await hashPassword(body.new_password);
 
-      await db
-        .update(users)
-        .set({ passwordHash: newHash })
-        .where(eq(users.id, userId));
+      await db.update(users).set({ passwordHash: newHash }).where(eq(users.id, userId));
 
-      await db
-        .delete(passwordResetTokens)
-        .where(eq(passwordResetTokens.userId, userId));
+      await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
 
       return "Password changed successfully";
     },
@@ -220,6 +194,4 @@ const protectedAuthRoutes = new Elysia({ prefix: "/auth" })
     },
   );
 
-export const authRoutes = new Elysia()
-  .use(publicAuthRoutes)
-  .use(protectedAuthRoutes);
+export const authRoutes = new Elysia().use(publicAuthRoutes).use(protectedAuthRoutes);

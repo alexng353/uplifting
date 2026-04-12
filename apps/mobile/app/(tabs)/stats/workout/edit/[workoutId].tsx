@@ -29,9 +29,7 @@ function WorkoutDetailsPage({ onDelete }: WorkoutDetailsPageProps) {
   const [startTime, setStartTime] = useState(
     workout?.startTime ? new Date(workout.startTime) : new Date(),
   );
-  const [endTime, setEndTime] = useState(
-    workout?.endTime ? new Date(workout.endTime) : new Date(),
-  );
+  const [endTime, setEndTime] = useState(workout?.endTime ? new Date(workout.endTime) : new Date());
 
   // Derive duration in minutes from startTime/endTime
   const duration = Math.round((endTime.getTime() - startTime.getTime()) / 60000);
@@ -87,7 +85,6 @@ function WorkoutDetailsPage({ onDelete }: WorkoutDetailsPageProps) {
     [startTime],
   );
 
-
   return (
     <ScrollView
       className="flex-1 bg-white dark:bg-zinc-900"
@@ -127,7 +124,10 @@ function WorkoutDetailsPage({ onDelete }: WorkoutDetailsPageProps) {
         <Text className="mb-1 text-xs font-semibold uppercase text-zinc-400 dark:text-zinc-500">
           Start Time
         </Text>
-        <View className="mb-4 items-start justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 px-2" style={{ height: 48 }}>
+        <View
+          className="mb-4 items-start justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 px-2"
+          style={{ height: 48 }}
+        >
           <DateTimePicker
             value={startTime}
             mode="datetime"
@@ -141,7 +141,10 @@ function WorkoutDetailsPage({ onDelete }: WorkoutDetailsPageProps) {
         <Text className="mb-1 text-xs font-semibold uppercase text-zinc-400 dark:text-zinc-500">
           End Time
         </Text>
-        <View className="mb-4 items-start justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 px-2" style={{ height: 48 }}>
+        <View
+          className="mb-4 items-start justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 px-2"
+          style={{ height: 48 }}
+        >
           <DateTimePicker
             value={endTime}
             mode="datetime"
@@ -206,12 +209,9 @@ function EditWorkoutContent() {
     }
   }, [exerciseCount, activeSlide]);
 
-  const handlePageSelected = useCallback(
-    (e: { nativeEvent: { position: number } }) => {
-      setActiveSlide(e.nativeEvent.position);
-    },
-    [],
-  );
+  const handlePageSelected = useCallback((e: { nativeEvent: { position: number } }) => {
+    setActiveSlide(e.nativeEvent.position);
+  }, []);
 
   const handleExerciseAdded = useCallback(() => {
     if (!workout) return;
@@ -226,34 +226,26 @@ function EditWorkoutContent() {
     const exerciseIndex = activeSlide - 1;
     const exercise = workout.exercises[exerciseIndex];
     if (!exercise) return;
-    Alert.alert(
-      "Remove Exercise",
-      `Remove ${exercise.exerciseName} from this workout?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: () => meta.actions?.removeExercise(exercise.exerciseId),
-        },
-      ],
-    );
+    Alert.alert("Remove Exercise", `Remove ${exercise.exerciseName} from this workout?`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: () => meta.actions?.removeExercise(exercise.exerciseId),
+      },
+    ]);
   }, [workout, activeSlide, meta.actions]);
 
   const handleBack = useCallback(() => {
     if (meta.hasChanges) {
-      Alert.alert(
-        "Discard Changes",
-        "You have unsaved changes. Discard them?",
-        [
-          { text: "Keep Editing", style: "cancel" },
-          {
-            text: "Discard",
-            style: "destructive",
-            onPress: () => router.back(),
-          },
-        ],
-      );
+      Alert.alert("Discard Changes", "You have unsaved changes. Discard them?", [
+        { text: "Keep Editing", style: "cancel" },
+        {
+          text: "Discard",
+          style: "destructive",
+          onPress: () => router.back(),
+        },
+      ]);
     } else {
       router.back();
     }
@@ -266,10 +258,7 @@ function EditWorkoutContent() {
       router.back();
       router.back();
     } catch {
-      Alert.alert(
-        "Save Failed",
-        "Could not save workout. Please try again.",
-      );
+      Alert.alert("Save Failed", "Could not save workout. Please try again.");
     }
   }, [meta, router]);
 
@@ -288,10 +277,7 @@ function EditWorkoutContent() {
               router.back();
               router.back();
             } catch {
-              Alert.alert(
-                "Delete Failed",
-                "Could not delete workout. Please try again.",
-              );
+              Alert.alert("Delete Failed", "Could not delete workout. Please try again.");
             }
           },
         },
@@ -357,8 +343,7 @@ function EditWorkoutContent() {
           className="h-1.5 rounded-full"
           style={{
             width: activeSlide === 0 ? 16 : 6,
-            backgroundColor:
-              activeSlide === 0 ? colors.activeIndicator : colors.inactiveIndicator,
+            backgroundColor: activeSlide === 0 ? colors.activeIndicator : colors.inactiveIndicator,
           }}
         />
         {/* Exercise dots (indices 1..exerciseCount) */}
@@ -369,9 +354,7 @@ function EditWorkoutContent() {
             style={{
               width: activeSlide === i + 1 ? 16 : 6,
               backgroundColor:
-                activeSlide === i + 1
-                  ? colors.activeIndicator
-                  : colors.inactiveIndicator,
+                activeSlide === i + 1 ? colors.activeIndicator : colors.inactiveIndicator,
             }}
           />
         ))}
@@ -381,9 +364,7 @@ function EditWorkoutContent() {
           style={{
             width: activeSlide === exerciseCount + 1 ? 16 : 6,
             backgroundColor:
-              activeSlide === exerciseCount + 1
-                ? colors.activeIndicator
-                : colors.inactiveIndicator,
+              activeSlide === exerciseCount + 1 ? colors.activeIndicator : colors.inactiveIndicator,
           }}
         />
       </View>
@@ -402,10 +383,7 @@ function EditWorkoutContent() {
 
         {/* Pages 1..n: Exercises */}
         {workout?.exercises.map((exercise) => (
-          <View
-            key={exercise.exerciseId + (exercise.profileId ?? "")}
-            collapsable={false}
-          >
+          <View key={exercise.exerciseId + (exercise.profileId ?? "")} collapsable={false}>
             <ExerciseSlide exercise={exercise} />
           </View>
         ))}
@@ -416,10 +394,7 @@ function EditWorkoutContent() {
         </View>
       </PagerView>
 
-      <ReorderModal
-        visible={showReorder}
-        onClose={() => setShowReorder(false)}
-      />
+      <ReorderModal visible={showReorder} onClose={() => setShowReorder(false)} />
     </SafeAreaView>
   );
 }

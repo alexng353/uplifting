@@ -1,8 +1,5 @@
 import { useMemo } from "react";
-import {
-  getExerciseSequences,
-  type StoredExerciseSequences,
-} from "../services/storage";
+import { getExerciseSequences, type StoredExerciseSequences } from "../services/storage";
 import { useWorkout } from "./useWorkout";
 
 /**
@@ -48,10 +45,7 @@ export function rankExercises(
     if (currentSet.size === 0) {
       const firstExercise = exerciseIds[0];
       if (firstExercise) {
-        scores.set(
-          firstExercise,
-          (scores.get(firstExercise) ?? 0) + recencyWeight,
-        );
+        scores.set(firstExercise, (scores.get(firstExercise) ?? 0) + recencyWeight);
       }
       continue;
     }
@@ -77,10 +71,7 @@ export function rankExercises(
     .map(([id]) => id);
 }
 
-function findLastMatchIndex(
-  sequence: string[],
-  currentIds: Set<string>,
-): number {
+function findLastMatchIndex(sequence: string[], currentIds: Set<string>): number {
   let lastIdx = -1;
   for (let i = 0; i < sequence.length; i++) {
     if (currentIds.has(sequence[i])) {

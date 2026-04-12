@@ -49,19 +49,14 @@ function isSameDay(d1: Date, d2: Date): boolean {
   );
 }
 
-function calculateDayStatusesFromEntries(
-  weekDates: Date[],
-  entries: WorkoutEntry[],
-): DayStatus[] {
+function calculateDayStatusesFromEntries(weekDates: Date[], entries: WorkoutEntry[]): DayStatus[] {
   const dateStatusMap = new Map<string, DayStatus>();
 
   for (const entry of entries) {
-    const date =
-      typeof entry.date === "string" ? new Date(entry.date) : entry.date;
+    const date = typeof entry.date === "string" ? new Date(entry.date) : entry.date;
     const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
     const currentStatus = dateStatusMap.get(dateKey);
-    const kind: DayStatus =
-      entry.kind === "rest" ? "rest" : "workout";
+    const kind: DayStatus = entry.kind === "rest" ? "rest" : "workout";
 
     // Workout takes precedence over rest
     if (kind === "workout" || currentStatus !== "workout") {
@@ -120,10 +115,7 @@ export default function WeekStreak({
         const isFuture = date > today;
 
         return (
-          <View
-            key={date.toISOString()}
-            className="items-center gap-1"
-          >
+          <View key={date.toISOString()} className="items-center gap-1">
             {showLabels && (
               <Text
                 className={`font-semibold uppercase text-zinc-400 dark:text-zinc-500 ${LABEL_SIZES[size]}`}

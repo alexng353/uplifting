@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useRef,
-} from "react";
+import React, { createContext, useCallback, useContext, useMemo, useRef } from "react";
 import { Keyboard, TextInput } from "react-native";
 
 interface InputEntry {
@@ -22,8 +16,7 @@ interface InputNavigationContextType {
   dismiss: () => void;
 }
 
-const InputNavigationContext =
-  createContext<InputNavigationContextType | null>(null);
+const InputNavigationContext = createContext<InputNavigationContextType | null>(null);
 
 export function InputNavigationProvider({
   activeSlide,
@@ -92,9 +85,7 @@ export function InputNavigationProvider({
   );
 
   return (
-    <InputNavigationContext.Provider value={value}>
-      {children}
-    </InputNavigationContext.Provider>
+    <InputNavigationContext.Provider value={value}>{children}</InputNavigationContext.Provider>
   );
 }
 

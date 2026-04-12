@@ -1,13 +1,5 @@
 import { useCallback, useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  FlatList,
-  Pressable,
-  Modal,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, TextInput, FlatList, Pressable, Modal, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useSearchUsers } from "../../hooks/useSearchUsers";
@@ -33,8 +25,7 @@ export default function FriendSearch({ visible, onClose }: FriendSearchProps) {
   const [sentRequests, setSentRequests] = useState<Set<string>>(new Set());
   const colors = useThemeColors();
 
-  const { data: results = [], isLoading: isSearching } =
-    useSearchUsers(searchText);
+  const { data: results = [], isLoading: isSearching } = useSearchUsers(searchText);
   const sendFriendRequest = useSendFriendRequest();
 
   const handleSendRequest = useCallback(
@@ -112,12 +103,8 @@ export default function FriendSearch({ visible, onClose }: FriendSearchProps) {
                   </Text>
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-base font-medium dark:text-zinc-100">
-                    {item.real_name}
-                  </Text>
-                  <Text className="text-sm text-zinc-400 dark:text-zinc-500">
-                    @{item.username}
-                  </Text>
+                  <Text className="text-base font-medium dark:text-zinc-100">{item.real_name}</Text>
+                  <Text className="text-sm text-zinc-400 dark:text-zinc-500">@{item.username}</Text>
                 </View>
                 <Pressable
                   onPress={() => handleSendRequest(item.id)}
@@ -133,9 +120,7 @@ export default function FriendSearch({ visible, onClose }: FriendSearchProps) {
                   ) : (
                     <View className="flex-row items-center gap-1">
                       <Ionicons name="person-add" size={14} color="white" />
-                      <Text className="text-sm font-medium text-white">
-                        Add
-                      </Text>
+                      <Text className="text-sm font-medium text-white">Add</Text>
                     </View>
                   )}
                 </Pressable>

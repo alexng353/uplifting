@@ -84,9 +84,7 @@ function ThisWeekTab({
       return d >= startOfWeek;
     });
 
-    const actualWorkouts = thisWeek.filter(
-      (w) => (w.kind ?? "workout") === "workout",
-    );
+    const actualWorkouts = thisWeek.filter((w) => (w.kind ?? "workout") === "workout");
 
     let totalMinutes = 0;
     for (const w of actualWorkouts) {
@@ -111,37 +109,27 @@ function ThisWeekTab({
     <ScrollView
       className="flex-1"
       contentContainerClassName="pb-24"
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       {/* Summary card */}
       <View className="mx-4 mt-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 p-4">
         <Text className="mb-3 text-lg font-bold text-zinc-900 dark:text-zinc-50">This Week</Text>
         <View className="flex-row">
           <View className="flex-1 items-center">
-            <Text className="text-2xl font-bold text-blue-500">
-              {weekStats.workouts}
-            </Text>
+            <Text className="text-2xl font-bold text-blue-500">{weekStats.workouts}</Text>
             <Text className="text-xs text-zinc-500 dark:text-zinc-400">Workouts</Text>
           </View>
           <View className="flex-1 items-center">
-            <Text className="text-2xl font-bold text-green-500">
-              {weekStats.restDays}
-            </Text>
+            <Text className="text-2xl font-bold text-green-500">{weekStats.restDays}</Text>
             <Text className="text-xs text-zinc-500 dark:text-zinc-400">Rest Days</Text>
           </View>
           <View className="flex-1 items-center">
-            <Text className="text-2xl font-bold text-orange-500">
-              {weekStats.totalMinutes}
-            </Text>
+            <Text className="text-2xl font-bold text-orange-500">{weekStats.totalMinutes}</Text>
             <Text className="text-xs text-zinc-500 dark:text-zinc-400">Minutes</Text>
           </View>
           {streak > 0 && (
             <View className="flex-1 items-center">
-              <Text className="text-2xl font-bold text-purple-500">
-                {streak}
-              </Text>
+              <Text className="text-2xl font-bold text-purple-500">{streak}</Text>
               <Text className="text-xs text-zinc-500 dark:text-zinc-400">Streak</Text>
             </View>
           )}
@@ -173,10 +161,7 @@ function ThisWeekTab({
           return (
             <Pressable
               key={w.id}
-              onPress={() =>
-                !isRest &&
-                router.push(`/(tabs)/stats/workout/${w.id}` as any)
-              }
+              onPress={() => !isRest && router.push(`/(tabs)/stats/workout/${w.id}` as any)}
               className="mx-4 mb-2 flex-row items-center rounded-xl bg-white dark:bg-zinc-900 px-4 py-3 active:bg-zinc-50 dark:active:bg-zinc-800"
               style={{
                 shadowColor: "#000",
@@ -202,10 +187,7 @@ function ThisWeekTab({
               {!isRest && (
                 <>
                   <Text className="text-sm text-zinc-400 dark:text-zinc-500">
-                    {formatDuration(
-                      w.startTime ?? w.start_time,
-                      w.endTime ?? w.end_time,
-                    )}
+                    {formatDuration(w.startTime ?? w.start_time, w.endTime ?? w.end_time)}
                   </Text>
                   <Ionicons
                     name="chevron-forward"
@@ -225,13 +207,7 @@ function ThisWeekTab({
 
 // --- All Time Tab ---
 
-function AllTimeTab({
-  refreshing,
-  onRefresh,
-}: {
-  refreshing: boolean;
-  onRefresh: () => void;
-}) {
+function AllTimeTab({ refreshing, onRefresh }: { refreshing: boolean; onRefresh: () => void }) {
   const { data: allTimeStats, isLoading } = useAllTimeStats();
   const streak = useStreak();
   const { getDisplayUnit } = useSettings();
@@ -257,9 +233,7 @@ function AllTimeTab({
     <ScrollView
       className="flex-1"
       contentContainerClassName="pb-24"
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       {/* Stats grid */}
       <View className="mx-4 mt-4 flex-row flex-wrap">
@@ -271,7 +245,7 @@ function AllTimeTab({
         />
         <StatCard
           label={`Volume (${unit})`}
-          value={formatVolume(convertWeight(Number(allTimeStats.total_volume), 'kg', unit))}
+          value={formatVolume(convertWeight(Number(allTimeStats.total_volume), "kg", unit))}
           icon="trending-up-outline"
           color="#22c55e"
         />
@@ -328,7 +302,7 @@ function AllTimeTab({
                 </Text>
                 <Text className="text-sm text-zinc-400 dark:text-zinc-500">
                   {ex.workout_count} workouts · {ex.total_sets} sets ·{" "}
-                  {formatVolume(convertWeight(Number(ex.total_volume), 'kg', unit))} {unit}
+                  {formatVolume(convertWeight(Number(ex.total_volume), "kg", unit))} {unit}
                 </Text>
               </View>
             </View>
@@ -359,7 +333,7 @@ function AllTimeTab({
                   {mg.group}
                 </Text>
                 <Text className="text-xs text-zinc-400 dark:text-zinc-500">
-                  {formatVolume(convertWeight(Number(mg.volume), 'kg', unit))} {unit}
+                  {formatVolume(convertWeight(Number(mg.volume), "kg", unit))} {unit}
                 </Text>
               </View>
               <View className="h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
@@ -388,9 +362,7 @@ function StatCard({
   color: string;
 }) {
   return (
-    <View
-      className="mb-3 w-1/2 px-1.5"
-    >
+    <View className="mb-3 w-1/2 px-1.5">
       <View
         className="rounded-2xl bg-white dark:bg-zinc-900 p-4"
         style={{
@@ -401,12 +373,7 @@ function StatCard({
           elevation: 1,
         }}
       >
-        <Ionicons
-          name={icon as any}
-          size={20}
-          color={color}
-          style={{ marginBottom: 8 }}
-        />
+        <Ionicons name={icon as any} size={20} color={color} style={{ marginBottom: 8 }} />
         <Text className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{value}</Text>
         <Text className="text-xs text-zinc-500 dark:text-zinc-400">{label}</Text>
       </View>
@@ -416,13 +383,7 @@ function StatCard({
 
 // --- Exercises Tab ---
 
-function ExercisesTab({
-  refreshing,
-  onRefresh,
-}: {
-  refreshing: boolean;
-  onRefresh: () => void;
-}) {
+function ExercisesTab({ refreshing, onRefresh }: { refreshing: boolean; onRefresh: () => void }) {
   const router = useRouter();
   const colors = useThemeColors();
   const { getDisplayUnit } = useSettings();
@@ -452,9 +413,7 @@ function ExercisesTab({
     return (
       <View className="flex-1 items-center justify-center">
         <ActivityIndicator size="large" />
-        <Text className="mt-2 text-sm text-zinc-400 dark:text-zinc-500">
-          Loading exercises...
-        </Text>
+        <Text className="mt-2 text-sm text-zinc-400 dark:text-zinc-500">Loading exercises...</Text>
       </View>
     );
   }
@@ -479,15 +438,11 @@ function ExercisesTab({
       keyExtractor={(item) => item.id}
       onEndReached={handleEndReached}
       onEndReachedThreshold={0.5}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-      }
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
       contentContainerClassName="pt-2 pb-24"
       renderItem={({ item, index }) => (
         <Pressable
-          onPress={() =>
-            router.push(`/(tabs)/stats/exercise/${item.id}` as any)
-          }
+          onPress={() => router.push(`/(tabs)/stats/exercise/${item.id}` as any)}
           className="mx-4 mb-2 flex-row items-center rounded-xl bg-white dark:bg-zinc-900 px-4 py-3 active:bg-zinc-50 dark:active:bg-zinc-800"
           style={{
             shadowColor: "#000",
@@ -528,11 +483,7 @@ function ExercisesTab({
 export default function StatsScreen() {
   const [activeTab, setActiveTab] = useState<StatsTab>("week");
   const [refreshing, setRefreshing] = useState(false);
-  const {
-    data: workouts,
-    isLoading,
-    refetch: refetchWorkouts,
-  } = useWorkouts(1, 20);
+  const { data: workouts, isLoading, refetch: refetchWorkouts } = useWorkouts(1, 20);
   const streak = useStreak();
 
   const handleRefresh = useCallback(async () => {
@@ -594,9 +545,7 @@ export default function StatsScreen() {
         />
       )}
 
-      {activeTab === "alltime" && (
-        <AllTimeTab refreshing={refreshing} onRefresh={handleRefresh} />
-      )}
+      {activeTab === "alltime" && <AllTimeTab refreshing={refreshing} onRefresh={handleRefresh} />}
 
       {activeTab === "exercises" && (
         <ExercisesTab refreshing={refreshing} onRefresh={handleRefresh} />

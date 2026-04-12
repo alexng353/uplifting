@@ -148,9 +148,7 @@ export default function LoginScreen() {
 
             <View className="flex-row items-center justify-center mt-2">
               <Text className="text-gray-500 dark:text-zinc-400">
-                {isRegistering
-                  ? "Already have an account?"
-                  : "Don't have an account?"}
+                {isRegistering ? "Already have an account?" : "Don't have an account?"}
               </Text>
               <TouchableOpacity
                 onPress={() => {

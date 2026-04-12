@@ -20,17 +20,18 @@ PagerView with a persistent red "Editing Workout" banner above it.
 
 ### Page 0: Workout Details
 
-| Field | Input | Behavior |
-|-------|-------|----------|
-| Workout Name | Text input | Free text, optional |
-| Gym Location | Text input / picker | Match existing gym selection pattern from WorkoutSummary |
-| Start Time | DateTime picker | Independently editable. No other field affects it. |
-| End Time | DateTime picker | Editable directly. When changed, duration recalculates. |
-| Duration (min) | Numeric input | Helper field. When changed, sets endTime = startTime + duration. |
+| Field          | Input               | Behavior                                                         |
+| -------------- | ------------------- | ---------------------------------------------------------------- |
+| Workout Name   | Text input          | Free text, optional                                              |
+| Gym Location   | Text input / picker | Match existing gym selection pattern from WorkoutSummary         |
+| Start Time     | DateTime picker     | Independently editable. No other field affects it.               |
+| End Time       | DateTime picker     | Editable directly. When changed, duration recalculates.          |
+| Duration (min) | Numeric input       | Helper field. When changed, sets endTime = startTime + duration. |
 
 **Mutual update rules:**
+
 - End time changes → duration = (endTime - startTime) / 60000
-- Duration changes → endTime = startTime + duration * 60000
+- Duration changes → endTime = startTime + duration \* 60000
 - Start time changes → end time stays fixed, duration
   recalculates
 
@@ -72,18 +73,31 @@ Extract workout state mutations from `useWorkout` into pure
 functions:
 
 ```typescript
-type WorkoutMutation<TArgs extends any[]> = (workout: StoredWorkout, ...args: TArgs) => StoredWorkout;
+type WorkoutMutation<TArgs extends any[]> = (
+  workout: StoredWorkout,
+  ...args: TArgs
+) => StoredWorkout;
 
-export const addSet: WorkoutMutation<[exerciseId: string, weightUnit: string, reps?: number, weight?: number, side?: string]>;
+export const addSet: WorkoutMutation<
+  [exerciseId: string, weightUnit: string, reps?: number, weight?: number, side?: string]
+>;
 export const removeSet: WorkoutMutation<[exerciseId: string, setId: string]>;
-export const updateSet: WorkoutMutation<[exerciseId: string, setId: string, updates: Partial<StoredSet>]>;
+export const updateSet: WorkoutMutation<
+  [exerciseId: string, setId: string, updates: Partial<StoredSet>]
+>;
 export const removeLastSet: WorkoutMutation<[exerciseId: string]>;
 export const toggleUnilateral: WorkoutMutation<[exerciseId: string]>;
-export const addExercise: WorkoutMutation<[exerciseId: string, exerciseName: string, profileId?: string, exerciseType?: string]>;
+export const addExercise: WorkoutMutation<
+  [exerciseId: string, exerciseName: string, profileId?: string, exerciseType?: string]
+>;
 export const removeExercise: WorkoutMutation<[exerciseId: string]>;
 export const reorderExercises: WorkoutMutation<[newOrder: string[]]>;
-export const changeExerciseProfile: WorkoutMutation<[exerciseId: string, profileId?: string, exerciseName: string]>;
-export const addUnilateralPair: WorkoutMutation<[exerciseId: string, weightUnit: string, reps?: number, weight?: number]>;
+export const changeExerciseProfile: WorkoutMutation<
+  [exerciseId: string, profileId?: string, exerciseName: string]
+>;
+export const addUnilateralPair: WorkoutMutation<
+  [exerciseId: string, weightUnit: string, reps?: number, weight?: number]
+>;
 export const removeLastUnilateralPair: WorkoutMutation<[exerciseId: string]>;
 ```
 
@@ -239,6 +253,7 @@ Stats tab
 ## Files to Create/Modify
 
 ### New files
+
 - `apps/mobile/lib/workout-mutations.ts` — pure mutation
   functions
 - `apps/mobile/hooks/useEditWorkout.tsx` — edit state + context
@@ -248,6 +263,7 @@ Stats tab
   edit screen
 
 ### Modified files
+
 - `apps/mobile/hooks/useWorkout.tsx` — refactor to use pure
   mutation functions
 - `apps/mobile/components/workout/ExerciseSlide.tsx` — switch

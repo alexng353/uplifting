@@ -15,11 +15,7 @@ export function useCreateServerGym() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (body: {
-      name: string;
-      latitude?: number;
-      longitude?: number;
-    }) => {
+    mutationFn: async (body: { name: string; latitude?: number; longitude?: number }) => {
       return unwrap(await api.api.v1.gyms.post(body));
     },
     onSuccess: () => {
@@ -57,10 +53,7 @@ export function useDeleteServerGym() {
   });
 }
 
-export function useServerGymProfileMappings(
-  gymId: string | null,
-  enabled = true,
-) {
+export function useServerGymProfileMappings(gymId: string | null, enabled = true) {
   return useQuery({
     queryKey: ["gymProfileMappings", gymId],
     queryFn: async () => {

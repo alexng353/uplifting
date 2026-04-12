@@ -84,17 +84,14 @@ function PickerRow({
 }) {
   const [showPicker, setShowPicker] = useState(false);
   const colors = useThemeColors();
-  const displayLabel =
-    options.find((o) => o.value === value)?.label ?? String(value);
+  const displayLabel = options.find((o) => o.value === value)?.label ?? String(value);
 
   return (
     <>
       <SettingsRow onPress={() => setShowPicker(true)} last={last}>
         <Text className="text-base dark:text-zinc-100">{label}</Text>
         <View className="flex-row items-center gap-1">
-          <Text className="text-base text-zinc-400 dark:text-zinc-500">
-            {displayLabel}
-          </Text>
+          <Text className="text-base text-zinc-400 dark:text-zinc-500">{displayLabel}</Text>
           <Ionicons name="chevron-forward" size={16} color={colors.chevron} />
         </View>
       </SettingsRow>
@@ -121,15 +118,9 @@ function PickerRow({
                 }}
                 className="flex-row items-center justify-between rounded-lg px-4 py-3 active:bg-zinc-50 dark:active:bg-zinc-800"
               >
-                <Text className="text-base dark:text-zinc-100">
-                  {opt.label}
-                </Text>
+                <Text className="text-base dark:text-zinc-100">{opt.label}</Text>
                 {opt.value === value && (
-                  <Ionicons
-                    name="checkmark"
-                    size={20}
-                    color={colors.accentIcon}
-                  />
+                  <Ionicons name="checkmark" size={20} color={colors.accentIcon} />
                 )}
               </Pressable>
             ))}
@@ -161,9 +152,7 @@ export default function SettingsScreen() {
   // Email verification
   const [showVerifyEmail, setShowVerifyEmail] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
-  const [verificationStep, setVerificationStep] = useState<
-    "request" | "verify"
-  >("request");
+  const [verificationStep, setVerificationStep] = useState<"request" | "verify">("request");
   const [isVerifying, setIsVerifying] = useState(false);
 
   // Password change
@@ -171,17 +160,12 @@ export default function SettingsScreen() {
   const [passwordCode, setPasswordCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordStep, setPasswordStep] = useState<"request" | "change">(
-    "request",
-  );
+  const [passwordStep, setPasswordStep] = useState<"request" | "change">("request");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const me = user;
   const profileCount = allProfiles
-    ? Array.from(allProfiles.values()).reduce(
-        (sum, profiles) => sum + profiles.length,
-        0,
-      )
+    ? Array.from(allProfiles.values()).reduce((sum, profiles) => sum + profiles.length, 0)
     : 0;
 
   // Handlers
@@ -296,18 +280,14 @@ export default function SettingsScreen() {
       setPasswordStep("change");
       Alert.alert("Sent", "Verification code sent to your email.");
     } catch {
-      Alert.alert(
-        "Error",
-        "Failed to send verification code. Please verify your email first.",
-      );
+      Alert.alert("Error", "Failed to send verification code. Please verify your email first.");
     } finally {
       setIsChangingPassword(false);
     }
   }, []);
 
   const handleChangePassword = useCallback(async () => {
-    if (!passwordCode.trim() || !newPassword || newPassword !== confirmPassword)
-      return;
+    if (!passwordCode.trim() || !newPassword || newPassword !== confirmPassword) return;
     setIsChangingPassword(true);
     try {
       const { error } = await api.api.v1.auth["change-password"].post({
@@ -325,16 +305,11 @@ export default function SettingsScreen() {
   }, [passwordCode, newPassword, confirmPassword]);
 
   return (
-    <SafeAreaView
-      className="flex-1 bg-zinc-50 dark:bg-zinc-950"
-      edges={["top"]}
-    >
+    <SafeAreaView className="flex-1 bg-zinc-50 dark:bg-zinc-950" edges={["top"]}>
       <ScrollView className="flex-1" contentContainerClassName="pb-12">
         {/* Header */}
         <View className="px-4 pb-2 pt-4">
-          <Text className="text-3xl font-bold dark:text-zinc-100">
-            Settings
-          </Text>
+          <Text className="text-3xl font-bold dark:text-zinc-100">Settings</Text>
         </View>
 
         {/* Profile Header */}
@@ -353,9 +328,7 @@ export default function SettingsScreen() {
             <Text className="text-lg font-semibold dark:text-zinc-100">
               {me.real_name || me.username}
             </Text>
-            <Text className="text-sm text-zinc-400 dark:text-zinc-500">
-              @{me.username}
-            </Text>
+            <Text className="text-sm text-zinc-400 dark:text-zinc-500">@{me.username}</Text>
             {!me.email_verified && (
               <View className="mt-2 rounded-full bg-amber-100 dark:bg-amber-950 px-3 py-1">
                 <Text className="text-xs font-medium text-amber-600 dark:text-amber-400">
@@ -378,11 +351,7 @@ export default function SettingsScreen() {
                     Verify Email
                   </Text>
                 </View>
-                <Ionicons
-                  name="chevron-forward"
-                  size={16}
-                  color={colors.warningIcon}
-                />
+                <Ionicons name="chevron-forward" size={16} color={colors.warningIcon} />
               </SettingsRow>
             </View>
           </>
@@ -395,17 +364,10 @@ export default function SettingsScreen() {
             label="Weight Unit"
             value={settings.displayUnit}
             options={UNIT_OPTIONS.map((u) => ({
-              label:
-                u === null
-                  ? "Auto (locale)"
-                  : u === "kg"
-                    ? "Kilograms (kg)"
-                    : "Pounds (lbs)",
+              label: u === null ? "Auto (locale)" : u === "kg" ? "Kilograms (kg)" : "Pounds (lbs)",
               value: u,
             }))}
-            onChange={(v: "kg" | "lbs" | null) =>
-              updateSettings({ displayUnit: v })
-            }
+            onChange={(v: "kg" | "lbs" | null) => updateSettings({ displayUnit: v })}
           />
           <PickerRow
             label="Rest Timer"
@@ -414,9 +376,7 @@ export default function SettingsScreen() {
               label: `${s} seconds`,
               value: s,
             }))}
-            onChange={(v: number) =>
-              updateSettings({ defaultRestTimerSeconds: v })
-            }
+            onChange={(v: number) => updateSettings({ defaultRestTimerSeconds: v })}
           />
           <PickerRow
             label="Max Workout Duration"
@@ -425,9 +385,7 @@ export default function SettingsScreen() {
               label: m === 0 ? "Disabled" : `${m} minutes`,
               value: m,
             }))}
-            onChange={(v: number) =>
-              updateSettings({ maxWorkoutDurationMinutes: v })
-            }
+            onChange={(v: number) => updateSettings({ maxWorkoutDurationMinutes: v })}
           />
           <PickerRow
             label="Default Privacy"
@@ -452,9 +410,7 @@ export default function SettingsScreen() {
             />
           </SettingsRow>
           <SettingsRow last>
-            <Text className="text-base dark:text-zinc-100">
-              Auto Remove Empty Set
-            </Text>
+            <Text className="text-base dark:text-zinc-100">Auto Remove Empty Set</Text>
             <Switch
               value={settings.autoRemoveEmptySet}
               onValueChange={(v) => updateSettings({ autoRemoveEmptySet: v })}
@@ -475,9 +431,7 @@ export default function SettingsScreen() {
               keyboardType="decimal-pad"
               placeholder="Not set"
               placeholderTextColor={colors.placeholder}
-              value={
-                settings.bodyweight != null ? String(settings.bodyweight) : ""
-              }
+              value={settings.bodyweight != null ? String(settings.bodyweight) : ""}
               onChangeText={(text) => {
                 const val = text ? Number(text) : null;
                 updateSettings({ bodyweight: val });
@@ -490,36 +444,28 @@ export default function SettingsScreen() {
         <SectionHeader>Sharing</SectionHeader>
         <View className="overflow-hidden rounded-xl mx-4">
           <SettingsRow>
-            <Text className="text-base dark:text-zinc-100">
-              Share Gym Location
-            </Text>
+            <Text className="text-base dark:text-zinc-100">Share Gym Location</Text>
             <Switch
               value={settings.shareGymLocation}
               onValueChange={(v) => updateSettings({ shareGymLocation: v })}
             />
           </SettingsRow>
           <SettingsRow>
-            <Text className="text-base dark:text-zinc-100">
-              Show Online Status
-            </Text>
+            <Text className="text-base dark:text-zinc-100">Show Online Status</Text>
             <Switch
               value={settings.shareOnlineStatus}
               onValueChange={(v) => updateSettings({ shareOnlineStatus: v })}
             />
           </SettingsRow>
           <SettingsRow>
-            <Text className="text-base dark:text-zinc-100">
-              Show Workout Status
-            </Text>
+            <Text className="text-base dark:text-zinc-100">Show Workout Status</Text>
             <Switch
               value={settings.shareWorkoutStatus}
               onValueChange={(v) => updateSettings({ shareWorkoutStatus: v })}
             />
           </SettingsRow>
           <SettingsRow last>
-            <Text className="text-base dark:text-zinc-100">
-              Share Workout History
-            </Text>
+            <Text className="text-base dark:text-zinc-100">Share Workout History</Text>
             <Switch
               value={settings.shareWorkoutHistory}
               onValueChange={(v) => updateSettings({ shareWorkoutHistory: v })}
@@ -550,11 +496,7 @@ export default function SettingsScreen() {
                   {gyms.length}
                 </Text>
               </View>
-              <Ionicons
-                name="chevron-forward"
-                size={16}
-                color={colors.chevron}
-              />
+              <Ionicons name="chevron-forward" size={16} color={colors.chevron} />
             </View>
           </SettingsRow>
         </View>
@@ -564,21 +506,10 @@ export default function SettingsScreen() {
           <>
             <SectionHeader>Exercise Profiles</SectionHeader>
             <View className="overflow-hidden rounded-xl mx-4">
-              <SettingsRow
-                onPress={() =>
-                  router.push("/(tabs)/settings/exercise-profiles")
-                }
-                last
-              >
+              <SettingsRow onPress={() => router.push("/(tabs)/settings/exercise-profiles")} last>
                 <View className="flex-row items-center gap-3">
-                  <Ionicons
-                    name="barbell"
-                    size={20}
-                    color={colors.accentIcon}
-                  />
-                  <Text className="text-base dark:text-zinc-100">
-                    Manage Exercise Profiles
-                  </Text>
+                  <Ionicons name="barbell" size={20} color={colors.accentIcon} />
+                  <Text className="text-base dark:text-zinc-100">Manage Exercise Profiles</Text>
                 </View>
                 <View className="flex-row items-center gap-1.5">
                   <View className="min-w-[22px] items-center rounded-full bg-zinc-200 dark:bg-zinc-700 px-1.5 py-0.5">
@@ -586,11 +517,7 @@ export default function SettingsScreen() {
                       {profileCount}
                     </Text>
                   </View>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={16}
-                    color={colors.chevron}
-                  />
+                  <Ionicons name="chevron-forward" size={16} color={colors.chevron} />
                 </View>
               </SettingsRow>
             </View>
@@ -609,19 +536,10 @@ export default function SettingsScreen() {
               setColorScheme(v);
             }}
           />
-          <SettingsRow
-            onPress={() => router.push("/(tabs)/settings/rep-ranges")}
-            last
-          >
+          <SettingsRow onPress={() => router.push("/(tabs)/settings/rep-ranges")} last>
             <View className="flex-row items-center gap-3">
-              <Ionicons
-                name="color-palette"
-                size={20}
-                color={colors.accentIcon}
-              />
-              <Text className="text-base dark:text-zinc-100">
-                Rep Range Colors
-              </Text>
+              <Ionicons name="color-palette" size={20} color={colors.accentIcon} />
+              <Text className="text-base dark:text-zinc-100">Rep Range Colors</Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={colors.chevron} />
           </SettingsRow>
@@ -633,22 +551,14 @@ export default function SettingsScreen() {
           <SettingsRow onPress={handleEditUsername}>
             <View className="flex-row items-center gap-3">
               <Ionicons name="pencil" size={20} color={colors.accentIcon} />
-              <Text className="text-base dark:text-zinc-100">
-                Change Username
-              </Text>
+              <Text className="text-base dark:text-zinc-100">Change Username</Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={colors.chevron} />
           </SettingsRow>
           <SettingsRow onPress={handleOpenChangePassword}>
             <View className="flex-row items-center gap-3">
-              <Ionicons
-                name="lock-closed"
-                size={20}
-                color={colors.accentIcon}
-              />
-              <Text className="text-base dark:text-zinc-100">
-                Change Password
-              </Text>
+              <Ionicons name="lock-closed" size={20} color={colors.accentIcon} />
+              <Text className="text-base dark:text-zinc-100">Change Password</Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={colors.chevron} />
           </SettingsRow>
@@ -694,16 +604,9 @@ export default function SettingsScreen() {
           className="flex-1 bg-white dark:bg-zinc-900"
         >
           <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-4 pb-3 pt-4">
-            <Text className="text-xl font-bold dark:text-zinc-100">
-              Change Username
-            </Text>
-            <Pressable
-              onPress={() => setShowEditUsername(false)}
-              className="active:opacity-60"
-            >
-              <Text className="text-base text-zinc-400 dark:text-zinc-500">
-                Cancel
-              </Text>
+            <Text className="text-xl font-bold dark:text-zinc-100">Change Username</Text>
+            <Pressable onPress={() => setShowEditUsername(false)} className="active:opacity-60">
+              <Text className="text-base text-zinc-400 dark:text-zinc-500">Cancel</Text>
             </Pressable>
           </View>
           <View className="p-4">
@@ -754,16 +657,9 @@ export default function SettingsScreen() {
           className="flex-1 bg-white dark:bg-zinc-900"
         >
           <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-4 pb-3 pt-4">
-            <Text className="text-xl font-bold dark:text-zinc-100">
-              Verify Email
-            </Text>
-            <Pressable
-              onPress={() => setShowVerifyEmail(false)}
-              className="active:opacity-60"
-            >
-              <Text className="text-base text-zinc-400 dark:text-zinc-500">
-                Cancel
-              </Text>
+            <Text className="text-xl font-bold dark:text-zinc-100">Verify Email</Text>
+            <Pressable onPress={() => setShowVerifyEmail(false)} className="active:opacity-60">
+              <Text className="text-base text-zinc-400 dark:text-zinc-500">Cancel</Text>
             </Pressable>
           </View>
           <View className="p-4">
@@ -776,16 +672,12 @@ export default function SettingsScreen() {
                   onPress={handleRequestVerification}
                   disabled={isVerifying}
                   className={`items-center rounded-lg py-3 ${
-                    isVerifying
-                      ? "bg-zinc-200 dark:bg-zinc-700"
-                      : "bg-blue-500 active:bg-blue-600"
+                    isVerifying ? "bg-zinc-200 dark:bg-zinc-700" : "bg-blue-500 active:bg-blue-600"
                   }`}
                 >
                   <Text
                     className={`text-base font-semibold ${
-                      isVerifying
-                        ? "text-zinc-400 dark:text-zinc-500"
-                        : "text-white"
+                      isVerifying ? "text-zinc-400 dark:text-zinc-500" : "text-white"
                     }`}
                   >
                     {isVerifying ? "Sending..." : "Send Verification Code"}
@@ -850,24 +742,16 @@ export default function SettingsScreen() {
           className="flex-1 bg-white dark:bg-zinc-900"
         >
           <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-4 pb-3 pt-4">
-            <Text className="text-xl font-bold dark:text-zinc-100">
-              Change Password
-            </Text>
-            <Pressable
-              onPress={() => setShowChangePassword(false)}
-              className="active:opacity-60"
-            >
-              <Text className="text-base text-zinc-400 dark:text-zinc-500">
-                Cancel
-              </Text>
+            <Text className="text-xl font-bold dark:text-zinc-100">Change Password</Text>
+            <Pressable onPress={() => setShowChangePassword(false)} className="active:opacity-60">
+              <Text className="text-base text-zinc-400 dark:text-zinc-500">Cancel</Text>
             </Pressable>
           </View>
           <View className="p-4">
             {passwordStep === "request" ? (
               <>
                 <Text className="mb-4 text-base text-zinc-500 dark:text-zinc-400">
-                  We'll send a verification code to your email to confirm the
-                  password change.
+                  We'll send a verification code to your email to confirm the password change.
                 </Text>
                 <Pressable
                   onPress={handleRequestPasswordChange}
@@ -880,14 +764,10 @@ export default function SettingsScreen() {
                 >
                   <Text
                     className={`text-base font-semibold ${
-                      isChangingPassword
-                        ? "text-zinc-400 dark:text-zinc-500"
-                        : "text-white"
+                      isChangingPassword ? "text-zinc-400 dark:text-zinc-500" : "text-white"
                     }`}
                   >
-                    {isChangingPassword
-                      ? "Sending..."
-                      : "Send Verification Code"}
+                    {isChangingPassword ? "Sending..." : "Send Verification Code"}
                   </Text>
                 </Pressable>
               </>
@@ -924,13 +804,9 @@ export default function SettingsScreen() {
                   secureTextEntry
                   placeholderTextColor={colors.placeholder}
                 />
-                {newPassword &&
-                  confirmPassword &&
-                  newPassword !== confirmPassword && (
-                    <Text className="mt-2 text-sm text-red-500">
-                      Passwords do not match
-                    </Text>
-                  )}
+                {newPassword && confirmPassword && newPassword !== confirmPassword && (
+                  <Text className="mt-2 text-sm text-red-500">Passwords do not match</Text>
+                )}
                 <Pressable
                   onPress={handleChangePassword}
                   disabled={

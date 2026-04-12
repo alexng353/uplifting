@@ -12,9 +12,7 @@ import { useServerSettings, useUpdateSettings } from "./useServerSettings";
 
 export function useSettings() {
   const { isAuthenticated } = useAuth();
-  const [settings, setSettingsState] = useState<StoredSettings>(() =>
-    getSettings(),
-  );
+  const [settings, setSettingsState] = useState<StoredSettings>(() => getSettings());
   const [isLoading] = useState(false);
 
   const { data: serverSettings } = useServerSettings(isAuthenticated);
@@ -38,9 +36,7 @@ export function useSettings() {
           prev.defaultRestTimerSeconds ??
           DEFAULT_SETTINGS.defaultRestTimerSeconds,
         defaultPrivacy:
-          serverSettings.defaultPrivacy ??
-          prev.defaultPrivacy ??
-          DEFAULT_SETTINGS.defaultPrivacy,
+          serverSettings.defaultPrivacy ?? prev.defaultPrivacy ?? DEFAULT_SETTINGS.defaultPrivacy,
         shareGymLocation:
           serverSettings.shareGymLocation ??
           prev.shareGymLocation ??
@@ -58,10 +54,8 @@ export function useSettings() {
           prev.shareWorkoutHistory ??
           DEFAULT_SETTINGS.shareWorkoutHistory,
         colorScheme:
-          (serverSettings.colorScheme as "light" | "dark" | "system") ??
-          prev.colorScheme,
-        currentGymId:
-          serverSettings.currentGymId ?? prev.currentGymId ?? null,
+          (serverSettings.colorScheme as "light" | "dark" | "system") ?? prev.colorScheme,
+        currentGymId: serverSettings.currentGymId ?? prev.currentGymId ?? null,
         autoAddSet: prev.autoAddSet,
         autoRemoveEmptySet: prev.autoRemoveEmptySet,
         bodyweight: prev.bodyweight,
@@ -92,13 +86,11 @@ export function useSettings() {
     try {
       const locale =
         Platform.OS === "ios"
-          ? NativeModules.SettingsManager?.settings?.AppleLocale ??
+          ? (NativeModules.SettingsManager?.settings?.AppleLocale ??
             NativeModules.SettingsManager?.settings?.AppleLanguages?.[0] ??
-            "en"
-          : NativeModules.I18nManager?.localeIdentifier ?? "en";
-      return locale.startsWith("en_US") || locale.startsWith("en-US")
-        ? "lbs"
-        : "kg";
+            "en")
+          : (NativeModules.I18nManager?.localeIdentifier ?? "en");
+      return locale.startsWith("en_US") || locale.startsWith("en-US") ? "lbs" : "kg";
     } catch {
       return "kg";
     }

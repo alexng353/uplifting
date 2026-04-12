@@ -8,12 +8,11 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
 
   // GET /bootstrap — fetch all data needed for app initialization
   .get("/bootstrap", async ({ userId }) => {
-    const [gyms, profiles, gymProfileMappings, previousSetsRows] =
-      await Promise.all([
-        sql`SELECT * FROM user_gyms WHERE user_id = ${userId} ORDER BY created_at ASC`,
-        sql`SELECT * FROM exercise_profiles WHERE user_id = ${userId} ORDER BY exercise_id, name`,
-        sql`SELECT gym_id, exercise_id, profile_id FROM user_gym_profile_mappings WHERE user_id = ${userId}`,
-        sql`
+    const [gyms, profiles, gymProfileMappings, previousSetsRows] = await Promise.all([
+      sql`SELECT * FROM user_gyms WHERE user_id = ${userId} ORDER BY created_at ASC`,
+      sql`SELECT * FROM exercise_profiles WHERE user_id = ${userId} ORDER BY exercise_id, name`,
+      sql`SELECT gym_id, exercise_id, profile_id FROM user_gym_profile_mappings WHERE user_id = ${userId}`,
+      sql`
           WITH ranked_sets AS (
               SELECT s.exercise_id, s.profile_id, s.reps, s.weight, s.weight_unit, s.side, s.created_at,
                   DENSE_RANK() OVER (
@@ -27,7 +26,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
           FROM ranked_sets WHERE workout_rank = 1
           ORDER BY exercise_id, profile_id, created_at ASC
         `,
-      ]);
+    ]);
 
     // Group previous_sets by key: {exercise_id}_{profile_id || 'default'}
     const previousSets: Record<string, Record<string, unknown>[]> = {};

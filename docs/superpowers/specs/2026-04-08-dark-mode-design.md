@@ -29,33 +29,33 @@ Add a 3-way dark mode toggle (Light / Dark / System) to the mobile app. Every sc
 
 All screens use Tailwind `dark:` variant classes:
 
-| Light Class | Dark Variant |
-|---|---|
-| `bg-white` | `dark:bg-zinc-900` |
-| `bg-zinc-50` | `dark:bg-zinc-950` |
-| `bg-zinc-100` | `dark:bg-zinc-800` |
-| `bg-zinc-200` | `dark:bg-zinc-700` |
-| `border-zinc-100` | `dark:border-zinc-800` |
-| `border-zinc-200` | `dark:border-zinc-700` |
-| `border-zinc-300` | `dark:border-zinc-600` |
-| `text-zinc-900` | `dark:text-zinc-50` |
-| `text-zinc-700` | `dark:text-zinc-200` |
-| `text-zinc-600` | `dark:text-zinc-300` |
-| `text-zinc-500` | `dark:text-zinc-400` |
-| `text-zinc-400` | `dark:text-zinc-500` |
-| `active:bg-zinc-50` | `dark:active:bg-zinc-800` |
-| `bg-gray-300` (login borders) | `dark:border-zinc-600` |
-| `text-gray-500` | `dark:text-zinc-400` |
+| Light Class                   | Dark Variant              |
+| ----------------------------- | ------------------------- |
+| `bg-white`                    | `dark:bg-zinc-900`        |
+| `bg-zinc-50`                  | `dark:bg-zinc-950`        |
+| `bg-zinc-100`                 | `dark:bg-zinc-800`        |
+| `bg-zinc-200`                 | `dark:bg-zinc-700`        |
+| `border-zinc-100`             | `dark:border-zinc-800`    |
+| `border-zinc-200`             | `dark:border-zinc-700`    |
+| `border-zinc-300`             | `dark:border-zinc-600`    |
+| `text-zinc-900`               | `dark:text-zinc-50`       |
+| `text-zinc-700`               | `dark:text-zinc-200`      |
+| `text-zinc-600`               | `dark:text-zinc-300`      |
+| `text-zinc-500`               | `dark:text-zinc-400`      |
+| `text-zinc-400`               | `dark:text-zinc-500`      |
+| `active:bg-zinc-50`           | `dark:active:bg-zinc-800` |
+| `bg-gray-300` (login borders) | `dark:border-zinc-600`    |
+| `text-gray-500`               | `dark:text-zinc-400`      |
 
-Accent colors (blue-500, red-500, green-500, amber-*) remain unchanged — they have sufficient contrast on both light and dark backgrounds.
+Accent colors (blue-500, red-500, green-500, amber-\*) remain unchanged — they have sufficient contrast on both light and dark backgrounds.
 
 Semantic/status backgrounds that already use color (e.g. `bg-red-50`, `bg-green-50`, `bg-blue-50`, `bg-amber-100`) get dark variants:
 
-| Light | Dark |
-|---|---|
-| `bg-red-50` | `dark:bg-red-950` |
-| `bg-green-50` | `dark:bg-green-950` |
-| `bg-blue-50` | `dark:bg-blue-950` |
+| Light          | Dark                |
+| -------------- | ------------------- |
+| `bg-red-50`    | `dark:bg-red-950`   |
+| `bg-green-50`  | `dark:bg-green-950` |
+| `bg-blue-50`   | `dark:bg-blue-950`  |
 | `bg-amber-100` | `dark:bg-amber-950` |
 
 ## Inline Style Colors — `useThemeColors` Hook
@@ -107,15 +107,18 @@ In `(tabs)/_layout.tsx`, set tab bar colors reactively:
 ## Files Changed
 
 ### New files
+
 - `apps/mobile/hooks/useThemeColors.ts` — inline color hook
 
 ### Modified files (plumbing)
+
 - `apps/mobile/tailwind.config.js` — add `darkMode: "class"`
 - `apps/mobile/hooks/useSettings.tsx` — add `colorScheme` to `StoredSettings`
 - `apps/mobile/app/_layout.tsx` — wire up color scheme after hydration
 - `apps/mobile/app/(tabs)/_layout.tsx` — dark tab bar styles
 
 ### Modified files (dark variants on all screens/components — 27 files)
+
 - `apps/mobile/app/login.tsx`
 - `apps/mobile/app/(tabs)/me.tsx`
 - `apps/mobile/app/(tabs)/workout.tsx`

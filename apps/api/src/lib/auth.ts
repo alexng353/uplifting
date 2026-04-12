@@ -26,11 +26,7 @@ export const authPlugin = new Elysia({ name: "auth" })
       return { userId: "" as string, user: null as any };
     }
     const userId = payload.sub as string;
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!user) {
       return { userId: "" as string, user: null as any };
     }

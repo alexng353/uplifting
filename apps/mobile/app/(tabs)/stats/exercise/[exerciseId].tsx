@@ -1,11 +1,5 @@
 import { useMemo, useState } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, ScrollView, Pressable, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
@@ -35,12 +29,8 @@ export default function ExerciseHistoryScreen() {
   const { getDisplayUnit } = useSettings();
   const unit = getDisplayUnit();
 
-  const months =
-    timeRange === "all" ? null : Number.parseInt(timeRange, 10);
-  const { data: history, isLoading } = useExerciseHistory(
-    exerciseId!,
-    months,
-  );
+  const months = timeRange === "all" ? null : Number.parseInt(timeRange, 10);
+  const { data: history, isLoading } = useExerciseHistory(exerciseId!, months);
 
   // Fetch exercise name
   const { data: exercise } = useQuery({
@@ -62,8 +52,7 @@ export default function ExerciseHistoryScreen() {
   // Sort history descending by date (most recent first)
   const sortedHistory = useMemo(() => {
     return [...historyData].sort(
-      (a: any, b: any) =>
-        new Date(b.date).getTime() - new Date(a.date).getTime(),
+      (a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime(),
     );
   }, [historyData]);
 
@@ -91,11 +80,7 @@ export default function ExerciseHistoryScreen() {
   };
 
   const formatSet = (s: any): string => {
-    const weight = convertWeight(
-      Number(s.weight),
-      s.weight_unit ?? "kg",
-      unit,
-    );
+    const weight = convertWeight(Number(s.weight), s.weight_unit ?? "kg", unit);
     if (s.side) {
       return `${s.reps}x${weight}${unit} ${s.side}`;
     }
@@ -153,9 +138,7 @@ export default function ExerciseHistoryScreen() {
       {isLoading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" />
-          <Text className="mt-2 text-sm text-zinc-400 dark:text-zinc-500">
-            Loading history...
-          </Text>
+          <Text className="mt-2 text-sm text-zinc-400 dark:text-zinc-500">Loading history...</Text>
         </View>
       ) : sortedHistory.length === 0 ? (
         <View className="flex-1 items-center justify-center px-8">
@@ -226,11 +209,7 @@ export default function ExerciseHistoryScreen() {
           {sortedHistory.map((entry: any) => (
             <Pressable
               key={entry.workout_id}
-              onPress={() =>
-                router.push(
-                  `/(tabs)/stats/workout/${entry.workout_id}` as any,
-                )
-              }
+              onPress={() => router.push(`/(tabs)/stats/workout/${entry.workout_id}` as any)}
               className="mx-4 mb-3 rounded-xl bg-white dark:bg-zinc-900 px-4 py-3 active:bg-zinc-50 dark:active:bg-zinc-800"
               style={{
                 shadowColor: "#000",
@@ -247,8 +226,7 @@ export default function ExerciseHistoryScreen() {
                 <Ionicons name="chevron-forward" size={14} color={colors.chevron} />
               </View>
               <Text className="text-sm text-zinc-400 dark:text-zinc-500">
-                {entry.sets.length} sets ·{" "}
-                {entry.sets.map(formatSet).join(", ")}
+                {entry.sets.length} sets · {entry.sets.map(formatSet).join(", ")}
               </Text>
             </Pressable>
           ))}

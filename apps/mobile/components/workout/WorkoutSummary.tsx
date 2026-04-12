@@ -1,20 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  ScrollView,
-  Modal,
-} from "react-native";
+import { View, Text, TextInput, Pressable, ScrollView, Modal } from "react-native";
 import { useSettings } from "../../hooks/useSettings";
 import { useThemeColors } from "../../hooks/useThemeColors";
 import { useWorkoutTitleSuggestion } from "../../hooks/useWorkoutTitleSuggestion";
-import {
-  getCurrentGymId,
-  getGyms,
-  type StoredWorkout,
-} from "../../services/storage";
+import { getCurrentGymId, getGyms, type StoredWorkout } from "../../services/storage";
 
 interface WorkoutSummaryProps {
   visible: boolean;
@@ -59,24 +48,16 @@ export default function WorkoutSummary({
   }, [name, gymLocation, onSave]);
 
   // Calculate stats
-  const totalSets = workout.exercises.reduce(
-    (sum, ex) => sum + ex.sets.length,
-    0,
-  );
+  const totalSets = workout.exercises.reduce((sum, ex) => sum + ex.sets.length, 0);
   const totalReps = workout.exercises.reduce(
-    (sum, ex) =>
-      sum + ex.sets.reduce((s, set) => s + (set.reps ?? 0), 0),
+    (sum, ex) => sum + ex.sets.reduce((s, set) => s + (set.reps ?? 0), 0),
     0,
   );
   const totalVolume = workout.exercises.reduce(
-    (sum, ex) =>
-      sum +
-      ex.sets.reduce((s, set) => s + (set.reps ?? 0) * (set.weight ?? 0), 0),
+    (sum, ex) => sum + ex.sets.reduce((s, set) => s + (set.reps ?? 0) * (set.weight ?? 0), 0),
     0,
   );
-  const duration = Math.round(
-    (Date.now() - new Date(workout.startTime).getTime()) / 60000,
-  );
+  const duration = Math.round((Date.now() - new Date(workout.startTime).getTime()) / 60000);
 
   return (
     <Modal
@@ -133,9 +114,7 @@ export default function WorkoutSummary({
               <Text className="text-2xl font-bold dark:text-zinc-100">
                 {workout.exercises.length}
               </Text>
-              <Text className="text-xs uppercase text-zinc-400 dark:text-zinc-500">
-                Exercises
-              </Text>
+              <Text className="text-xs uppercase text-zinc-400 dark:text-zinc-500">Exercises</Text>
             </View>
             <View className="items-center rounded-lg bg-zinc-100 dark:bg-zinc-800 px-5 py-3">
               <Text className="text-2xl font-bold dark:text-zinc-100">{totalSets}</Text>
@@ -170,10 +149,7 @@ export default function WorkoutSummary({
                   {exercise.sets.length} set{exercise.sets.length !== 1 ? "s" : ""}{" "}
                   {exercise.sets
                     .filter((s) => s.reps != null)
-                    .map(
-                      (s) =>
-                        `${s.reps}x${formatWeight(s.weight ?? 0, s.weightUnit)}`,
-                    )
+                    .map((s) => `${s.reps}x${formatWeight(s.weight ?? 0, s.weightUnit)}`)
                     .join(", ")}
                 </Text>
               </View>
@@ -187,9 +163,7 @@ export default function WorkoutSummary({
             onPress={handleSave}
             className="mb-2 items-center rounded-lg bg-blue-500 py-3.5 active:bg-blue-600"
           >
-            <Text className="text-base font-semibold text-white">
-              Save Workout
-            </Text>
+            <Text className="text-base font-semibold text-white">Save Workout</Text>
           </Pressable>
           <Pressable
             onPress={onCancel}

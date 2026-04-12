@@ -57,7 +57,9 @@ export function useRenameExerciseProfile() {
       profileId: string;
       name: string;
     }) => {
-      return unwrap(await api.api.v1.exercises({ exerciseId }).profiles({ profileId }).put({ name }));
+      return unwrap(
+        await api.api.v1.exercises({ exerciseId }).profiles({ profileId }).put({ name }),
+      );
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({

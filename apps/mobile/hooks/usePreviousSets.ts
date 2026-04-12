@@ -1,9 +1,5 @@
 import { useCallback, useMemo } from "react";
-import {
-  getPreviousSets,
-  type StoredPreviousSets,
-  type StoredSet,
-} from "../services/storage";
+import { getPreviousSets, type StoredPreviousSets, type StoredSet } from "../services/storage";
 
 interface SetSuggestion {
   reps: number | null;
