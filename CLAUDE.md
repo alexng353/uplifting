@@ -84,6 +84,10 @@ Bun monorepo with two workspaces under `apps/`:
 
 ### Database schema changes
 
-1. Edit `apps/api/src/db/schema.ts`
-2. Run `bun api db:generate` to create migration
-3. Run `bun api db:push` to apply
+All schema migrations go through drizzle-kit. Never hand-write SQL files in `drizzle/`.
+
+1. Edit `apps/api/src/db/schema.ts` (the single source of truth)
+2. Run `bun api db:generate` (`drizzle-kit generate`) to diff schema and create a migration SQL file
+3. Run `bun api db:migrate` (`drizzle-kit migrate`) to apply pending migrations
+
+For data-only changes (e.g., backfilling column values), write a standalone Bun script — drizzle-kit does not handle data migrations.

@@ -1,0 +1,114 @@
+## Bug 1: Gym location capture UI missing
+
+Status: feature gap (not a permissions issue)
+
+GPS permissions are correctly configured in app.json for both iOS and Android.
+Auto-detection works on app bootstrap and workout start (300m threshold via
+haversineDistance in services/geolocation.ts). The function requestAndGetPosition()
+exists in services/geolocation.ts but is never called anywhere.
+
+What's missing:
+- No UI in GymManagerModal.tsx to capture current GPS coordinates when adding a gym
+- Gyms are added name-only; coordinates are stored as null
+- Without coordinates, detectAndSetNearbyGym() can never match
+
+Files:
+- apps/mobile/services/geolocation.ts (requestAndGetPosition unused)
+- apps/mobile/components/settings/GymManagerModal.tsx (no location capture button)
+- apps/mobile/app.json (permissions OK)
+
+---
+
+## Bug 2: No exercise history graphs
+
+Status: confirmed, feature not implemented
+
+No charting library is installed. Exercise history screen
+(app/(tabs)/stats/exercise/[exerciseId].tsx) renders a chronologically-sorted
+text list of sets. No scatter plot, line chart, or any visualization exists.
+react-native-svg is installed (prerequisite for victory-native).
+
+The API endpoint GET /exercises/{exerciseId}/history returns date+sets data
+that is ready to be graphed (dates as X-axis, weight/reps as Y-axis).
+
+The reference to ../uplifting-archive suggests a previous version had a
+scatter plot. The ask is to implement a line chart / histogram instead.
+
+Files:
+- apps/mobile/app/(tabs)/stats/exercise/[exerciseId].tsx (text list, no chart)
+- apps/mobile/hooks/useExerciseHistory.ts (data fetching, works correctly)
+- apps/mobile/package.json (no charting library)
+
+---
+
+## Bug 3: Muscle group minor-to-major mapping is hardcoded in API
+
+Status: confirmed (the volume data itself is dynamic)
+
+Volume calculations are real — they query user_sets joined with muscles via
+exercise_muscle_relations. The issue is MUSCLE_GROUP_MAP (lines 7-36 of
+apps/api/src/routes/workouts.ts), a hardcoded Record<string, string> that maps
+minor muscle groups (e.g. "biceps") to major groups (e.g. "Arms").
+
+If a minor_group exists in the muscles table but not in the map, it silently
+falls through to "Other". The mapping should come from the database (e.g. a
+major_group column on the muscles table) instead of being duplicated in code.
+
+Files:
+- apps/api/src/routes/workouts.ts lines 7-36 (MUSCLE_GROUP_MAP)
+- apps/api/src/routes/workouts.ts lines 145-173 (aggregation logic)
+- apps/api/src/db/schema.ts (muscles table, no major_group column)
+
+---
+
+## Bug 4: All-time volume stats sum mixed units without conversion
+
+Status: confirmed
+
+Three SQL queries in the all-time-stats endpoint compute SUM(s.weight * s.reps)
+without considering the weight_unit column. If a user logged 100 kg x 5 and
+100 lbs x 5, the API returns 1000 as total volume (meaningless sum of mixed
+units). The mobile app then labels this "Volume (lbs)" or "Volume (kg)" based
+on the user's display preference, but no conversion is applied.
+
+The user_sets table already stores weight_unit per row (varchar, "kg" or "lbs").
+The fix is to normalize to a base unit (kg) in the SQL before summing, then let
+the frontend convert to the user's display unit.
+
+Affected queries in apps/api/src/routes/workouts.ts:
+- Line 104: total_volume (all-time stats card)
+- Line 136: total_volume per exercise (top 10 exercises)
+- Line 148: volume per muscle group
+
+Frontend display (no conversion applied):
+- apps/mobile/app/(tabs)/stats/index.tsx lines 273-276, 331, 362
+- convertWeight() is imported but never used for aggregated stats
+
+---
+
+## Bug 5: User display unit preference lost on app restart (race condition)
+
+Status: confirmed
+
+useSettings.tsx has a useEffect (lines 24-61) that fires when serverSettings
+arrives from the API. It unconditionally overwrites local state and persists
+back to AsyncStorage via saveSettings(). If the server returns displayUnit as
+null (e.g. user never explicitly set it server-side), the local preference is
+replaced with null and saved — destroying the user's local choice.
+
+Timeline:
+1. User sets displayUnit to "lbs" locally -> saved to AsyncStorage
+2. App restarts -> hydrateStorage loads "lbs" from AsyncStorage (correct)
+3. useSettings initializes with "lbs" from cache (correct)
+4. useServerSettings query returns displayUnit: null
+5. Effect overwrites local state with null and calls saveSettings(null)
+6. Next restart: AsyncStorage has null, auto-detect kicks in -> preference lost
+
+The fix needs a "local wins unless server is explicitly newer" merge strategy,
+or at minimum: don't overwrite a non-null local value with a null server value.
+
+Files:
+- apps/mobile/hooks/useSettings.tsx lines 24-61 (destructive server sync)
+- apps/mobile/hooks/useSettings.tsx line 58 (saveSettings persists the null)
+- apps/mobile/services/storage.ts lines 250-259 (getSettings/setSettings, works correctly)
+- apps/api/src/db/schema.ts lines 146-160 (displayUnit is nullable)
