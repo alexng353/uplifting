@@ -246,6 +246,28 @@ export const passwordResetTokens = pgTable(
   ],
 );
 
+// ── Refresh Tokens ─────────────────────────────────────────────────────────
+
+export const refreshTokens = pgTable(
+  "refresh_tokens",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    familyId: uuid("family_id").notNull().defaultRandom(),
+    tokenHash: varchar("token_hash", { length: 64 }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_refresh_tokens_token_hash").on(t.tokenHash),
+    index("idx_refresh_tokens_family_id").on(t.familyId),
+    index("idx_refresh_tokens_user_id").on(t.userId),
+  ],
+);
+
 // ── User Activity ──────────────────────────────────────────────────────────
 
 export const userActivity = pgTable(

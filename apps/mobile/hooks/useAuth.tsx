@@ -1,11 +1,19 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { getToken, setToken, clearToken } from "../services/auth-storage";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { Alert } from "react-native";
+import {
+  clearAllTokens,
+  getRefreshToken,
+  getToken,
+  setRefreshToken,
+  setToken,
+} from "../services/auth-storage";
 import { clearAllData } from "../services/storage";
+import { api, setOnUnauthorized } from "../lib/api";
 
 interface AuthContext {
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (token: string) => Promise<void>;
+  login: (tokens: { access_token: string; refresh_token: string }) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -27,16 +35,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const login = async (token: string) => {
-    await setToken(token);
+  const login = useCallback(async (tokens: { access_token: string; refresh_token: string }) => {
+    await setRefreshToken(tokens.refresh_token);
+    await setToken(tokens.access_token);
     setIsAuthenticated(true);
-  };
+  }, []);
 
-  const logout = async () => {
-    await clearToken();
+  const logout = useCallback(async () => {
+    const refreshToken = await getRefreshToken();
+    if (refreshToken) {
+      // best-effort server revoke; ignore failures
+      try {
+        await api.api.v1.auth.logout.post({ refresh_token: refreshToken });
+      } catch {}
+    }
+    await clearAllTokens();
     clearAllData();
     setIsAuthenticated(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    setOnUnauthorized(() => {
+      Alert.alert("Session expired", "Please sign in again.");
+      // local-only teardown — server token is already invalid
+      clearAllTokens().then(() => {
+        clearAllData();
+        setIsAuthenticated(false);
+      });
+    });
+    return () => setOnUnauthorized(null);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, isLoading, login, logout }}>

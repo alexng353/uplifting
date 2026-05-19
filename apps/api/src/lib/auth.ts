@@ -4,20 +4,21 @@ import { bearer } from "@elysiajs/bearer";
 import { db } from "../db";
 import { users } from "../db/schema";
 import { eq } from "drizzle-orm";
+import { AUTH_REQUIRED } from "./auth-errors";
 
 export const jwtPlugin = new Elysia({ name: "jwt" })
   .use(
     jwt({
       name: "jwt",
       secret: process.env.JWT_SECRET!,
-      exp: "7d",
+      exp: "1h",
     }),
   )
   .use(bearer());
 
 export const authPlugin = new Elysia({ name: "auth" })
   .use(jwtPlugin)
-  .derive({ as: "scoped" }, async ({ jwt, bearer, set }) => {
+  .derive({ as: "scoped" }, async ({ jwt, bearer }) => {
     if (!bearer) {
       return { userId: "" as string, user: null as any };
     }
@@ -35,6 +36,6 @@ export const authPlugin = new Elysia({ name: "auth" })
   .onBeforeHandle({ as: "scoped" }, ({ userId, set }) => {
     if (!userId) {
       set.status = 401;
-      return { error: "Unauthorized" };
+      return { error: "Unauthorized", code: AUTH_REQUIRED };
     }
   });

@@ -5,6 +5,8 @@ import { users, emailVerificationTokens, passwordResetTokens } from "../db/schem
 import { jwtPlugin, authPlugin } from "../lib/auth";
 import { hashPassword, verifyPassword } from "../lib/password";
 import { sendEmail, generateVerificationCode } from "../lib/mailgun";
+import { issueTokenPair, rotateRefreshToken, revokeRefreshToken } from "../lib/tokens";
+import { AUTH_REQUIRED } from "../lib/auth-errors";
 
 const publicAuthRoutes = new Elysia({ prefix: "/auth" })
   .use(jwtPlugin)
@@ -23,14 +25,7 @@ const publicAuthRoutes = new Elysia({ prefix: "/auth" })
         })
         .returning();
 
-      const token = await jwt.sign({
-        sub: user.id,
-        username: user.username,
-        real_name: user.realName,
-        email: user.email,
-      });
-
-      return token;
+      return await issueTokenPair(jwt, user.id);
     },
     {
       body: t.Object({
@@ -62,19 +57,42 @@ const publicAuthRoutes = new Elysia({ prefix: "/auth" })
         return { error: "Invalid credentials" };
       }
 
-      const token = await jwt.sign({
-        sub: user.id,
-        username: user.username,
-        real_name: user.realName,
-        email: user.email,
-      });
-
-      return token;
+      return await issueTokenPair(jwt, user.id);
     },
     {
       body: t.Object({
         username: t.String(),
         password: t.String(),
+      }),
+    },
+  )
+
+  .post(
+    "/refresh",
+    async ({ jwt, body, set }) => {
+      const result = await rotateRefreshToken(jwt, body.refresh_token);
+      if (!result.ok) {
+        set.status = 401;
+        return { error: "Unauthorized", code: AUTH_REQUIRED };
+      }
+      return { access_token: result.access_token, refresh_token: result.refresh_token };
+    },
+    {
+      body: t.Object({
+        refresh_token: t.String(),
+      }),
+    },
+  )
+
+  .post(
+    "/logout",
+    async ({ body }) => {
+      await revokeRefreshToken(body.refresh_token);
+      return { ok: true };
+    },
+    {
+      body: t.Object({
+        refresh_token: t.String(),
       }),
     },
   );
