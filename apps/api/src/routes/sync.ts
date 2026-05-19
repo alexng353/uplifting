@@ -8,7 +8,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
 
   // GET /bootstrap — fetch all data needed for app initialization
   .get("/bootstrap", async ({ userId }) => {
-    const [gyms, profiles, gymProfileMappings, previousSetsRows] = await Promise.all([
+    const [gyms, profiles, gymProfileMappings, previousSetsRows, sequenceRows] = await Promise.all([
       sql`SELECT * FROM user_gyms WHERE user_id = ${userId} ORDER BY created_at ASC`,
       sql`SELECT * FROM exercise_profiles WHERE user_id = ${userId} ORDER BY exercise_id, name`,
       sql`SELECT gym_id, exercise_id, profile_id FROM user_gym_profile_mappings WHERE user_id = ${userId}`,
@@ -25,6 +25,23 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
           SELECT exercise_id, profile_id, reps, weight, weight_unit, side
           FROM ranked_sets WHERE workout_rank = 1
           ORDER BY exercise_id, profile_id, created_at ASC
+        `,
+      sql`
+          WITH recent AS (
+              SELECT id, name, end_time FROM workouts
+              WHERE user_id = ${userId} AND end_time IS NOT NULL AND kind = 'workout'
+              ORDER BY end_time DESC
+              LIMIT 20
+          ),
+          exercise_order AS (
+              SELECT workout_id, exercise_id, MIN(created_at) AS first_seen
+              FROM user_sets
+              WHERE workout_id IN (SELECT id FROM recent)
+              GROUP BY workout_id, exercise_id
+          )
+          SELECT r.id AS workout_id, r.name AS workout_name, eo.exercise_id
+          FROM recent r JOIN exercise_order eo ON eo.workout_id = r.id
+          ORDER BY r.end_time DESC, eo.first_seen ASC
         `,
     ]);
 
@@ -45,11 +62,28 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
       });
     }
 
+    // Group exercise sequences by workout, preserving the SQL row order (Map
+    // insertion order = most-recent-workout-first, then exercise first-appearance).
+    const sequenceMap = new Map<string, { title: string | null; exercise_ids: string[] }>();
+    for (const row of sequenceRows) {
+      const entry = sequenceMap.get(row.workout_id);
+      if (entry) {
+        entry.exercise_ids.push(row.exercise_id);
+      } else {
+        sequenceMap.set(row.workout_id, {
+          title: row.workout_name,
+          exercise_ids: [row.exercise_id],
+        });
+      }
+    }
+    const exerciseSequences = [...sequenceMap.values()];
+
     return {
       gyms,
       profiles,
       gym_profile_mappings: gymProfileMappings,
       previous_sets: previousSets,
+      exercise_sequences: exerciseSequences,
     };
   })
 

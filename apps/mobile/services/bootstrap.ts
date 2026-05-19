@@ -1,10 +1,12 @@
 import { api, unwrap } from "../lib/api";
 import {
   type GymProfileMapping,
+  type StoredExerciseSequences,
   type StoredGym,
   type StoredPreviousSets,
   type StoredProfile,
   type StoredSet,
+  setExerciseSequences,
   setGyms,
   setGymProfileMap,
   setPreviousSets,
@@ -16,6 +18,7 @@ export interface BootstrapData {
   profiles: StoredProfile[];
   gymProfileMappings: GymProfileMapping;
   previousSets: StoredPreviousSets;
+  exerciseSequences: StoredExerciseSequences;
 }
 
 export async function fetchBootstrapData(): Promise<BootstrapData> {
@@ -69,11 +72,19 @@ export async function fetchBootstrapData(): Promise<BootstrapData> {
     );
   }
 
+  const exerciseSequences: StoredExerciseSequences = (data.exercise_sequences ?? []).map(
+    (entry) => ({
+      exerciseIds: entry.exercise_ids,
+      title: entry.title ?? undefined,
+    }),
+  );
+
   return {
     gyms,
     profiles,
     gymProfileMappings,
     previousSets,
+    exerciseSequences,
   };
 }
 
@@ -82,4 +93,5 @@ export function applyBootstrapData(data: BootstrapData): void {
   setProfiles(data.profiles);
   setGymProfileMap(data.gymProfileMappings);
   setPreviousSets(data.previousSets);
+  setExerciseSequences(data.exerciseSequences);
 }

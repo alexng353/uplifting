@@ -2,6 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project mode
+
+This is a **let-it-ride** project, not a personal project. The global default
+in `~/.claude/CLAUDE.md` says to give concept-level guidance and let Alex
+write the code himself — that default does **not** apply here. In this repo,
+Claude drives implementation: after design alignment, write the code, run
+typecheck/lint/format, and commit + push. Alex still owns design decisions
+and reviews diffs, but the keyboard belongs to Claude.
+
 ## Commands
 
 ```bash

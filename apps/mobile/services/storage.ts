@@ -451,6 +451,11 @@ export function addExerciseSequence(sequence: string[], title?: string): void {
   setJSON(STORAGE_KEYS.EXERCISE_SEQUENCES, sequences);
 }
 
+export function setExerciseSequences(sequences: StoredExerciseSequences): void {
+  const trimmed = sequences.slice(0, MAX_EXERCISE_SEQUENCES);
+  setJSON(STORAGE_KEYS.EXERCISE_SEQUENCES, trimmed);
+}
+
 export function getLastProfileForExerciseAtGym(exerciseId: string, gymId: string): string | null {
   const map = getGymProfileMap();
   const key = `${exerciseId}_${gymId}`;
