@@ -56,3 +56,22 @@ etc. See `CHANGELOG.md` for the running history.
   agents working on the repo.
 - **`apps/mobile/app.json`** — app config (icon, splash, bundle ID).
 - **`apps/api/drizzle/`** — generated migrations.
+
+<!--
+TODO: things that would make this page better
+- Hero screenshot at the top (workout-in-progress screen) so the README
+  isn't a wall of text.
+- Animated GIF of the core loop: log a set → finish workout → suggestion
+  surfaces next session. Shows the offline-first sync visually.
+- A small gallery further down: home, exercise picker with fuzzy search,
+  stats page, friends feed. Light + dark for each.
+- Architecture diagram (mobile ↔ API ↔ Postgres, plus the offline
+  cache → sync queue flow). Mermaid renders fine on GitHub.
+- Badges row: latest tagged version, build status (once CI exists),
+  Expo SDK version, Bun version.
+- Feature checklist near the top so a drive-by reader knows what's in.
+- TestFlight invite link once the build is publicly shareable.
+- Acknowledgements: shadcn (the design influence), Elysia, Expo.
+- "Why another tracker?" paragraph — the offline-first / sub-second-log
+  pitch in plain English.
+-->
