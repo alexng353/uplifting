@@ -5,23 +5,36 @@ set -euo pipefail
 # EAS auto-increments the build number (appVersionSource: "remote",
 # autoIncrement: true in eas.json).
 #
-# Usage: bun testflight
+# Usage: bun testflight [-y|--yes]
+
+ASSUME_YES=0
+for arg in "$@"; do
+  case "$arg" in
+    -y|--yes) ASSUME_YES=1 ;;
+  esac
+done
 
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
 # ── 1. Ensure working tree is clean ──────────────────────────────
 if [[ -n "$(git status --porcelain)" ]]; then
-  echo "Warning: working tree has uncommitted changes."
-  read -rp "Continue anyway? [y/N] " CONFIRM
-  if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
-    echo "Aborted."
-    exit 1
+  if [[ $ASSUME_YES -eq 1 ]]; then
+    echo "Warning: working tree has uncommitted changes. Continuing (--yes)."
+  else
+    echo "Warning: working tree has uncommitted changes."
+    read -rp "Continue anyway? [y/N] " CONFIRM
+    if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
+      echo "Aborted."
+      exit 1
+    fi
   fi
 fi
 
 # ── 2. Build + submit ────────────────────────────────────────────
-bash apps/mobile/scripts/build-ios.sh
+BUILD_ARGS=()
+[[ $ASSUME_YES -eq 1 ]] && BUILD_ARGS+=(--yes)
+bash apps/mobile/scripts/build-ios.sh "${BUILD_ARGS[@]}"
 
 # ── 3. Commit any build-time changes (e.g. app.json) ─────────────
 cd "$ROOT"

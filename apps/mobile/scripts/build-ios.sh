@@ -5,6 +5,13 @@ set -euo pipefail
 # Called by release-ios.sh and testflight.sh — not meant to be
 # invoked directly.
 
+ASSUME_YES=0
+for arg in "$@"; do
+  case "$arg" in
+    -y|--yes) ASSUME_YES=1 ;;
+  esac
+done
+
 cd "$(git rev-parse --show-toplevel)/apps/mobile"
 
 LOGFILE="build-$(date +%s).log"
@@ -40,10 +47,14 @@ if [[ "$(uname)" == "Darwin" ]]; then
   echo "Build artifact: $IPA_PATH"
   echo ""
 
-  read -rp "Submit this build to App Store Connect? [y/N] " CONFIRM
-  if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
-    echo "Submission cancelled."
-    exit 0
+  if [[ $ASSUME_YES -eq 1 ]]; then
+    echo "Auto-submitting to App Store Connect (--yes)."
+  else
+    read -rp "Submit this build to App Store Connect? [y/N] " CONFIRM
+    if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
+      echo "Submission cancelled."
+      exit 0
+    fi
   fi
 
   echo "Submitting to App Store Connect..."
