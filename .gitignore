@@ -7,3 +7,4 @@ android/
 *.tsbuildinfo
 .worktrees/
 *.log
+.DS_Store
