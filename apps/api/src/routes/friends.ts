@@ -240,23 +240,27 @@ export const friendRoutes = new Elysia({ prefix: "/friends" })
   .post(
     "/activity",
     async ({ userId, body }) => {
+      let workoutId: string | null = null;
       let workoutStartedAt: Date | null = null;
 
       if (body.current_workout_id) {
         const [workout] = await sql`
           SELECT start_time FROM workouts WHERE id = ${body.current_workout_id} AND user_id = ${userId}
         `;
+        // Offline-first: the mobile client may heartbeat with a workout id
+        // that hasn't been synced yet. Drop it rather than tripping the FK.
         if (workout) {
+          workoutId = body.current_workout_id;
           workoutStartedAt = new Date(workout.start_time as string);
         }
       }
 
       await sql`
         INSERT INTO user_activity (user_id, last_seen_at, current_workout_id, current_workout_started_at)
-        VALUES (${userId}, NOW(), ${body.current_workout_id ?? null}, ${workoutStartedAt})
+        VALUES (${userId}, NOW(), ${workoutId}, ${workoutStartedAt})
         ON CONFLICT (user_id) DO UPDATE SET
           last_seen_at = NOW(),
-          current_workout_id = ${body.current_workout_id ?? null},
+          current_workout_id = ${workoutId},
           current_workout_started_at = ${workoutStartedAt}
       `;
 
