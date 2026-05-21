@@ -21,4 +21,4 @@ COPY --from=build /app/package.json ./
 
 ENV PORT=8080
 EXPOSE 8080
-CMD ["bun", "src/index.ts"]
+CMD ["sh", "-c", "bun src/migrate.ts && bun src/index.ts"]
