@@ -20,8 +20,6 @@ import { useInputNavigation } from "../../hooks/useInputNavigation";
 import type { StoredSet, StoredWorkoutExercise } from "../../services/storage";
 import RestTimer from "./RestTimer";
 
-export const WORKOUT_INPUT_ACCESSORY_ID = "workout-inputs";
-
 interface ExerciseSlideProps {
   exercise: StoredWorkoutExercise;
   slideIndex?: number;
@@ -117,7 +115,6 @@ function SetRow({
           }
           className="rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 text-center dark:text-zinc-100"
           style={{ height: INPUT_HEIGHT, fontSize: 16, textAlignVertical: "center" }}
-          inputAccessoryViewID={WORKOUT_INPUT_ACCESSORY_ID}
           selectTextOnFocus
         />
       </View>
@@ -137,7 +134,6 @@ function SetRow({
           }
           className="rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 text-center dark:text-zinc-100"
           style={{ height: INPUT_HEIGHT, fontSize: 16, textAlignVertical: "center" }}
-          inputAccessoryViewID={WORKOUT_INPUT_ACCESSORY_ID}
           selectTextOnFocus
         />
       </View>

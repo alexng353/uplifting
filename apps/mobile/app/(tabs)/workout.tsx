@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { View, Text, Pressable, Alert, InputAccessoryView, StyleSheet } from "react-native";
+import { View, Text, Pressable, Alert, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { KeyboardStickyView, useKeyboardState } from "react-native-keyboard-controller";
 import PagerView from "react-native-pager-view";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -16,7 +17,7 @@ import {
 } from "../../services/storage";
 import { api } from "../../lib/api";
 import { InputNavigationProvider, useInputNavigation } from "../../hooks/useInputNavigation";
-import ExerciseSlide, { WORKOUT_INPUT_ACCESSORY_ID } from "../../components/workout/ExerciseSlide";
+import ExerciseSlide from "../../components/workout/ExerciseSlide";
 import AddExerciseSlide from "../../components/workout/AddExerciseSlide";
 import WorkoutSummary from "../../components/workout/WorkoutSummary";
 import ReorderModal from "../../components/workout/ReorderModal";
@@ -24,11 +25,12 @@ import ReorderModal from "../../components/workout/ReorderModal";
 function WorkoutKeyboardToolbar() {
   const inputNav = useInputNavigation();
   const colors = useThemeColors();
-  if (!inputNav) return null;
+  const { isVisible } = useKeyboardState();
+  if (!inputNav || !isVisible) return null;
   const { focusPrev, focusNext, dismiss } = inputNav;
 
   return (
-    <InputAccessoryView nativeID={WORKOUT_INPUT_ACCESSORY_ID}>
+    <KeyboardStickyView offset={{ closed: 0, opened: 0 }}>
       <View
         style={{
           flexDirection: "row",
@@ -61,7 +63,7 @@ function WorkoutKeyboardToolbar() {
           </Text>
         </Pressable>
       </View>
-    </InputAccessoryView>
+    </KeyboardStickyView>
   );
 }
 

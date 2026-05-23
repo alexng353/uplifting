@@ -1,6 +1,7 @@
 import "../global.css";
 import { Slot, useRouter, useSegments } from "expo-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import { AuthProvider, useAuth } from "../hooks/useAuth";
 import { WorkoutProvider } from "../hooks/useWorkout";
 import { useBootstrap } from "../hooks/useBootstrap";
@@ -81,14 +82,16 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ColorSchemeProvider>
-        <AuthProvider>
-          <WorkoutProvider>
-            <AuthGate />
-          </WorkoutProvider>
-        </AuthProvider>
-      </ColorSchemeProvider>
-    </QueryClientProvider>
+    <KeyboardProvider>
+      <QueryClientProvider client={queryClient}>
+        <ColorSchemeProvider>
+          <AuthProvider>
+            <WorkoutProvider>
+              <AuthGate />
+            </WorkoutProvider>
+          </AuthProvider>
+        </ColorSchemeProvider>
+      </QueryClientProvider>
+    </KeyboardProvider>
   );
 }
