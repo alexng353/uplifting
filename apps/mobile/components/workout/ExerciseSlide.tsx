@@ -44,6 +44,7 @@ function SetRow({
   exerciseId,
   displayUnit,
   updateSet,
+  onBlur,
   suggestedReps,
   suggestedWeight,
   isBodyweight,
@@ -56,6 +57,7 @@ function SetRow({
   exerciseId: string;
   displayUnit: string;
   updateSet: (exerciseId: string, setId: string, updates: Partial<StoredSet>) => void;
+  onBlur?: () => void;
   suggestedReps: number;
   suggestedWeight: number;
   isBodyweight?: boolean;
@@ -108,6 +110,7 @@ function SetRow({
           placeholder={String(suggestedReps)}
           placeholderTextColor={colors.placeholder}
           onFocus={() => inputNav?.setFocusedId(repsId)}
+          onBlur={onBlur}
           onChangeText={(text) =>
             updateSet(exerciseId, set.id, {
               reps: text ? Number(text) : undefined,
@@ -127,6 +130,7 @@ function SetRow({
           placeholder={String(suggestedWeight)}
           placeholderTextColor={colors.placeholder}
           onFocus={() => inputNav?.setFocusedId(weightId)}
+          onBlur={onBlur}
           onChangeText={(text) =>
             updateSet(exerciseId, set.id, {
               weight: text ? Number(text) : undefined,
@@ -150,10 +154,12 @@ export default function ExerciseSlide({ exercise, slideIndex = 0 }: ExerciseSlid
     toggleUnilateral,
     removeLastSet,
     removeLastUnilateralPair,
+    trimTrailingEmptySets,
     changeExerciseProfile,
+    mode,
   } = useWorkoutActions();
   const colors = useThemeColors();
-  const { getDisplayUnit } = useSettings();
+  const { settings, getDisplayUnit } = useSettings();
   const { getSuggestion } = usePreviousSets();
   const { data: profiles = [] } = useExerciseProfiles(exercise.exerciseId);
   const { getSuggestedProfile, recordProfileUsage, currentGymId } = useGymProfileSuggestion();
@@ -197,6 +203,47 @@ export default function ExerciseSlide({ exercise, slideIndex = 0 }: ExerciseSlid
     // Scroll to bottom after add
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
   }, [exercise.exerciseId, exercise.isUnilateral, addSet, addUnilateralPair, displayUnit]);
+
+  const handleUpdateSet = useCallback(
+    (exerciseId: string, setId: string, updates: Partial<StoredSet>) => {
+      const set = exercise.sets.find((s) => s.id === setId);
+      updateSet(exerciseId, setId, updates);
+
+      if (mode !== "live" || !settings.autoAddSet || !set) return;
+
+      const wasEmpty = set.reps == null && set.weight == null;
+      if (!wasEmpty) return;
+      const becomesNonEmpty = updates.reps != null || updates.weight != null;
+      if (!becomesNonEmpty) return;
+
+      if (exercise.isUnilateral) {
+        const sideSets = exercise.sets.filter((s) => s.side === set.side);
+        const setIndex = sideSets.findIndex((s) => s.id === setId);
+        if (setIndex !== setGroups.length - 1) return;
+        const otherSet = exercise.sets.filter((s) => s.side !== set.side)[setIndex];
+        if (otherSet && (otherSet.reps != null || otherSet.weight != null)) return;
+        addUnilateralPair(exercise.exerciseId, displayUnit);
+      } else {
+        if (exercise.sets[exercise.sets.length - 1]?.id !== setId) return;
+        addSet(exercise.exerciseId, displayUnit);
+      }
+    },
+    [
+      exercise,
+      updateSet,
+      mode,
+      settings.autoAddSet,
+      addSet,
+      addUnilateralPair,
+      displayUnit,
+      setGroups,
+    ],
+  );
+
+  const handleSetBlur = useCallback(() => {
+    if (mode !== "live" || !settings.autoRemoveEmptySet) return;
+    trimTrailingEmptySets(exercise.exerciseId, 1);
+  }, [mode, settings.autoRemoveEmptySet, trimTrailingEmptySets, exercise.exerciseId]);
 
   const lastSet = exercise.sets[exercise.sets.length - 1];
   const lastRightSet = exercise.isUnilateral
@@ -352,7 +399,8 @@ export default function ExerciseSlide({ exercise, slideIndex = 0 }: ExerciseSlid
                       sideLabel="R"
                       exerciseId={exercise.exerciseId}
                       displayUnit={displayUnit}
-                      updateSet={updateSet}
+                      updateSet={handleUpdateSet}
+                      onBlur={handleSetBlur}
                       suggestedReps={rightSuggestion.reps ?? DEFAULT_REPS}
                       suggestedWeight={
                         rightSuggestion.weight ?? (isBodyweight ? 0 : DEFAULT_WEIGHT)
@@ -369,7 +417,8 @@ export default function ExerciseSlide({ exercise, slideIndex = 0 }: ExerciseSlid
                       sideLabel="L"
                       exerciseId={exercise.exerciseId}
                       displayUnit={displayUnit}
-                      updateSet={updateSet}
+                      updateSet={handleUpdateSet}
+                      onBlur={handleSetBlur}
                       suggestedReps={leftSuggestion.reps ?? DEFAULT_REPS}
                       suggestedWeight={leftSuggestion.weight ?? (isBodyweight ? 0 : DEFAULT_WEIGHT)}
                       isBodyweight={isBodyweight}
@@ -389,7 +438,8 @@ export default function ExerciseSlide({ exercise, slideIndex = 0 }: ExerciseSlid
                   setNumber={index + 1}
                   exerciseId={exercise.exerciseId}
                   displayUnit={displayUnit}
-                  updateSet={updateSet}
+                  updateSet={handleUpdateSet}
+                  onBlur={handleSetBlur}
                   suggestedReps={suggestion.reps ?? DEFAULT_REPS}
                   suggestedWeight={suggestion.weight ?? (isBodyweight ? 0 : DEFAULT_WEIGHT)}
                   isBodyweight={isBodyweight}

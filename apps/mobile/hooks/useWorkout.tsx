@@ -29,6 +29,7 @@ import {
   removeLastUnilateralPairMutation,
   toggleUnilateralMutation,
   changeExerciseProfileMutation,
+  trimTrailingEmptySetsMutation,
 } from "../lib/workout-mutations";
 
 interface WorkoutContextValue {
@@ -64,6 +65,7 @@ interface WorkoutContextValue {
   removeSet: (exerciseId: string, setId: string) => void;
   removeLastSet: (exerciseId: string) => void;
   removeLastUnilateralPair: (exerciseId: string) => void;
+  trimTrailingEmptySets: (exerciseId: string, keepCount?: number) => void;
   toggleUnilateral: (exerciseId: string) => void;
   changeExerciseProfile: (
     exerciseId: string,
@@ -322,6 +324,14 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     [workout, saveWorkout],
   );
 
+  const trimTrailingEmptySets = useCallback(
+    (exerciseId: string, keepCount: number = 0) => {
+      if (!workout) return;
+      saveWorkout(trimTrailingEmptySetsMutation(workout, exerciseId, keepCount));
+    },
+    [workout, saveWorkout],
+  );
+
   const finishWorkout = useCallback(
     (name?: string, gymLocation?: string): StoredWorkout => {
       if (!workout) throw new Error("No active workout");
@@ -382,6 +392,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
         removeSet,
         removeLastSet,
         removeLastUnilateralPair,
+        trimTrailingEmptySets,
         toggleUnilateral,
         changeExerciseProfile,
         finishWorkout,

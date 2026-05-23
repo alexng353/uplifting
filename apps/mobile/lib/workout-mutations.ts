@@ -205,6 +205,65 @@ export function removeLastUnilateralPairMutation(
   };
 }
 
+function isSetEmpty(s: StoredSet): boolean {
+  return s.reps == null && s.weight == null;
+}
+
+/**
+ * Remove trailing empty sets from an exercise, keeping at most `keepCount`
+ * empty sets at the end. An "empty" set has neither reps nor weight; for
+ * unilateral exercises, a "pair" is empty when both its R and L sides
+ * (or the only side present) are empty.
+ */
+export function trimTrailingEmptySetsMutation(
+  workout: StoredWorkout,
+  exerciseId: string,
+  keepCount: number = 0,
+): StoredWorkout {
+  return {
+    ...workout,
+    exercises: workout.exercises.map((e) => {
+      if (e.exerciseId !== exerciseId) return e;
+
+      if (e.isUnilateral) {
+        const rightSets = e.sets.filter((s) => s.side === "R");
+        const leftSets = e.sets.filter((s) => s.side === "L");
+        const maxLen = Math.max(rightSets.length, leftSets.length);
+
+        let lastNonEmpty = -1;
+        for (let i = maxLen - 1; i >= 0; i -= 1) {
+          const r = rightSets[i];
+          const l = leftSets[i];
+          if ((r && !isSetEmpty(r)) || (l && !isSetEmpty(l))) {
+            lastNonEmpty = i;
+            break;
+          }
+        }
+
+        const keepUntil = lastNonEmpty + 1 + keepCount;
+        if (keepUntil >= maxLen) return e;
+
+        const keepIds = new Set<string>([
+          ...rightSets.slice(0, keepUntil).map((s) => s.id),
+          ...leftSets.slice(0, keepUntil).map((s) => s.id),
+        ]);
+        return { ...e, sets: e.sets.filter((s) => keepIds.has(s.id)) };
+      }
+
+      let lastNonEmpty = -1;
+      for (let i = e.sets.length - 1; i >= 0; i -= 1) {
+        if (!isSetEmpty(e.sets[i])) {
+          lastNonEmpty = i;
+          break;
+        }
+      }
+      const keepUntil = lastNonEmpty + 1 + keepCount;
+      if (keepUntil >= e.sets.length) return e;
+      return { ...e, sets: e.sets.slice(0, keepUntil) };
+    }),
+  };
+}
+
 export function toggleUnilateralMutation(
   workout: StoredWorkout,
   exerciseId: string,

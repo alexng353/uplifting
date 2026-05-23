@@ -17,6 +17,7 @@ import {
   addExerciseMutation,
   addSetMutation,
   addUnilateralPairMutation,
+  trimTrailingEmptySetsMutation,
   changeExerciseProfileMutation,
   removeExerciseMutation,
   removeLastSetMutation,
@@ -188,6 +189,8 @@ export function useEditWorkoutState(workoutId: string) {
         removeLastSet: (exerciseId) => apply((w) => removeLastSetMutation(w, exerciseId)),
         removeLastUnilateralPair: (exerciseId) =>
           apply((w) => removeLastUnilateralPairMutation(w, exerciseId)),
+        trimTrailingEmptySets: (exerciseId, keepCount) =>
+          apply((w) => trimTrailingEmptySetsMutation(w, exerciseId, keepCount)),
         toggleUnilateral: (exerciseId) => apply((w) => toggleUnilateralMutation(w, exerciseId)),
         changeExerciseProfile: (exerciseId, profileId, exerciseName) =>
           apply((w) => changeExerciseProfileMutation(w, exerciseId, profileId, exerciseName)),
