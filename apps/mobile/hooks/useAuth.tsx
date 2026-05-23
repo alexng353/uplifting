@@ -8,7 +8,7 @@ import {
   setToken,
 } from "../services/auth-storage";
 import { clearAllData } from "../services/storage";
-import { api, setOnUnauthorized } from "../lib/api";
+import { api, resetUnauthorizedGuard, setOnUnauthorized } from "../lib/api";
 
 interface AuthContext {
   isAuthenticated: boolean;
@@ -38,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (tokens: { access_token: string; refresh_token: string }) => {
     await setRefreshToken(tokens.refresh_token);
     await setToken(tokens.access_token);
+    resetUnauthorizedGuard();
     setIsAuthenticated(true);
   }, []);
 

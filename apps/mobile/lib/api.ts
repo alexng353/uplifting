@@ -7,9 +7,22 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:8080";
 
 let onUnauthorized: (() => void) | null = null;
 let refreshPromise: Promise<boolean> | null = null;
+let unauthorizedFired = false;
 
 export function setOnUnauthorized(fn: (() => void) | null) {
   onUnauthorized = fn;
+}
+
+// Called from the auth provider on a successful login so a future session
+// expiration can re-fire the alert.
+export function resetUnauthorizedGuard() {
+  unauthorizedFired = false;
+}
+
+function fireUnauthorized() {
+  if (unauthorizedFired) return;
+  unauthorizedFired = true;
+  onUnauthorized?.();
 }
 
 async function applyAuthHeader(init: RequestInit): Promise<RequestInit> {
@@ -36,6 +49,7 @@ async function performRefresh(): Promise<boolean> {
     // order would leave a stale refresh token that trips reuse detection.
     await setRefreshToken(body.refresh_token);
     await setToken(body.access_token);
+    unauthorizedFired = false;
     return true;
   } catch {
     return false;
@@ -64,13 +78,13 @@ async function authFetcher(input: RequestInfo | URL, init?: RequestInit): Promis
 
   const refreshed = await refreshOnce();
   if (!refreshed) {
-    onUnauthorized?.();
+    fireUnauthorized();
     return res;
   }
 
   const retryInit = await applyAuthHeader(init ?? {});
   const retryRes = await fetch(input, retryInit);
-  if (retryRes.status === 401) onUnauthorized?.();
+  if (retryRes.status === 401) fireUnauthorized();
   return retryRes;
 }
 
