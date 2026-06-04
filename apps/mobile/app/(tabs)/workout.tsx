@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { View, Text, Pressable, Alert, StyleSheet } from "react-native";
+import { View, Text, Pressable, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { KeyboardStickyView, useKeyboardState } from "react-native-keyboard-controller";
 import PagerView from "react-native-pager-view";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -16,56 +15,10 @@ import {
   setWorkoutLastSlide,
 } from "../../services/storage";
 import { api } from "../../lib/api";
-import { InputNavigationProvider, useInputNavigation } from "../../hooks/useInputNavigation";
 import ExerciseSlide from "../../components/workout/ExerciseSlide";
 import AddExerciseSlide from "../../components/workout/AddExerciseSlide";
 import WorkoutSummary from "../../components/workout/WorkoutSummary";
 import ReorderModal from "../../components/workout/ReorderModal";
-
-function WorkoutKeyboardToolbar() {
-  const inputNav = useInputNavigation();
-  const colors = useThemeColors();
-  const { isVisible } = useKeyboardState();
-  if (!inputNav || !isVisible) return null;
-  const { focusPrev, focusNext, dismiss } = inputNav;
-
-  return (
-    <KeyboardStickyView offset={{ closed: 0, opened: 0 }}>
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          paddingHorizontal: 16,
-          paddingVertical: 8,
-          backgroundColor: colors.keyboardToolbarBg,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: colors.keyboardToolbarBorder,
-        }}
-      >
-        <View style={{ flexDirection: "row", gap: 20 }}>
-          <Pressable onPress={focusPrev} hitSlop={8}>
-            <Ionicons name="chevron-up" size={22} color={colors.accentIcon} />
-          </Pressable>
-          <Pressable onPress={focusNext} hitSlop={8}>
-            <Ionicons name="chevron-down" size={22} color={colors.accentIcon} />
-          </Pressable>
-        </View>
-        <Pressable onPress={dismiss} hitSlop={8}>
-          <Text
-            style={{
-              color: colors.accentIcon,
-              fontSize: 16,
-              fontWeight: "600",
-            }}
-          >
-            Done
-          </Text>
-        </Pressable>
-      </View>
-    </KeyboardStickyView>
-  );
-}
 
 function formatElapsed(startTime: string): string {
   const ms = Date.now() - new Date(startTime).getTime();
@@ -319,106 +272,102 @@ export default function WorkoutScreen() {
   if (!workout) return null;
 
   return (
-    <InputNavigationProvider activeSlide={activeSlide}>
-      <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900" edges={["top"]}>
-        {/* Header */}
-        <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-3 pb-2 pt-2">
-          <View className="flex-row items-center gap-2">
-            {/* Reorder button */}
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900" edges={["top"]}>
+      {/* Header */}
+      <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-3 pb-2 pt-2">
+        <View className="flex-row items-center gap-2">
+          {/* Reorder button */}
+          <Pressable
+            onPress={() => setShowReorder(true)}
+            className="h-9 w-9 items-center justify-center rounded-md active:bg-zinc-100 dark:active:bg-zinc-800"
+          >
+            <Ionicons name="reorder-four" size={22} color={colors.secondaryText} />
+          </Pressable>
+          {/* Remove current exercise button */}
+          {isOnExerciseSlide && (
             <Pressable
-              onPress={() => setShowReorder(true)}
-              className="h-9 w-9 items-center justify-center rounded-md active:bg-zinc-100 dark:active:bg-zinc-800"
-            >
-              <Ionicons name="reorder-four" size={22} color={colors.secondaryText} />
-            </Pressable>
-            {/* Remove current exercise button */}
-            {isOnExerciseSlide && (
-              <Pressable
-                onPress={handleRemoveCurrentExercise}
-                className="h-9 w-9 items-center justify-center rounded-md active:bg-red-50 dark:active:bg-red-950"
-              >
-                <Ionicons name="trash-outline" size={20} color={colors.dangerIcon} />
-              </Pressable>
-            )}
-          </View>
-
-          {/* Timer */}
-          <Text className="font-mono text-base font-semibold text-zinc-600 dark:text-zinc-300">
-            {elapsedTime}
-          </Text>
-
-          <View className="flex-row items-center gap-2">
-            {/* Cancel button */}
-            <Pressable
-              onPress={handleCancelWorkout}
+              onPress={handleRemoveCurrentExercise}
               className="h-9 w-9 items-center justify-center rounded-md active:bg-red-50 dark:active:bg-red-950"
             >
-              <Ionicons name="close" size={22} color={colors.dangerIcon} />
+              <Ionicons name="trash-outline" size={20} color={colors.dangerIcon} />
             </Pressable>
-            {/* Finish button */}
-            <Pressable
-              onPress={handleFinish}
-              className="h-9 w-9 items-center justify-center rounded-md active:bg-green-50 dark:active:bg-green-950"
-            >
-              <Ionicons name="checkmark" size={22} color={colors.successIcon} />
-            </Pressable>
-          </View>
+          )}
         </View>
 
-        {/* Slide indicator */}
-        <View className="flex-row items-center justify-center gap-1 py-1.5">
-          {workout.exercises.map((_, i) => (
-            <View
-              key={i}
-              className="h-1.5 rounded-full"
-              style={{
-                width: i === activeSlide ? 16 : 6,
-                backgroundColor:
-                  i === activeSlide ? colors.activeIndicator : colors.inactiveIndicator,
-              }}
-            />
-          ))}
+        {/* Timer */}
+        <Text className="font-mono text-base font-semibold text-zinc-600 dark:text-zinc-300">
+          {elapsedTime}
+        </Text>
+
+        <View className="flex-row items-center gap-2">
+          {/* Cancel button */}
+          <Pressable
+            onPress={handleCancelWorkout}
+            className="h-9 w-9 items-center justify-center rounded-md active:bg-red-50 dark:active:bg-red-950"
+          >
+            <Ionicons name="close" size={22} color={colors.dangerIcon} />
+          </Pressable>
+          {/* Finish button */}
+          <Pressable
+            onPress={handleFinish}
+            className="h-9 w-9 items-center justify-center rounded-md active:bg-green-50 dark:active:bg-green-950"
+          >
+            <Ionicons name="checkmark" size={22} color={colors.successIcon} />
+          </Pressable>
+        </View>
+      </View>
+
+      {/* Slide indicator */}
+      <View className="flex-row items-center justify-center gap-1 py-1.5">
+        {workout.exercises.map((_, i) => (
           <View
+            key={i}
             className="h-1.5 rounded-full"
             style={{
-              width: activeSlide === exerciseCount ? 16 : 6,
+              width: i === activeSlide ? 16 : 6,
               backgroundColor:
-                activeSlide === exerciseCount ? colors.activeIndicator : colors.inactiveIndicator,
+                i === activeSlide ? colors.activeIndicator : colors.inactiveIndicator,
             }}
           />
-        </View>
+        ))}
+        <View
+          className="h-1.5 rounded-full"
+          style={{
+            width: activeSlide === exerciseCount ? 16 : 6,
+            backgroundColor:
+              activeSlide === exerciseCount ? colors.activeIndicator : colors.inactiveIndicator,
+          }}
+        />
+      </View>
 
-        {/* PagerView */}
-        <PagerView
-          ref={pagerRef}
-          style={{ flex: 1 }}
-          initialPage={0}
-          onPageSelected={handlePageSelected}
-        >
-          {workout.exercises.map((exercise, index) => (
-            <View key={exercise.exerciseId + (exercise.profileId || "")} collapsable={false}>
-              <ExerciseSlide exercise={exercise} slideIndex={index} />
-            </View>
-          ))}
-          <View key="add" collapsable={false}>
-            <AddExerciseSlide onExerciseAdded={handleExerciseAdded} />
+      {/* PagerView */}
+      <PagerView
+        ref={pagerRef}
+        style={{ flex: 1 }}
+        initialPage={0}
+        onPageSelected={handlePageSelected}
+      >
+        {workout.exercises.map((exercise) => (
+          <View key={exercise.exerciseId + (exercise.profileId || "")} collapsable={false}>
+            <ExerciseSlide exercise={exercise} />
           </View>
-        </PagerView>
+        ))}
+        <View key="add" collapsable={false}>
+          <AddExerciseSlide onExerciseAdded={handleExerciseAdded} />
+        </View>
+      </PagerView>
 
-        {/* Modals */}
-        {workout && (
-          <WorkoutSummary
-            visible={showSummary}
-            workout={workout}
-            onSave={handleSave}
-            onCancel={handleCancelSummary}
-          />
-        )}
+      {/* Modals */}
+      {workout && (
+        <WorkoutSummary
+          visible={showSummary}
+          workout={workout}
+          onSave={handleSave}
+          onCancel={handleCancelSummary}
+        />
+      )}
 
-        <ReorderModal visible={showReorder} onClose={() => setShowReorder(false)} />
-
-        <WorkoutKeyboardToolbar />
-      </SafeAreaView>
-    </InputNavigationProvider>
+      <ReorderModal visible={showReorder} onClose={() => setShowReorder(false)} />
+    </SafeAreaView>
   );
 }
