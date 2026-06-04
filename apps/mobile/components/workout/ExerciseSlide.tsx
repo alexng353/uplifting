@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -16,13 +16,11 @@ import { useSettings } from "../../hooks/useSettings";
 import { usePreviousSets } from "../../hooks/usePreviousSets";
 import { useExerciseProfiles } from "../../hooks/useExerciseProfiles";
 import { useGymProfileSuggestion } from "../../hooks/useGymProfileSuggestion";
-import { useInputNavigation } from "../../hooks/useInputNavigation";
 import type { StoredSet, StoredWorkoutExercise } from "../../services/storage";
 import RestTimer from "./RestTimer";
 
 interface ExerciseSlideProps {
   exercise: StoredWorkoutExercise;
-  slideIndex?: number;
 }
 
 interface SetPair {
@@ -48,8 +46,6 @@ function SetRow({
   suggestedReps,
   suggestedWeight,
   isBodyweight,
-  slideIndex,
-  baseOrder,
 }: {
   set: StoredSet;
   setNumber: number;
@@ -61,25 +57,8 @@ function SetRow({
   suggestedReps: number;
   suggestedWeight: number;
   isBodyweight?: boolean;
-  slideIndex?: number;
-  baseOrder?: number;
 }) {
   const colors = useThemeColors();
-  const inputNav = useInputNavigation();
-  const repsRef = useRef<TextInput>(null);
-  const weightRef = useRef<TextInput>(null);
-  const repsId = `${exerciseId}-${set.id}-reps`;
-  const weightId = `${exerciseId}-${set.id}-weight`;
-
-  useEffect(() => {
-    if (!inputNav || slideIndex == null || baseOrder == null) return;
-    inputNav.register(repsId, { ref: repsRef, order: baseOrder, slideIndex });
-    inputNav.register(weightId, { ref: weightRef, order: baseOrder + 1, slideIndex });
-    return () => {
-      inputNav.unregister(repsId);
-      inputNav.unregister(weightId);
-    };
-  }, [inputNav, repsId, weightId, baseOrder, slideIndex]);
 
   return (
     <View className="mb-1 flex-row items-center gap-2 px-2 py-1">
@@ -104,12 +83,10 @@ function SetRow({
       )}
       <View className="flex-1">
         <TextInput
-          ref={repsRef}
           keyboardType="numeric"
           value={set.reps != null ? String(set.reps) : ""}
           placeholder={String(suggestedReps)}
           placeholderTextColor={colors.placeholder}
-          onFocus={() => inputNav?.setFocusedId(repsId)}
           onBlur={onBlur}
           onChangeText={(text) =>
             updateSet(exerciseId, set.id, {
@@ -124,12 +101,10 @@ function SetRow({
       {isBodyweight && <Text className="text-xs text-zinc-400 dark:text-zinc-500">BW +</Text>}
       <View className="flex-1">
         <TextInput
-          ref={weightRef}
           keyboardType="numeric"
           value={set.weight != null ? String(set.weight) : ""}
           placeholder={String(suggestedWeight)}
           placeholderTextColor={colors.placeholder}
-          onFocus={() => inputNav?.setFocusedId(weightId)}
           onBlur={onBlur}
           onChangeText={(text) =>
             updateSet(exerciseId, set.id, {
@@ -146,7 +121,7 @@ function SetRow({
   );
 }
 
-export default function ExerciseSlide({ exercise, slideIndex = 0 }: ExerciseSlideProps) {
+export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   const {
     addSet,
     addUnilateralPair,
@@ -406,8 +381,6 @@ export default function ExerciseSlide({ exercise, slideIndex = 0 }: ExerciseSlid
                         rightSuggestion.weight ?? (isBodyweight ? 0 : DEFAULT_WEIGHT)
                       }
                       isBodyweight={isBodyweight}
-                      slideIndex={slideIndex}
-                      baseOrder={(group.setNumber - 1) * 4}
                     />
                   )}
                   {group.leftSet && (
@@ -422,8 +395,6 @@ export default function ExerciseSlide({ exercise, slideIndex = 0 }: ExerciseSlid
                       suggestedReps={leftSuggestion.reps ?? DEFAULT_REPS}
                       suggestedWeight={leftSuggestion.weight ?? (isBodyweight ? 0 : DEFAULT_WEIGHT)}
                       isBodyweight={isBodyweight}
-                      slideIndex={slideIndex}
-                      baseOrder={(group.setNumber - 1) * 4 + 2}
                     />
                   )}
                 </View>
@@ -443,8 +414,6 @@ export default function ExerciseSlide({ exercise, slideIndex = 0 }: ExerciseSlid
                   suggestedReps={suggestion.reps ?? DEFAULT_REPS}
                   suggestedWeight={suggestion.weight ?? (isBodyweight ? 0 : DEFAULT_WEIGHT)}
                   isBodyweight={isBodyweight}
-                  slideIndex={slideIndex}
-                  baseOrder={index * 2}
                 />
               );
             })}
