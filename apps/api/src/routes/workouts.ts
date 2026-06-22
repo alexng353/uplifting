@@ -332,7 +332,7 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
                 workoutId: params.workoutId,
                 exerciseId: exercise.exercise_id,
                 profileId: exercise.profile_id,
-                reps: s.reps,
+                reps: String(s.reps),
                 weight: String(s.weight),
                 weightUnit: s.weight_unit,
                 side: s.side,

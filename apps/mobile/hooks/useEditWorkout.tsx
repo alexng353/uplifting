@@ -4,7 +4,6 @@ import { api, unwrap } from "../lib/api";
 import {
   generateId,
   getProfiles,
-  type StoredSet,
   type StoredWorkout,
   type StoredWorkoutExercise,
 } from "../services/storage";
@@ -50,7 +49,7 @@ function transformToStoredWorkout(
       isUnilateral: group.is_unilateral,
       sets: group.sets.map((s: any) => ({
         id: s.id ?? generateId(),
-        reps: s.reps,
+        reps: Number(s.reps),
         weight: Number(s.weight),
         weightUnit: s.weightUnit ?? s.weight_unit ?? "kg",
         createdAt: s.createdAt ?? s.created_at ?? new Date().toISOString(),

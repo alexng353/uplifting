@@ -130,7 +130,7 @@ export const userSets = pgTable("user_sets", {
     .notNull()
     .references(() => workouts.id),
   profileId: uuid("profile_id").references(() => exerciseProfiles.id),
-  reps: integer().notNull(),
+  reps: decimal({ precision: 10, scale: 2 }).notNull(),
   weight: decimal({ precision: 10, scale: 2 }).notNull(),
   weightUnit: varchar("weight_unit", { length: 3 }).notNull().default("kg"),
   side: varchar({ length: 1 }),
