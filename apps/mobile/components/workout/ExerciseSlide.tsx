@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { usePreviousSets } from "../../hooks/usePreviousSets";
 import { useExerciseProfiles } from "../../hooks/useExerciseProfiles";
 import { useGymProfileSuggestion } from "../../hooks/useGymProfileSuggestion";
 import type { StoredSet, StoredWorkoutExercise } from "../../services/storage";
+import { formatDecimalInput, parseDecimalInput } from "../../lib/decimal-input";
 import RestTimer from "./RestTimer";
 
 interface ExerciseSlideProps {
@@ -34,6 +35,52 @@ const DEFAULT_WEIGHT = 20;
 
 const INPUT_HEIGHT = 36;
 const SIDE_BADGE_HEIGHT = 22;
+
+function DecimalSetInput({
+  value,
+  placeholder,
+  onChangeValue,
+  onBlur,
+}: {
+  value: number | undefined;
+  placeholder: number;
+  onChangeValue: (value: number | undefined) => void;
+  onBlur?: () => void;
+}) {
+  const colors = useThemeColors();
+  const [text, setText] = useState(formatDecimalInput(value));
+  const [isFocused, setIsFocused] = useState(false);
+
+  useEffect(() => {
+    if (!isFocused) {
+      setText(formatDecimalInput(value));
+    }
+  }, [isFocused, value]);
+
+  return (
+    <TextInput
+      keyboardType="decimal-pad"
+      value={text}
+      placeholder={String(placeholder)}
+      placeholderTextColor={colors.placeholder}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => {
+        setIsFocused(false);
+        setText(formatDecimalInput(value));
+        onBlur?.();
+      }}
+      onChangeText={(nextText) => {
+        const parsed = parseDecimalInput(nextText);
+        if (!parsed.isValid) return;
+        setText(nextText);
+        onChangeValue(parsed.value);
+      }}
+      className="rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 text-center dark:text-zinc-100"
+      style={{ height: INPUT_HEIGHT, fontSize: 16, textAlignVertical: "center" }}
+      selectTextOnFocus
+    />
+  );
+}
 
 function SetRow({
   set,
@@ -82,38 +129,20 @@ function SetRow({
         </View>
       )}
       <View className="flex-1">
-        <TextInput
-          keyboardType="numeric"
-          value={set.reps != null ? String(set.reps) : ""}
-          placeholder={String(suggestedReps)}
-          placeholderTextColor={colors.placeholder}
+        <DecimalSetInput
+          value={set.reps}
+          placeholder={suggestedReps}
           onBlur={onBlur}
-          onChangeText={(text) =>
-            updateSet(exerciseId, set.id, {
-              reps: text ? Number(text) : undefined,
-            })
-          }
-          className="rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 text-center dark:text-zinc-100"
-          style={{ height: INPUT_HEIGHT, fontSize: 16, textAlignVertical: "center" }}
-          selectTextOnFocus
+          onChangeValue={(reps) => updateSet(exerciseId, set.id, { reps })}
         />
       </View>
       {isBodyweight && <Text className="text-xs text-zinc-400 dark:text-zinc-500">BW +</Text>}
       <View className="flex-1">
-        <TextInput
-          keyboardType="numeric"
-          value={set.weight != null ? String(set.weight) : ""}
-          placeholder={String(suggestedWeight)}
-          placeholderTextColor={colors.placeholder}
+        <DecimalSetInput
+          value={set.weight}
+          placeholder={suggestedWeight}
           onBlur={onBlur}
-          onChangeText={(text) =>
-            updateSet(exerciseId, set.id, {
-              weight: text ? Number(text) : undefined,
-            })
-          }
-          className="rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 text-center dark:text-zinc-100"
-          style={{ height: INPUT_HEIGHT, fontSize: 16, textAlignVertical: "center" }}
-          selectTextOnFocus
+          onChangeValue={(weight) => updateSet(exerciseId, set.id, { weight })}
         />
       </View>
       <Text className="w-8 text-xs text-zinc-400 dark:text-zinc-500">{displayUnit}</Text>

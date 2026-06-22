@@ -63,7 +63,7 @@ export async function fetchBootstrapData(): Promise<BootstrapData> {
     previousSets[key] = sets.map(
       (set, index): StoredSet => ({
         id: `bootstrap_${key}_${index}`,
-        reps: set.reps,
+        reps: Number(set.reps),
         weight: Number(set.weight),
         weightUnit: set.weight_unit ?? set.weightUnit ?? "kg",
         createdAt: new Date().toISOString(),

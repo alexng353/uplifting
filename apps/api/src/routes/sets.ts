@@ -30,7 +30,7 @@ export const setRoutes = new Elysia({ prefix: "/sets" })
           workoutId: params.workoutId,
           exerciseId: body.exercise_id,
           profileId: body.profile_id,
-          reps: body.reps,
+          reps: String(body.reps),
           weight: body.weight,
           weightUnit: body.weight_unit,
           side: body.side,
@@ -70,7 +70,7 @@ export const setRoutes = new Elysia({ prefix: "/sets" })
       }
 
       const updates: Record<string, unknown> = {};
-      if (body.reps !== undefined) updates.reps = body.reps;
+      if (body.reps !== undefined) updates.reps = String(body.reps);
       if (body.weight !== undefined) updates.weight = body.weight;
       if (body.weight_unit !== undefined) updates.weightUnit = body.weight_unit;
 
