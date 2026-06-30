@@ -327,8 +327,7 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
           // 3. Insert new sets. `position` is the exercise's index in the
           // submitted order, so reordering exercises in the editor persists
           // (display order is by position, then createdAt within an exercise).
-          let position = 0;
-          for (const exercise of body.exercises!) {
+          for (const [position, exercise] of body.exercises!.entries()) {
             for (const s of exercise.sets) {
               await tx.insert(userSets).values({
                 userId,
@@ -344,7 +343,6 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
                 createdAt: s.created_at ? new Date(s.created_at) : new Date(),
               });
             }
-            position += 1;
           }
 
           return updated;

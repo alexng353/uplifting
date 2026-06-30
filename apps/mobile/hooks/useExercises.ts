@@ -99,6 +99,7 @@ export function useExercises(search?: string) {
     const query = search?.trim();
     if (!query) return allExercisesQuery.data;
     if (!fuse) return allExercisesQuery.data;
+    const normalizedQuery = query.toLowerCase();
 
     // Fuzzy recall, keyed by id so we can dedupe against alias inserts.
     const candidates = new Map<string, { item: Exercise; fuse: number }>();
@@ -108,7 +109,7 @@ export function useExercises(search?: string) {
 
     // Make sure alias targets are present even when fuzzy search missed them
     // (e.g. "b" -> "bench press").
-    const aliasTargets = EXERCISE_SEARCH_ALIASES[query.toLowerCase()];
+    const aliasTargets = EXERCISE_SEARCH_ALIASES[normalizedQuery];
     if (aliasTargets) {
       for (const ex of allExercisesQuery.data) {
         const name = ex.name.toLowerCase();

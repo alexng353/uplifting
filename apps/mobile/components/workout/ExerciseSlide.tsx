@@ -561,6 +561,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
               onChangeText={setNoteDraft}
               placeholder="e.g. drive through your heels, keep core tight"
               placeholderTextColor={colors.placeholder}
+              maxLength={1000}
               multiline
               autoFocus
               className="min-h-24 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800 p-3 dark:text-zinc-100"

@@ -34,14 +34,16 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
               LIMIT 20
           ),
           exercise_order AS (
-              SELECT workout_id, exercise_id, MIN(created_at) AS first_seen
+              SELECT workout_id, exercise_id,
+                     MIN(position) AS first_position,
+                     MIN(created_at) AS first_seen
               FROM user_sets
               WHERE workout_id IN (SELECT id FROM recent)
               GROUP BY workout_id, exercise_id
           )
           SELECT r.id AS workout_id, r.name AS workout_name, eo.exercise_id
           FROM recent r JOIN exercise_order eo ON eo.workout_id = r.id
-          ORDER BY r.end_time DESC, eo.first_seen ASC
+          ORDER BY r.end_time DESC, eo.first_position ASC, eo.first_seen ASC
         `,
     ]);
 
@@ -124,8 +126,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
         // 2. Insert all sets. `position` is the exercise's index in the
         // submitted order so exercise order is preserved independently of
         // createdAt (and survives later edits/reorders).
-        let position = 0;
-        for (const exercise of body.exercises) {
+        for (const [position, exercise] of body.exercises.entries()) {
           for (const s of exercise.sets) {
             await tx.insert(userSets).values({
               userId,
@@ -141,7 +142,6 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
               createdAt: s.created_at ? new Date(s.created_at) : new Date(),
             });
           }
-          position += 1;
         }
 
         return workout.id;

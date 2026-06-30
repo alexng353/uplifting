@@ -291,7 +291,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
       // 5. Personal record
       sql`
           SELECT weight, weight_unit, reps, created_at FROM user_sets
-          WHERE user_id = ${userId} AND exercise_id = ${params.exerciseId}
+          WHERE user_id = ${userId} AND exercise_id = ${params.exerciseId} AND reps > 0
           ORDER BY weight DESC, reps DESC LIMIT 1
         `,
     ]);
@@ -476,7 +476,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
   // exercise. An empty/whitespace note clears it.
   .put(
     "/:exerciseId/note",
-    async ({ userId, params, body }) => {
+    async ({ userId, params, body, set }) => {
       const note = body.note.trim();
       if (!note) {
         await sql`
@@ -484,6 +484,16 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
           WHERE user_id = ${userId} AND exercise_id = ${params.exerciseId}
         `;
         return { exercise_id: params.exerciseId, note: null };
+      }
+      // Verify the exercise exists and is visible to this user before
+      // inserting; otherwise the FK violation surfaces as a raw 500.
+      const [exists] = await sql`
+        SELECT id FROM exercises
+        WHERE id = ${params.exerciseId} AND (official = true OR author_id = ${userId})
+      `;
+      if (!exists) {
+        set.status = 404;
+        return { error: "Exercise not found" };
       }
       const [row] = await sql`
         INSERT INTO exercise_notes (user_id, exercise_id, note, updated_at)
@@ -500,7 +510,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
     },
     {
       body: t.Object({
-        note: t.String(),
+        note: t.String({ maxLength: 1000 }),
       }),
     },
   )
