@@ -85,6 +85,12 @@ export default function AddExerciseSlide({ onExerciseAdded }: AddExerciseSlidePr
   const sections = useMemo(() => {
     if (!exercises) return [];
 
+    // When searching, preserve the relevance order from useExercises (exact /
+    // phrase / alias matches first) instead of re-sorting alphabetically.
+    if (searchText.trim()) {
+      return exercises.length > 0 ? [{ title: "Results", data: exercises }] : [];
+    }
+
     const result: { title: string; data: Exercise[] }[] = [];
     const favs: Exercise[] = [];
     const grouped: Record<string, Exercise[]> = {};

@@ -121,7 +121,10 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
           })
           .returning({ id: workouts.id });
 
-        // 2. Insert all sets
+        // 2. Insert all sets. `position` is the exercise's index in the
+        // submitted order so exercise order is preserved independently of
+        // createdAt (and survives later edits/reorders).
+        let position = 0;
         for (const exercise of body.exercises) {
           for (const s of exercise.sets) {
             await tx.insert(userSets).values({
@@ -134,9 +137,11 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
               weightUnit: s.weight_unit,
               side: s.side,
               bodyweight: s.bodyweight ? String(s.bodyweight) : undefined,
+              position,
               createdAt: s.created_at ? new Date(s.created_at) : new Date(),
             });
           }
+          position += 1;
         }
 
         return workout.id;

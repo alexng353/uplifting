@@ -202,7 +202,7 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
       .select()
       .from(userSets)
       .where(eq(userSets.workoutId, params.workoutId))
-      .orderBy(asc(userSets.createdAt));
+      .orderBy(asc(userSets.position), asc(userSets.createdAt));
 
     // Group sets by (exercise_id, profile_id)
     const groupMap = new Map<
@@ -324,7 +324,10 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
           // 2. Delete all existing sets
           await tx.delete(userSets).where(eq(userSets.workoutId, params.workoutId));
 
-          // 3. Insert new sets
+          // 3. Insert new sets. `position` is the exercise's index in the
+          // submitted order, so reordering exercises in the editor persists
+          // (display order is by position, then createdAt within an exercise).
+          let position = 0;
           for (const exercise of body.exercises!) {
             for (const s of exercise.sets) {
               await tx.insert(userSets).values({
@@ -337,9 +340,11 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
                 weightUnit: s.weight_unit,
                 side: s.side,
                 bodyweight: s.bodyweight ? String(s.bodyweight) : undefined,
+                position,
                 createdAt: s.created_at ? new Date(s.created_at) : new Date(),
               });
             }
+            position += 1;
           }
 
           return updated;
@@ -350,7 +355,7 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
           .select()
           .from(userSets)
           .where(eq(userSets.workoutId, params.workoutId))
-          .orderBy(asc(userSets.createdAt));
+          .orderBy(asc(userSets.position), asc(userSets.createdAt));
 
         const groupMap = new Map<
           string,

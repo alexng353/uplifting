@@ -135,6 +135,11 @@ export const userSets = pgTable("user_sets", {
   weightUnit: varchar("weight_unit", { length: 3 }).notNull().default("kg"),
   side: varchar({ length: 1 }),
   bodyweight: decimal({ precision: 10, scale: 2 }),
+  // Order index of this set's exercise within its workout (all sets of the
+  // same exercise+profile in a workout share it). Authoritative for exercise
+  // display order, so reordering persists independently of createdAt. Sets
+  // within a group still order by createdAt.
+  position: integer().notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -204,6 +209,24 @@ export const favouriteExercises = pgTable(
       .notNull()
       .references(() => exercises.id),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique().on(t.userId, t.exerciseId)],
+);
+
+// ── Exercise Notes (persistent per-user cue) ───────────────────────────────
+
+export const exerciseNotes = pgTable(
+  "exercise_notes",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    exerciseId: uuid("exercise_id")
+      .notNull()
+      .references(() => exercises.id, { onDelete: "cascade" }),
+    note: text().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [unique().on(t.userId, t.exerciseId)],
 );

@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Fuse, { type IFuseOptions } from "fuse.js";
 import { useEffect, useMemo } from "react";
 import { api, unwrap } from "../lib/api";
+import { EXERCISE_SEARCH_ALIASES, scoreExercise } from "../lib/search-constants";
 import {
   getExercises as getCachedExercises,
   setExercises as setCachedExercises,
@@ -86,14 +87,45 @@ export function useExercises(search?: string) {
     return new Fuse(allExercisesQuery.data, fuseOptions);
   }, [allExercisesQuery.data]);
 
-  // Filter exercises client-side using fuzzy search
+  // Filter + rank exercises client-side.
+  //
+  // Fuse provides fuzzy recall; we then re-rank with `scoreExercise` so that
+  // exact word matches, exact-order phrases, and alias hits rise to the top
+  // (Fuse's own relevance score is only used to break ties). Without this the
+  // list was being re-sorted alphabetically by the caller, discarding all
+  // relevance.
   const filteredExercises = useMemo(() => {
     if (!allExercisesQuery.data) return undefined;
-    if (!search?.trim()) return allExercisesQuery.data;
+    const query = search?.trim();
+    if (!query) return allExercisesQuery.data;
     if (!fuse) return allExercisesQuery.data;
 
-    const results = fuse.search(search.trim());
-    return results.map((r) => r.item);
+    // Fuzzy recall, keyed by id so we can dedupe against alias inserts.
+    const candidates = new Map<string, { item: Exercise; fuse: number }>();
+    for (const r of fuse.search(query)) {
+      candidates.set(r.item.id, { item: r.item, fuse: r.score ?? 1 });
+    }
+
+    // Make sure alias targets are present even when fuzzy search missed them
+    // (e.g. "b" -> "bench press").
+    const aliasTargets = EXERCISE_SEARCH_ALIASES[query.toLowerCase()];
+    if (aliasTargets) {
+      for (const ex of allExercisesQuery.data) {
+        const name = ex.name.toLowerCase();
+        if (!candidates.has(ex.id) && aliasTargets.some((t) => name.includes(t.toLowerCase()))) {
+          candidates.set(ex.id, { item: ex, fuse: 1 });
+        }
+      }
+    }
+
+    return [...candidates.values()]
+      .map((c) => ({ ...c, custom: scoreExercise(c.item.name, query) }))
+      .sort((a, b) => {
+        if (b.custom !== a.custom) return b.custom - a.custom; // higher score first
+        if (a.fuse !== b.fuse) return a.fuse - b.fuse; // better fuzzy match first
+        return a.item.name.localeCompare(b.item.name);
+      })
+      .map((c) => c.item);
   }, [allExercisesQuery.data, search, fuse]);
 
   return {

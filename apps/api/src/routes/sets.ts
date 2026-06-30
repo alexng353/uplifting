@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull, max } from "drizzle-orm";
 import { db } from "../db";
 import { userSets, workouts } from "../db/schema";
 import { authPlugin } from "../lib/auth";
@@ -23,6 +23,29 @@ export const setRoutes = new Elysia({ prefix: "/sets" })
         return { error: "Workout not found" };
       }
 
+      // Reuse the exercise's existing position in this workout so the new set
+      // joins its group; otherwise append it after the last exercise.
+      const [existingGroup] = await db
+        .select({ position: userSets.position })
+        .from(userSets)
+        .where(
+          and(
+            eq(userSets.workoutId, params.workoutId),
+            eq(userSets.exerciseId, body.exercise_id),
+            body.profile_id ? eq(userSets.profileId, body.profile_id) : isNull(userSets.profileId),
+          ),
+        )
+        .limit(1);
+
+      let position = existingGroup?.position;
+      if (position === undefined) {
+        const [{ maxPosition } = { maxPosition: null }] = await db
+          .select({ maxPosition: max(userSets.position) })
+          .from(userSets)
+          .where(eq(userSets.workoutId, params.workoutId));
+        position = (maxPosition ?? -1) + 1;
+      }
+
       const [created] = await db
         .insert(userSets)
         .values({
@@ -35,6 +58,7 @@ export const setRoutes = new Elysia({ prefix: "/sets" })
           weightUnit: body.weight_unit,
           side: body.side,
           bodyweight: body.bodyweight,
+          position,
         })
         .returning();
 

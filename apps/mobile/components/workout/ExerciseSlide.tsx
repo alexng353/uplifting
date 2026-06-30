@@ -15,6 +15,7 @@ import { useThemeColors } from "../../hooks/useThemeColors";
 import { useSettings } from "../../hooks/useSettings";
 import { usePreviousSets } from "../../hooks/usePreviousSets";
 import { useExerciseProfiles } from "../../hooks/useExerciseProfiles";
+import { useExerciseNotes, useSetExerciseNote } from "../../hooks/useExerciseNotes";
 import { useGymProfileSuggestion } from "../../hooks/useGymProfileSuggestion";
 import type { StoredSet, StoredWorkoutExercise } from "../../services/storage";
 import RestTimer from "./RestTimer";
@@ -141,6 +142,23 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   const isBodyweight = exercise.exerciseType === "Bodyweight";
   const scrollRef = useRef<ScrollView>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
+
+  // Persistent per-exercise note (cue) — shows every time you do this exercise.
+  const { data: exerciseNotes } = useExerciseNotes();
+  const noteMutation = useSetExerciseNote();
+  const note = exerciseNotes?.get(exercise.exerciseId) ?? "";
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [noteDraft, setNoteDraft] = useState("");
+
+  const openNoteEditor = useCallback(() => {
+    setNoteDraft(note);
+    setShowNoteModal(true);
+  }, [note]);
+
+  const handleSaveNote = useCallback(() => {
+    noteMutation.mutate({ exerciseId: exercise.exerciseId, note: noteDraft });
+    setShowNoteModal(false);
+  }, [noteMutation, exercise.exerciseId, noteDraft]);
 
   const displayUnit = getDisplayUnit();
 
@@ -327,6 +345,21 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
             </View>
           </View>
         )}
+
+        {/* Persistent note (cue) */}
+        <Pressable onPress={openNoteEditor} className="mt-1.5 flex-row items-start gap-1.5">
+          <Ionicons
+            name={note ? "document-text" : "document-text-outline"}
+            size={14}
+            color={note ? colors.accentIcon : colors.mutedIcon}
+            style={{ marginTop: 1 }}
+          />
+          {note ? (
+            <Text className="flex-1 text-xs italic text-zinc-500 dark:text-zinc-400">{note}</Text>
+          ) : (
+            <Text className="text-xs text-zinc-400 dark:text-zinc-500">Add a note</Text>
+          )}
+        </Pressable>
       </View>
 
       {/* Set Table Header */}
@@ -491,6 +524,49 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
               );
             }}
           />
+        </View>
+      </Modal>
+
+      {/* Note editor modal */}
+      <Modal
+        visible={showNoteModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowNoteModal(false)}
+      >
+        <View className="flex-1 bg-white dark:bg-zinc-900">
+          <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-4 pb-3 pt-4">
+            <Pressable
+              onPress={() => setShowNoteModal(false)}
+              className="rounded-lg px-3 py-1.5 active:bg-zinc-100 dark:active:bg-zinc-800"
+            >
+              <Text className="text-base font-medium text-zinc-500">Cancel</Text>
+            </Pressable>
+            <Text className="text-lg font-bold dark:text-zinc-100">Note</Text>
+            <Pressable
+              onPress={handleSaveNote}
+              disabled={noteMutation.isPending}
+              className="rounded-lg px-3 py-1.5 active:bg-zinc-100 dark:active:bg-zinc-800"
+              style={{ opacity: noteMutation.isPending ? 0.5 : 1 }}
+            >
+              <Text className="text-base font-semibold text-blue-500">Save</Text>
+            </Pressable>
+          </View>
+          <View className="p-4">
+            <Text className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+              A cue for {baseName} — shows every time you do this exercise.
+            </Text>
+            <TextInput
+              value={noteDraft}
+              onChangeText={setNoteDraft}
+              placeholder="e.g. drive through your heels, keep core tight"
+              placeholderTextColor={colors.placeholder}
+              multiline
+              autoFocus
+              className="min-h-24 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800 p-3 dark:text-zinc-100"
+              style={{ fontSize: 16, textAlignVertical: "top" }}
+            />
+          </View>
         </View>
       </Modal>
     </View>

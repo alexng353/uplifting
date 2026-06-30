@@ -1,13 +1,7 @@
 import { Elysia, t } from "elysia";
 import { eq, and } from "drizzle-orm";
 import { db, sql } from "../db";
-import {
-  exercises,
-  exerciseMuscleRelations,
-  exerciseProfiles,
-  favouriteExercises,
-  muscles,
-} from "../db/schema";
+import { exercises, exerciseMuscleRelations, exerciseProfiles, muscles } from "../db/schema";
 import { authPlugin } from "../lib/auth";
 
 const EXERCISE_TYPES = [
@@ -81,6 +75,18 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
       .orderBy(exerciseProfiles.exerciseId, exerciseProfiles.name);
 
     return rows;
+  })
+
+  // GET /notes — all of the user's persistent exercise notes (cues)
+  .get("/notes", async ({ userId }) => {
+    const rows = await sql`
+      SELECT exercise_id, note, updated_at FROM exercise_notes WHERE user_id = ${userId}
+    `;
+    return rows.map((r) => ({
+      exercise_id: r.exercise_id as string,
+      note: r.note as string,
+      updated_at: new Date(r.updated_at as string).toISOString(),
+    }));
   })
 
   // GET / — list exercises with optional filters
@@ -461,6 +467,48 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
   .delete("/:exerciseId/favourite", async ({ userId, params }) => {
     await sql`
       DELETE FROM favourite_exercises
+      WHERE user_id = ${userId} AND exercise_id = ${params.exerciseId}
+    `;
+    return "removed";
+  })
+
+  // PUT /:exerciseId/note — upsert the user's persistent note (cue) for an
+  // exercise. An empty/whitespace note clears it.
+  .put(
+    "/:exerciseId/note",
+    async ({ userId, params, body }) => {
+      const note = body.note.trim();
+      if (!note) {
+        await sql`
+          DELETE FROM exercise_notes
+          WHERE user_id = ${userId} AND exercise_id = ${params.exerciseId}
+        `;
+        return { exercise_id: params.exerciseId, note: null };
+      }
+      const [row] = await sql`
+        INSERT INTO exercise_notes (user_id, exercise_id, note, updated_at)
+        VALUES (${userId}, ${params.exerciseId}, ${note}, now())
+        ON CONFLICT (user_id, exercise_id)
+        DO UPDATE SET note = EXCLUDED.note, updated_at = now()
+        RETURNING exercise_id, note, updated_at
+      `;
+      return {
+        exercise_id: row.exercise_id as string,
+        note: row.note as string,
+        updated_at: new Date(row.updated_at as string).toISOString(),
+      };
+    },
+    {
+      body: t.Object({
+        note: t.String(),
+      }),
+    },
+  )
+
+  // DELETE /:exerciseId/note — clear the user's note for an exercise
+  .delete("/:exerciseId/note", async ({ userId, params }) => {
+    await sql`
+      DELETE FROM exercise_notes
       WHERE user_id = ${userId} AND exercise_id = ${params.exerciseId}
     `;
     return "removed";

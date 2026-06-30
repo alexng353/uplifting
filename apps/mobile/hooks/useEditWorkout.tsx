@@ -4,7 +4,6 @@ import { api, unwrap } from "../lib/api";
 import {
   generateId,
   getProfiles,
-  type StoredSet,
   type StoredWorkout,
   type StoredWorkoutExercise,
 } from "../services/storage";
@@ -131,10 +130,14 @@ export function useEditWorkoutState(workoutId: string) {
             .map((e) => ({
               exercise_id: e.exerciseId,
               profile_id: e.profileId,
+              // Keep any set the user actually touched (reps OR weight). This
+              // matches the app's `isSetEmpty` notion and stops weight-only or
+              // in-progress sets from being silently dropped on save. Only
+              // fully-empty placeholder sets are filtered out.
               sets: e.sets
-                .filter((s) => s.reps != null && s.reps > 0)
+                .filter((s) => s.reps != null || s.weight != null)
                 .map((s) => ({
-                  reps: s.reps ?? 1,
+                  reps: s.reps ?? 0,
                   weight: s.weight ?? 0,
                   weight_unit: s.weightUnit,
                   created_at: s.createdAt,
