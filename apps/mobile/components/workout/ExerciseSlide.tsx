@@ -8,13 +8,16 @@ import {
   Switch,
   Modal,
   FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useWorkoutActions } from "../../hooks/useWorkoutActions";
 import { useThemeColors } from "../../hooks/useThemeColors";
 import { useSettings } from "../../hooks/useSettings";
 import { usePreviousSets } from "../../hooks/usePreviousSets";
-import { useExerciseProfiles } from "../../hooks/useExerciseProfiles";
+import { useCreateExerciseProfile, useExerciseProfiles } from "../../hooks/useExerciseProfiles";
 import { useExerciseNotes, useSetExerciseNote } from "../../hooks/useExerciseNotes";
 import { useGymProfileSuggestion } from "../../hooks/useGymProfileSuggestion";
 import type { StoredSet, StoredWorkoutExercise } from "../../services/storage";
@@ -138,10 +141,13 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   const { settings, getDisplayUnit } = useSettings();
   const { getSuggestion } = usePreviousSets();
   const { data: profiles = [] } = useExerciseProfiles(exercise.exerciseId);
+  const createProfileMutation = useCreateExerciseProfile(exercise.exerciseId);
   const { getSuggestedProfile, recordProfileUsage, currentGymId } = useGymProfileSuggestion();
   const isBodyweight = exercise.exerciseType === "Bodyweight";
   const scrollRef = useRef<ScrollView>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showCreateProfileModal, setShowCreateProfileModal] = useState(false);
+  const [newProfileName, setNewProfileName] = useState("");
 
   // Persistent per-exercise note (cue) — shows every time you do this exercise.
   const { data: exerciseNotes } = useExerciseNotes();
@@ -306,6 +312,42 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   );
 
   const hasProfiles = profiles.length > 0;
+
+  // The menu icon is always tappable: with profiles it opens the picker,
+  // without any it jumps straight to creating the first one.
+  const handleOpenProfileMenu = useCallback(() => {
+    if (hasProfiles) {
+      setShowProfileModal(true);
+    } else {
+      setNewProfileName("");
+      setShowCreateProfileModal(true);
+    }
+  }, [hasProfiles]);
+
+  const handleOpenProfileCreator = useCallback(() => {
+    setNewProfileName("");
+    if (showProfileModal) {
+      // Let the picker sheet finish dismissing before presenting the next one.
+      setShowProfileModal(false);
+      setTimeout(() => setShowCreateProfileModal(true), 350);
+    } else {
+      setShowCreateProfileModal(true);
+    }
+  }, [showProfileModal]);
+
+  const handleCreateProfile = useCallback(async () => {
+    const name = newProfileName.trim();
+    if (!name) return;
+    try {
+      const profile = await createProfileMutation.mutateAsync(name);
+      setShowCreateProfileModal(false);
+      setNewProfileName("");
+      handleChangeProfile(profile.id, profile.name ?? name);
+    } catch {
+      Alert.alert("Error", "Failed to create profile.");
+    }
+  }, [newProfileName, createProfileMutation, handleChangeProfile]);
+
   const canRemove = exercise.isUnilateral ? setGroups.length > 1 : exercise.sets.length > 1;
   const canDuplicate = exercise.sets.length > 0;
 
@@ -316,12 +358,13 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
       {/* Header */}
       <View className="mb-2">
         <Pressable
-          onPress={hasProfiles ? () => setShowProfileModal(true) : undefined}
-          disabled={!hasProfiles}
+          onPress={handleOpenProfileMenu}
+          hitSlop={8}
+          className="flex-row items-center gap-1.5 active:opacity-60"
         >
-          <Text className="text-xl font-bold dark:text-zinc-100">
+          <Ionicons name="ellipsis-horizontal-circle" size={22} color={colors.accentIcon} />
+          <Text className="flex-1 text-xl font-bold dark:text-zinc-100">
             {exercise.exerciseName}
-            {hasProfiles && <Text className="text-blue-500"> ...</Text>}
           </Text>
         </Pressable>
         {exercise.exerciseType && (
@@ -523,8 +566,76 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                 </Pressable>
               );
             }}
+            ListFooterComponent={
+              <Pressable
+                onPress={handleOpenProfileCreator}
+                className="flex-row items-center gap-2 border-b border-zinc-100 dark:border-zinc-800 px-4 py-3.5 active:bg-zinc-50 dark:active:bg-zinc-800"
+              >
+                <Ionicons name="add" size={20} color={colors.accentIcon} />
+                <Text className="text-base text-blue-500">New profile</Text>
+              </Pressable>
+            }
           />
         </View>
+      </Modal>
+
+      {/* Profile Creator Modal */}
+      <Modal
+        visible={showCreateProfileModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowCreateProfileModal(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          className="flex-1 bg-white dark:bg-zinc-900"
+        >
+          <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-4 pb-3 pt-4">
+            <Text className="text-lg font-bold dark:text-zinc-100">New profile</Text>
+            <Pressable
+              onPress={() => setShowCreateProfileModal(false)}
+              className="rounded-lg px-3 py-1.5 active:bg-zinc-100 dark:active:bg-zinc-800"
+            >
+              <Text className="text-base font-medium text-blue-500">Cancel</Text>
+            </Pressable>
+          </View>
+          <View className="p-4">
+            <Text className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+              A profile tracks {baseName} separately — e.g. a specific machine, bar, or grip.
+            </Text>
+            <TextInput
+              value={newProfileName}
+              onChangeText={setNewProfileName}
+              placeholder="e.g. Hammer Strength, wide grip"
+              placeholderTextColor={colors.placeholder}
+              maxLength={100}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={handleCreateProfile}
+              className="rounded-lg border border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800 px-4 py-3 dark:text-zinc-100"
+              style={{ fontSize: 16 }}
+            />
+            <Pressable
+              onPress={handleCreateProfile}
+              disabled={createProfileMutation.isPending || !newProfileName.trim()}
+              className={`mt-4 items-center rounded-lg py-3 ${
+                createProfileMutation.isPending || !newProfileName.trim()
+                  ? "bg-zinc-200 dark:bg-zinc-700"
+                  : "bg-blue-500 active:bg-blue-600"
+              }`}
+            >
+              <Text
+                className={`text-base font-semibold ${
+                  createProfileMutation.isPending || !newProfileName.trim()
+                    ? "text-zinc-400 dark:text-zinc-500"
+                    : "text-white"
+                }`}
+              >
+                {createProfileMutation.isPending ? "Creating..." : "Create"}
+              </Text>
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Note editor modal */}

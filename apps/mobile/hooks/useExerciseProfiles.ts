@@ -38,7 +38,7 @@ export function useCreateExerciseProfile(exerciseId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["exerciseProfiles", exerciseId],
+        queryKey: ["exerciseProfiles"],
       });
     },
   });
