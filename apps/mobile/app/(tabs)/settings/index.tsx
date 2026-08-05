@@ -406,13 +406,17 @@ export default function SettingsScreen() {
             <Text className="text-base dark:text-zinc-100">Auto Add Set</Text>
             <Switch
               value={settings.autoAddSet}
-              onValueChange={(v) => updateSettings({ autoAddSet: v })}
+              onValueChange={(v) =>
+                updateSettings(
+                  v ? { autoAddSet: true } : { autoAddSet: false, autoRemoveEmptySet: false },
+                )
+              }
             />
           </SettingsRow>
           <SettingsRow last>
             <Text className="text-base dark:text-zinc-100">Auto Remove Empty Set</Text>
             <Switch
-              value={settings.autoRemoveEmptySet}
+              value={settings.autoAddSet && settings.autoRemoveEmptySet}
               onValueChange={(v) => updateSettings({ autoRemoveEmptySet: v })}
               disabled={!settings.autoAddSet}
             />
