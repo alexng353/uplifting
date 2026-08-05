@@ -9,6 +9,7 @@ import {
   integer,
   decimal,
   doublePrecision,
+  jsonb,
   unique,
   index,
 } from "drizzle-orm/pg-core";
@@ -306,6 +307,128 @@ export const userActivity = pgTable(
     currentWorkoutStartedAt: timestamp("current_workout_started_at", { withTimezone: true }),
   },
   (t) => [index("idx_user_activity_last_seen").on(t.lastSeenAt)],
+);
+
+// ── OAuth 2.1 Authorization Server ─────────────────────────────────────────
+//
+// Backs the MCP connector at /mcp. These are deliberately separate from the
+// first-party `refresh_tokens` table above: MCP access tokens are opaque,
+// audience-bound to the MCP resource URL, and scope-limited, so a first-party
+// mobile JWT can never be replayed against /mcp (and vice versa).
+
+export const oauthClients = pgTable(
+  "oauth_clients",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    clientId: varchar("client_id", { length: 64 }).notNull().unique(),
+    // NULL for public clients (token_endpoint_auth_method = "none"), which is
+    // what Claude registers as over Dynamic Client Registration.
+    clientSecretHash: varchar("client_secret_hash", { length: 64 }),
+    clientName: varchar("client_name", { length: 255 }),
+    clientUri: text("client_uri"),
+    logoUri: text("logo_uri"),
+    redirectUris: jsonb("redirect_uris").$type<string[]>().notNull(),
+    grantTypes: jsonb("grant_types").$type<string[]>().notNull(),
+    responseTypes: jsonb("response_types").$type<string[]>().notNull(),
+    tokenEndpointAuthMethod: varchar("token_endpoint_auth_method", { length: 32 })
+      .notNull()
+      .default("none"),
+    scope: text(),
+    softwareId: varchar("software_id", { length: 255 }),
+    softwareVersion: varchar("software_version", { length: 255 }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("idx_oauth_clients_client_id").on(t.clientId)],
+);
+
+export const oauthAuthorizationCodes = pgTable(
+  "oauth_authorization_codes",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    codeHash: varchar("code_hash", { length: 64 }).notNull().unique(),
+    clientId: varchar("client_id", { length: 64 }).notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    redirectUri: text("redirect_uri").notNull(),
+    scope: text().notNull(),
+    // PKCE (RFC 7636) — S256 only, per OAuth 2.1.
+    codeChallenge: varchar("code_challenge", { length: 128 }).notNull(),
+    codeChallengeMethod: varchar("code_challenge_method", { length: 10 }).notNull().default("S256"),
+    // RFC 8707 resource indicator — becomes the access token's audience.
+    resource: text().notNull(),
+    // Set once the code is exchanged. A second exchange attempt is treated as
+    // replay and burns every token descended from this code.
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("idx_oauth_codes_code_hash").on(t.codeHash)],
+);
+
+export const oauthAccessTokens = pgTable(
+  "oauth_access_tokens",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    tokenHash: varchar("token_hash", { length: 64 }).notNull().unique(),
+    // Shared with the refresh token chain so a detected refresh replay can
+    // revoke the access tokens issued alongside it.
+    familyId: uuid("family_id").notNull(),
+    clientId: varchar("client_id", { length: 64 }).notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    scope: text().notNull(),
+    audience: text().notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_oauth_access_tokens_token_hash").on(t.tokenHash),
+    index("idx_oauth_access_tokens_family_id").on(t.familyId),
+    index("idx_oauth_access_tokens_user_id").on(t.userId),
+  ],
+);
+
+export const oauthRefreshTokens = pgTable(
+  "oauth_refresh_tokens",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    tokenHash: varchar("token_hash", { length: 64 }).notNull().unique(),
+    familyId: uuid("family_id").notNull(),
+    clientId: varchar("client_id", { length: 64 }).notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    scope: text().notNull(),
+    audience: text().notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_oauth_refresh_tokens_token_hash").on(t.tokenHash),
+    index("idx_oauth_refresh_tokens_family_id").on(t.familyId),
+    index("idx_oauth_refresh_tokens_user_id").on(t.userId),
+  ],
+);
+
+// Remembers that a user already approved a given client for a given scope set,
+// so reconnecting an already-authorized client skips the consent screen (but
+// never the login).
+export const oauthConsents = pgTable(
+  "oauth_consents",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    clientId: varchar("client_id", { length: 64 }).notNull(),
+    scope: text().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique().on(t.userId, t.clientId)],
 );
 
 // ── User Gym Profile Mappings ──────────────────────────────────────────────

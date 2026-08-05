@@ -10,20 +10,29 @@ import { userRoutes } from "./routes/users";
 import { gymRoutes } from "./routes/gyms";
 import { muscleRoutes } from "./routes/muscles";
 import { syncRoutes } from "./routes/sync";
+import { oauthRoutes } from "./routes/oauth";
+import { mcpRoutes } from "./routes/mcp";
 
 const app = new Elysia()
   .use(logger)
-  .use(
-    cors({
-      origin: process.env.MOBILE_FRONTEND_URL || "http://localhost:8081",
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization"],
-    }),
-  )
   .get("/", () => "ok 200")
   .get("/.well-known/health-check", () => "ok")
+  // The MCP connector and its OAuth server are mounted at the origin root:
+  // RFC 8414/9728 discovery lives under /.well-known, and the resource
+  // identifier clients authorize against is the bare /mcp URL. They set their
+  // own permissive CORS headers, so they are mounted outside the first-party
+  // CORS policy below rather than sharing it.
+  .use(oauthRoutes)
+  .use(mcpRoutes)
   .group("/api/v1", (app) =>
     app
+      .use(
+        cors({
+          origin: process.env.MOBILE_FRONTEND_URL || "http://localhost:8081",
+          methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+          allowedHeaders: ["Content-Type", "Authorization"],
+        }),
+      )
       .use(authRoutes)
       .use(workoutRoutes)
       .use(setRoutes)

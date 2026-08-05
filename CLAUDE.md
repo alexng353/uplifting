@@ -61,11 +61,33 @@ Bun monorepo with two workspaces under `apps/`:
 
 ### `apps/api` — Elysia REST API
 
-- **Elysia** web framework on **Bun** runtime, all routes under `/api/v1`
+- **Elysia** web framework on **Bun** runtime, first-party routes under `/api/v1`
 - **Drizzle ORM** with PostgreSQL — schema in `src/db/schema.ts`, migrations in `drizzle/`
 - Routes in `src/routes/` — each file exports an Elysia plugin: auth, workouts, sets, exercises, friends, users, gyms, muscles, sync
 - Auth: JWT Bearer tokens via `@elysiajs/jwt` + `@elysiajs/bearer`, helper in `src/lib/auth.ts`
 - `App` type exported from `src/index.ts` — the mobile client imports this for end-to-end type safety
+
+### MCP connector (`/mcp`)
+
+An MCP server for Claude web/desktop/mobile/Code lives at `POST /mcp`, mounted at
+the origin root rather than under `/api/v1` (OAuth discovery must sit at
+`/.well-known`, and the resource identifier clients authorize against is the bare
+`/mcp` URL). See **[docs/mcp.md](docs/mcp.md)** for the full picture.
+
+- `src/mcp/` — the server. `server.ts` builds a fresh `McpServer` per request with
+  the caller's identity and scopes captured in the tool closures; `tools/`,
+  `resources.ts`, `prompts.ts` register capabilities; `shared.ts` holds the
+  scope-gated registration helper and response shaping.
+- `src/lib/oauth/` + `src/routes/oauth.ts` — a self-contained OAuth 2.1
+  authorization server (RFC 9728/8414/7591/7636/8707/9207/7009) with a
+  server-rendered sign-in and consent screen, since there is no web frontend.
+- MCP tokens are **opaque and audience-bound**, deliberately separate from the
+  mobile JWTs — neither can be replayed against the other's endpoints.
+- Set `PUBLIC_BASE_URL` in production; the token audience derives from it.
+
+When adding an MCP tool: put it in the right `src/mcp/tools/` module, register it
+through `scopedTool` with the scope it needs, and document the return shape in
+the description — that description is the only spec the model gets.
 
 ### `apps/mobile` — Expo React Native App
 
