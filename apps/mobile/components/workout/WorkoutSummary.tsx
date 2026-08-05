@@ -3,7 +3,19 @@ import { View, Text, TextInput, Pressable, ScrollView, Modal } from "react-nativ
 import { useSettings } from "../../hooks/useSettings";
 import { useThemeColors } from "../../hooks/useThemeColors";
 import { useWorkoutTitleSuggestion } from "../../hooks/useWorkoutTitleSuggestion";
-import { getCurrentGymId, getGyms, type StoredWorkout } from "../../services/storage";
+import {
+  getCurrentGymId,
+  getGyms,
+  type StoredSet,
+  type StoredWorkout,
+  type StoredWorkoutExercise,
+} from "../../services/storage";
+
+// Unilateral exercises store one set per side, so a "set" is an L/R pair.
+const countSets = (exercise: StoredWorkoutExercise): number =>
+  exercise.isUnilateral
+    ? exercise.sets.filter((s) => s.side === "R" || !s.side).length
+    : exercise.sets.length;
 
 interface WorkoutSummaryProps {
   visible: boolean;
@@ -47,8 +59,45 @@ export default function WorkoutSummary({
     onSave(name || undefined, gymLocation || undefined);
   }, [name, gymLocation, onSave]);
 
+  const formatSet = useCallback(
+    (set: StoredSet) => `${set.reps}x${formatWeight(set.weight ?? 0, set.weightUnit)}`,
+    [formatWeight],
+  );
+
+  const describeSets = useCallback(
+    (exercise: StoredWorkoutExercise): string => {
+      if (!exercise.isUnilateral) {
+        const count = exercise.sets.length;
+        const list = exercise.sets
+          .filter((s) => s.reps != null)
+          .map(formatSet)
+          .join(", ");
+        return `${count} set${count !== 1 ? "s" : ""} ${list}`;
+      }
+
+      const rightSets = exercise.sets.filter((s) => s.side === "R" || !s.side);
+      const leftSets = exercise.sets.filter((s) => s.side === "L");
+      const pairCount = Math.max(rightSets.length, leftSets.length);
+      const pairs: string[] = [];
+      for (let i = 0; i < pairCount; i++) {
+        const right = rightSets[i];
+        const left = leftSets[i];
+        const rightText = right?.reps != null ? formatSet(right) : null;
+        const leftText = left?.reps != null ? formatSet(left) : null;
+        if (rightText && rightText === leftText) {
+          pairs.push(`${rightText} L/R`);
+        } else {
+          if (rightText) pairs.push(`${rightText} R`);
+          if (leftText) pairs.push(`${leftText} L`);
+        }
+      }
+      return `${pairCount} set${pairCount !== 1 ? "s" : ""}/side ${pairs.join(", ")}`;
+    },
+    [formatSet],
+  );
+
   // Calculate stats
-  const totalSets = workout.exercises.reduce((sum, ex) => sum + ex.sets.length, 0);
+  const totalSets = workout.exercises.reduce((sum, ex) => sum + countSets(ex), 0);
   const totalReps = workout.exercises.reduce(
     (sum, ex) => sum + ex.sets.reduce((s, set) => s + (set.reps ?? 0), 0),
     0,
@@ -142,15 +191,20 @@ export default function WorkoutSummary({
                 key={exercise.exerciseId}
                 className="border-b border-zinc-100 dark:border-zinc-800 py-2"
               >
-                <Text className="text-base font-medium dark:text-zinc-100">
-                  {exercise.exerciseName}
-                </Text>
+                <View className="flex-row items-center gap-2">
+                  <Text className="shrink text-base font-medium dark:text-zinc-100">
+                    {exercise.exerciseName}
+                  </Text>
+                  {exercise.isUnilateral && (
+                    <View className="rounded bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5">
+                      <Text className="text-[10px] font-semibold uppercase text-zinc-500 dark:text-zinc-400">
+                        Unilateral
+                      </Text>
+                    </View>
+                  )}
+                </View>
                 <Text className="text-sm text-zinc-400 dark:text-zinc-500">
-                  {exercise.sets.length} set{exercise.sets.length !== 1 ? "s" : ""}{" "}
-                  {exercise.sets
-                    .filter((s) => s.reps != null)
-                    .map((s) => `${s.reps}x${formatWeight(s.weight ?? 0, s.weightUnit)}`)
-                    .join(", ")}
+                  {describeSets(exercise)}
                 </Text>
               </View>
             ))}
