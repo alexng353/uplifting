@@ -1,4 +1,12 @@
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { detectAndSetNearbyGym } from "../services/geolocation";
 import {
   addExerciseSequence,
@@ -80,9 +88,21 @@ interface WorkoutContextValue {
 const WorkoutContext = createContext<WorkoutContextValue | null>(null);
 
 export function WorkoutProvider({ children }: { children: ReactNode }) {
-  const [workout, setWorkout] = useState<StoredWorkout | null>(null);
+  const [workout, setWorkoutState] = useState<StoredWorkout | null>(null);
   const [hasPendingWorkout, setHasPendingWorkout] = useState(false);
   const [todayRestDayState, setTodayRestDayState] = useState<TodayRestDay | null>(null);
+
+  // Mirrors `workout` so mutations read the freshest value rather than the one
+  // captured at render time. Two mutations fired from the same event (e.g.
+  // auto-add-set: updateSet followed by addSet) must compose — reading state
+  // directly would make the second one clobber the first, dropping the
+  // keystroke the user just typed.
+  const workoutRef = useRef<StoredWorkout | null>(null);
+
+  const setWorkout = useCallback((w: StoredWorkout | null) => {
+    workoutRef.current = w;
+    setWorkoutState(w);
+  }, []);
 
   // Load current workout on mount (MMKV is synchronous)
   useEffect(() => {
@@ -123,10 +143,25 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const saveWorkout = useCallback((w: StoredWorkout | null) => {
-    setWorkout(w);
-    setCurrentWorkout(w);
-  }, []);
+  const saveWorkout = useCallback(
+    (w: StoredWorkout | null) => {
+      setWorkout(w);
+      setCurrentWorkout(w);
+    },
+    [setWorkout],
+  );
+
+  // Applies a pure mutation to the latest workout. Using the ref (not the
+  // render-time `workout`) keeps back-to-back mutations from clobbering
+  // each other.
+  const apply = useCallback(
+    (fn: (w: StoredWorkout) => StoredWorkout) => {
+      const current = workoutRef.current;
+      if (!current) return;
+      saveWorkout(fn(current));
+    },
+    [saveWorkout],
+  );
 
   const startWorkout = useCallback(() => {
     if (todayRestDayState) return; // Can't start workout on a rest day
@@ -238,111 +273,100 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 
   const addExercise = useCallback(
     (exerciseId: string, exerciseName: string, profileId?: string, exerciseType?: string) => {
-      if (!workout) return;
-      saveWorkout(addExerciseMutation(workout, exerciseId, exerciseName, profileId, exerciseType));
+      apply((w) => addExerciseMutation(w, exerciseId, exerciseName, profileId, exerciseType));
     },
-    [workout, saveWorkout],
+    [apply],
   );
 
   const removeExercise = useCallback(
     (exerciseId: string) => {
-      if (!workout) return;
-      saveWorkout(removeExerciseMutation(workout, exerciseId));
+      apply((w) => removeExerciseMutation(w, exerciseId));
     },
-    [workout, saveWorkout],
+    [apply],
   );
 
   const reorderExercises = useCallback(
     (newOrder: string[]) => {
-      if (!workout) return;
-      saveWorkout(reorderExercisesMutation(workout, newOrder));
+      apply((w) => reorderExercisesMutation(w, newOrder));
     },
-    [workout, saveWorkout],
+    [apply],
   );
 
   const addSet = useCallback(
     (exerciseId: string, weightUnit: string, reps?: number, weight?: number, side?: "L" | "R") => {
-      if (!workout) return;
-      saveWorkout(addSetMutation(workout, exerciseId, weightUnit, reps, weight, side));
+      apply((w) => addSetMutation(w, exerciseId, weightUnit, reps, weight, side));
     },
-    [workout, saveWorkout],
+    [apply],
   );
 
   const addUnilateralPair = useCallback(
     (exerciseId: string, weightUnit: string, reps?: number, weight?: number) => {
-      if (!workout) return;
-      saveWorkout(addUnilateralPairMutation(workout, exerciseId, weightUnit, reps, weight));
+      apply((w) => addUnilateralPairMutation(w, exerciseId, weightUnit, reps, weight));
     },
-    [workout, saveWorkout],
+    [apply],
   );
 
   const toggleUnilateral = useCallback(
     (exerciseId: string) => {
-      if (!workout) return;
-      saveWorkout(toggleUnilateralMutation(workout, exerciseId));
+      apply((w) => toggleUnilateralMutation(w, exerciseId));
     },
-    [workout, saveWorkout],
+    [apply],
   );
 
   const changeExerciseProfile = useCallback(
     (exerciseId: string, profileId: string | undefined, exerciseName: string) => {
-      if (!workout) return;
-      saveWorkout(changeExerciseProfileMutation(workout, exerciseId, profileId, exerciseName));
+      apply((w) => changeExerciseProfileMutation(w, exerciseId, profileId, exerciseName));
     },
-    [workout, saveWorkout],
+    [apply],
   );
 
   const updateSet = useCallback(
     (exerciseId: string, setId: string, updates: Partial<StoredSet>) => {
-      if (!workout) return;
-      saveWorkout(updateSetMutation(workout, exerciseId, setId, updates));
+      apply((w) => updateSetMutation(w, exerciseId, setId, updates));
     },
-    [workout, saveWorkout],
+    [apply],
   );
 
   const removeSet = useCallback(
     (exerciseId: string, setId: string) => {
-      if (!workout) return;
-      saveWorkout(removeSetMutation(workout, exerciseId, setId));
+      apply((w) => removeSetMutation(w, exerciseId, setId));
     },
-    [workout, saveWorkout],
+    [apply],
   );
 
   const removeLastSet = useCallback(
     (exerciseId: string) => {
-      if (!workout) return;
-      saveWorkout(removeLastSetMutation(workout, exerciseId));
+      apply((w) => removeLastSetMutation(w, exerciseId));
     },
-    [workout, saveWorkout],
+    [apply],
   );
 
   const removeLastUnilateralPair = useCallback(
     (exerciseId: string) => {
-      if (!workout) return;
-      saveWorkout(removeLastUnilateralPairMutation(workout, exerciseId));
+      apply((w) => removeLastUnilateralPairMutation(w, exerciseId));
     },
-    [workout, saveWorkout],
+    [apply],
   );
 
   const trimTrailingEmptySets = useCallback(
     (exerciseId: string, keepCount: number = 0) => {
-      if (!workout) return;
-      saveWorkout(trimTrailingEmptySetsMutation(workout, exerciseId, keepCount));
+      apply((w) => trimTrailingEmptySetsMutation(w, exerciseId, keepCount));
     },
-    [workout, saveWorkout],
+    [apply],
   );
 
   const finishWorkout = useCallback(
     (name?: string, gymLocation?: string): StoredWorkout => {
-      if (!workout) throw new Error("No active workout");
+      const current = workoutRef.current;
+      if (!current) throw new Error("No active workout");
 
       // Remove empty sets before saving
       const finishedWorkout: StoredWorkout = {
-        ...workout,
+        ...current,
         name,
         gymLocation,
         endTime: new Date().toISOString(),
-        exercises: workout.exercises.map((e) => ({
+        exercises: current.exercises.map((e) => ({
           ...e,
           sets: e.sets.filter((s) => s.reps != null && s.reps > 0),
         })),
@@ -365,13 +389,13 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 
       return finishedWorkout;
     },
-    [workout],
+    [setWorkout],
   );
 
   const cancelWorkout = useCallback(() => {
     setCurrentWorkout(null);
     setWorkout(null);
-  }, []);
+  }, [setWorkout]);
 
   return (
     <WorkoutContext.Provider

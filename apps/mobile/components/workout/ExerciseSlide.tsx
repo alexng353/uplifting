@@ -145,6 +145,9 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   const { getSuggestedProfile, recordProfileUsage, currentGymId } = useGymProfileSuggestion();
   const isBodyweight = exercise.exerciseType === "Bodyweight";
   const scrollRef = useRef<ScrollView>(null);
+  // Sets that have already triggered an auto-add, so a set can only ever spawn
+  // one follow-up set no matter how fast its first value is typed.
+  const autoAddedForSetRef = useRef<Set<string>>(new Set());
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showCreateProfileModal, setShowCreateProfileModal] = useState(false);
   const [newProfileName, setNewProfileName] = useState("");
@@ -214,6 +217,10 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
       if (!wasEmpty) return;
       const becomesNonEmpty = updates.reps != null || updates.weight != null;
       if (!becomesNonEmpty) return;
+      // `exercise` is the render-time snapshot, so keystrokes typed before the
+      // next render still see the set as empty. Without this, typing "10"
+      // quickly would auto-add twice.
+      if (autoAddedForSetRef.current.has(setId)) return;
 
       if (exercise.isUnilateral) {
         const sideSets = exercise.sets.filter((s) => s.side === set.side);
@@ -221,9 +228,11 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
         if (setIndex !== setGroups.length - 1) return;
         const otherSet = exercise.sets.filter((s) => s.side !== set.side)[setIndex];
         if (otherSet && (otherSet.reps != null || otherSet.weight != null)) return;
+        autoAddedForSetRef.current.add(setId);
         addUnilateralPair(exercise.exerciseId, displayUnit);
       } else {
         if (exercise.sets[exercise.sets.length - 1]?.id !== setId) return;
+        autoAddedForSetRef.current.add(setId);
         addSet(exercise.exerciseId, displayUnit);
       }
     },
