@@ -23,6 +23,7 @@ import {
   removeLastUnilateralPairMutation,
   removeSetMutation,
   reorderExercisesMutation,
+  swapExerciseMutation,
   toggleUnilateralMutation,
   updateSetMutation,
 } from "../lib/workout-mutations";
@@ -181,6 +182,17 @@ export function useEditWorkoutState(workoutId: string) {
         addExercise: (exerciseId, exerciseName, profileId?, exerciseType?) =>
           apply((w) => addExerciseMutation(w, exerciseId, exerciseName, profileId, exerciseType)),
         removeExercise: (exerciseId) => apply((w) => removeExerciseMutation(w, exerciseId)),
+        swapExercise: (fromExerciseId, toExerciseId, exerciseName, profileId?, exerciseType?) =>
+          apply((w) =>
+            swapExerciseMutation(
+              w,
+              fromExerciseId,
+              toExerciseId,
+              exerciseName,
+              profileId,
+              exerciseType,
+            ),
+          ),
         reorderExercises: (newOrder) => apply((w) => reorderExercisesMutation(w, newOrder)),
         addSet: (exerciseId, weightUnit, reps?, weight?, side?) =>
           apply((w) => addSetMutation(w, exerciseId, weightUnit, reps, weight, side)),

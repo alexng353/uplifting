@@ -13,6 +13,13 @@ export interface WorkoutActions {
     exerciseType?: string,
   ) => void;
   removeExercise: (exerciseId: string) => void;
+  swapExercise: (
+    fromExerciseId: string,
+    toExerciseId: string,
+    exerciseName: string,
+    profileId?: string,
+    exerciseType?: string,
+  ) => void;
   reorderExercises: (newOrder: string[]) => void;
   addSet: (
     exerciseId: string,
@@ -82,6 +89,7 @@ export function useWorkoutActions(): WorkoutActions {
     mode: "live",
     addExercise: liveWorkout.addExercise,
     removeExercise: liveWorkout.removeExercise,
+    swapExercise: liveWorkout.swapExercise,
     reorderExercises: liveWorkout.reorderExercises,
     addSet: liveWorkout.addSet,
     addUnilateralPair: liveWorkout.addUnilateralPair,

@@ -63,6 +63,53 @@ export function removeExerciseMutation(workout: StoredWorkout, exerciseId: strin
   };
 }
 
+/**
+ * Replace one exercise with another, keeping the slot's position, sets and
+ * unilateral flag.
+ *
+ * Exercises are keyed by `exerciseId` everywhere (mutations, React keys, pager
+ * pages), so two entries sharing an id corrupt the workout: set edits would
+ * apply to both, and reorderExercisesMutation would silently drop one of them.
+ * Swapping onto an exercise that is already in the workout is therefore a
+ * no-op here — the picker also marks those rows unselectable, so this is the
+ * backstop rather than the primary guard.
+ */
+export function swapExerciseMutation(
+  workout: StoredWorkout,
+  fromExerciseId: string,
+  toExerciseId: string,
+  exerciseName: string,
+  profileId?: string,
+  exerciseType?: string,
+): StoredWorkout {
+  const index = workout.exercises.findIndex((e) => e.exerciseId === fromExerciseId);
+  if (index === -1) return workout;
+
+  const duplicateIndex = workout.exercises.findIndex((e) => e.exerciseId === toExerciseId);
+  if (duplicateIndex !== -1 && duplicateIndex !== index) return workout;
+
+  const current = workout.exercises[index];
+  const settings = getSettings();
+  // Bodyweight is a property of the exercise, not of the logged set, so it has
+  // to follow the swap: filled in when swapping onto a bodyweight exercise,
+  // dropped when swapping away from one.
+  const bodyweight = exerciseType === "Bodyweight" ? (settings.bodyweight ?? undefined) : undefined;
+
+  const swapped: StoredWorkoutExercise = {
+    ...current,
+    exerciseId: toExerciseId,
+    exerciseName,
+    exerciseType,
+    profileId,
+    sets: current.sets.map((s) => ({ ...s, bodyweight })),
+  };
+
+  const exercises = [...workout.exercises];
+  exercises[index] = swapped;
+
+  return { ...workout, exercises };
+}
+
 export function reorderExercisesMutation(
   workout: StoredWorkout,
   newOrder: string[],

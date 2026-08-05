@@ -20,6 +20,7 @@ import {
 import {
   addExerciseMutation,
   removeExerciseMutation,
+  swapExerciseMutation,
   reorderExercisesMutation,
   addSetMutation,
   addUnilateralPairMutation,
@@ -47,6 +48,13 @@ interface WorkoutContextValue {
     exerciseType?: string,
   ) => void;
   removeExercise: (exerciseId: string) => void;
+  swapExercise: (
+    fromExerciseId: string,
+    toExerciseId: string,
+    exerciseName: string,
+    profileId?: string,
+    exerciseType?: string,
+  ) => void;
   reorderExercises: (newOrder: string[]) => void;
   addSet: (
     exerciseId: string,
@@ -252,6 +260,29 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     [workout, saveWorkout],
   );
 
+  const swapExercise = useCallback(
+    (
+      fromExerciseId: string,
+      toExerciseId: string,
+      exerciseName: string,
+      profileId?: string,
+      exerciseType?: string,
+    ) => {
+      if (!workout) return;
+      saveWorkout(
+        swapExerciseMutation(
+          workout,
+          fromExerciseId,
+          toExerciseId,
+          exerciseName,
+          profileId,
+          exerciseType,
+        ),
+      );
+    },
+    [workout, saveWorkout],
+  );
+
   const reorderExercises = useCallback(
     (newOrder: string[]) => {
       if (!workout) return;
@@ -385,6 +416,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
         reconcileRestDay,
         addExercise,
         removeExercise,
+        swapExercise,
         reorderExercises,
         addSet,
         addUnilateralPair,

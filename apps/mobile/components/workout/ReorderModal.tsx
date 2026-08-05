@@ -1,8 +1,9 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { View, Text, Pressable, ScrollView, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeColors } from "../../hooks/useThemeColors";
 import { useWorkoutActions } from "../../hooks/useWorkoutActions";
+import SwapExerciseModal from "./SwapExerciseModal";
 
 interface ReorderModalProps {
   visible: boolean;
@@ -12,6 +13,11 @@ interface ReorderModalProps {
 export default function ReorderModal({ visible, onClose }: ReorderModalProps) {
   const { workout, reorderExercises } = useWorkoutActions();
   const colors = useThemeColors();
+  // Tracked by id rather than by object so the picker follows the exercise if
+  // the workout changes underneath it.
+  const [swapExerciseId, setSwapExerciseId] = useState<string | null>(null);
+
+  const swapTarget = workout?.exercises.find((e) => e.exerciseId === swapExerciseId) ?? null;
 
   const handleMoveUp = useCallback(
     (index: number) => {
@@ -72,6 +78,12 @@ export default function ReorderModal({ visible, onClose }: ReorderModalProps) {
 
               <View className="flex-row gap-1">
                 <Pressable
+                  onPress={() => setSwapExerciseId(exercise.exerciseId)}
+                  className="h-9 w-9 items-center justify-center rounded-md bg-zinc-200 dark:bg-zinc-700 active:bg-zinc-300 dark:active:bg-zinc-600"
+                >
+                  <Ionicons name="swap-horizontal" size={20} color={colors.secondaryText} />
+                </Pressable>
+                <Pressable
                   onPress={() => handleMoveUp(index)}
                   disabled={index === 0}
                   className="h-9 w-9 items-center justify-center rounded-md bg-zinc-200 dark:bg-zinc-700 active:bg-zinc-300 dark:active:bg-zinc-600"
@@ -99,6 +111,12 @@ export default function ReorderModal({ visible, onClose }: ReorderModalProps) {
             </Text>
           )}
         </ScrollView>
+
+        <SwapExerciseModal
+          visible={swapTarget !== null}
+          exercise={swapTarget}
+          onClose={() => setSwapExerciseId(null)}
+        />
       </View>
     </Modal>
   );
