@@ -26,6 +26,7 @@ import { useThemeColors } from "../../../hooks/useThemeColors";
 import { api } from "../../../lib/api";
 import { clearAllData } from "../../../services/storage";
 import GymManagerModal from "../../../components/settings/GymManagerModal";
+import NumericInput from "../../../components/NumericInput";
 
 // Picker options
 const REST_TIMER_OPTIONS = [30, 60, 90, 120, 180];
@@ -430,16 +431,12 @@ export default function SettingsScreen() {
             <Text className="text-base dark:text-zinc-100">
               Bodyweight ({settings.displayUnit ?? "kg"})
             </Text>
-            <TextInput
+            <NumericInput
               className="w-24 text-right text-base text-zinc-500 dark:text-zinc-400"
-              keyboardType="decimal-pad"
               placeholder="Not set"
               placeholderTextColor={colors.placeholder}
-              value={settings.bodyweight != null ? String(settings.bodyweight) : ""}
-              onChangeText={(text) => {
-                const val = text ? Number(text) : null;
-                updateSettings({ bodyweight: val });
-              }}
+              value={settings.bodyweight}
+              onChangeValue={(bodyweight) => updateSettings({ bodyweight: bodyweight ?? null })}
             />
           </SettingsRow>
         </View>

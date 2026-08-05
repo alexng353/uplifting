@@ -21,6 +21,7 @@ import { useCreateExerciseProfile, useExerciseProfiles } from "../../hooks/useEx
 import { useExerciseNotes, useSetExerciseNote } from "../../hooks/useExerciseNotes";
 import { useGymProfileSuggestion } from "../../hooks/useGymProfileSuggestion";
 import type { StoredSet, StoredWorkoutExercise } from "../../services/storage";
+import NumericInput from "../NumericInput";
 import RestTimer from "./RestTimer";
 
 interface ExerciseSlideProps {
@@ -86,17 +87,12 @@ function SetRow({
         </View>
       )}
       <View className="flex-1">
-        <TextInput
-          keyboardType="numeric"
-          value={set.reps != null ? String(set.reps) : ""}
+        <NumericInput
+          value={set.reps}
           placeholder={String(suggestedReps)}
           placeholderTextColor={colors.placeholder}
           onBlur={onBlur}
-          onChangeText={(text) =>
-            updateSet(exerciseId, set.id, {
-              reps: text ? Number(text) : undefined,
-            })
-          }
+          onChangeValue={(reps) => updateSet(exerciseId, set.id, { reps })}
           className="rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 text-center dark:text-zinc-100"
           style={{ height: INPUT_HEIGHT, fontSize: 16, textAlignVertical: "center" }}
           selectTextOnFocus
@@ -104,17 +100,12 @@ function SetRow({
       </View>
       {isBodyweight && <Text className="text-xs text-zinc-400 dark:text-zinc-500">BW +</Text>}
       <View className="flex-1">
-        <TextInput
-          keyboardType="numeric"
-          value={set.weight != null ? String(set.weight) : ""}
+        <NumericInput
+          value={set.weight}
           placeholder={String(suggestedWeight)}
           placeholderTextColor={colors.placeholder}
           onBlur={onBlur}
-          onChangeText={(text) =>
-            updateSet(exerciseId, set.id, {
-              weight: text ? Number(text) : undefined,
-            })
-          }
+          onChangeValue={(weight) => updateSet(exerciseId, set.id, { weight })}
           className="rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 text-center dark:text-zinc-100"
           style={{ height: INPUT_HEIGHT, fontSize: 16, textAlignVertical: "center" }}
           selectTextOnFocus
