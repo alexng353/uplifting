@@ -240,9 +240,15 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   );
 
   const handleSetBlur = useCallback(() => {
-    if (mode !== "live" || !settings.autoRemoveEmptySet) return;
+    if (mode !== "live" || !settings.autoAddSet || !settings.autoRemoveEmptySet) return;
     trimTrailingEmptySets(exercise.exerciseId, 1);
-  }, [mode, settings.autoRemoveEmptySet, trimTrailingEmptySets, exercise.exerciseId]);
+  }, [
+    mode,
+    settings.autoAddSet,
+    settings.autoRemoveEmptySet,
+    trimTrailingEmptySets,
+    exercise.exerciseId,
+  ]);
 
   const lastSet = exercise.sets[exercise.sets.length - 1];
   const lastRightSet = exercise.isUnilateral
