@@ -130,7 +130,10 @@ export const userSets = pgTable("user_sets", {
     .notNull()
     .references(() => workouts.id),
   profileId: uuid("profile_id").references(() => exerciseProfiles.id),
-  reps: integer().notNull(),
+  // Numeric rather than integer so partial reps (8.5) survive a round trip.
+  // `mode: "number"` keeps this a JS number through Drizzle; raw postgres-js
+  // reads still hand back a string, so those sites coerce at the boundary.
+  reps: decimal({ precision: 10, scale: 2, mode: "number" }).notNull(),
   weight: decimal({ precision: 10, scale: 2 }).notNull(),
   weightUnit: varchar("weight_unit", { length: 3 }).notNull().default("kg"),
   side: varchar({ length: 1 }),

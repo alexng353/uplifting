@@ -57,7 +57,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
       previousSets[key].push({
         exercise_id: row.exercise_id,
         profile_id: row.profile_id,
-        reps: row.reps,
+        reps: Number(row.reps),
         weight: row.weight,
         weight_unit: row.weight_unit,
         side: row.side,
@@ -178,7 +178,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
         previousSets[key].push({
           exercise_id: row.exercise_id,
           profile_id: row.profile_id,
-          reps: row.reps,
+          reps: Number(row.reps),
           weight: row.weight,
           weight_unit: row.weight_unit,
           side: row.side,
