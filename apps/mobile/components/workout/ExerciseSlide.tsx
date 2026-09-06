@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  type TextInputProps,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useWorkoutActions } from "../../hooks/useWorkoutActions";
@@ -38,6 +39,39 @@ const DEFAULT_WEIGHT = 20;
 
 const INPUT_HEIGHT = 36;
 const SIDE_BADGE_HEIGHT = 22;
+
+function SetNumberInput({
+  value,
+  onChangeValue,
+  onBlur,
+  ...props
+}: Omit<TextInputProps, "value" | "onChangeText" | "keyboardType"> & {
+  value?: number;
+  onChangeValue: (value: number | undefined) => void;
+}) {
+  // Keep intermediate text such as "20." while saving numeric values on every edit.
+  const [draft, setDraft] = useState<string | null>(null);
+
+  return (
+    <TextInput
+      {...props}
+      keyboardType="decimal-pad"
+      value={draft ?? (value != null ? String(value) : "")}
+      onChangeText={(text) => {
+        if (!/^\d*(?:[.,]\d*)?$/.test(text)) return;
+        const normalized = text.replace(",", ".");
+        const next = normalized === "" || normalized === "." ? undefined : Number(normalized);
+        if (next != null && !Number.isFinite(next)) return;
+        setDraft(text);
+        onChangeValue(next);
+      }}
+      onBlur={(event) => {
+        setDraft(null);
+        onBlur?.(event);
+      }}
+    />
+  );
+}
 
 function SetRow({
   set,
@@ -86,15 +120,14 @@ function SetRow({
         </View>
       )}
       <View className="flex-1">
-        <TextInput
-          keyboardType="numeric"
-          value={set.reps != null ? String(set.reps) : ""}
+        <SetNumberInput
+          value={set.reps}
           placeholder={String(suggestedReps)}
           placeholderTextColor={colors.placeholder}
           onBlur={onBlur}
-          onChangeText={(text) =>
+          onChangeValue={(reps) =>
             updateSet(exerciseId, set.id, {
-              reps: text ? Number(text) : undefined,
+              reps,
             })
           }
           className="rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 text-center dark:text-zinc-100"
@@ -104,15 +137,14 @@ function SetRow({
       </View>
       {isBodyweight && <Text className="text-xs text-zinc-400 dark:text-zinc-500">BW +</Text>}
       <View className="flex-1">
-        <TextInput
-          keyboardType="numeric"
-          value={set.weight != null ? String(set.weight) : ""}
+        <SetNumberInput
+          value={set.weight}
           placeholder={String(suggestedWeight)}
           placeholderTextColor={colors.placeholder}
           onBlur={onBlur}
-          onChangeText={(text) =>
+          onChangeValue={(weight) =>
             updateSet(exerciseId, set.id, {
-              weight: text ? Number(text) : undefined,
+              weight,
             })
           }
           className="rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 text-center dark:text-zinc-100"
@@ -451,6 +483,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                 <View key={group.setNumber}>
                   {group.rightSet && (
                     <SetRow
+                      key={group.rightSet.id}
                       set={group.rightSet}
                       setNumber={group.setNumber}
                       sideLabel="R"
@@ -467,6 +500,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                   )}
                   {group.leftSet && (
                     <SetRow
+                      key={group.leftSet.id}
                       set={group.leftSet}
                       setNumber={group.setNumber}
                       sideLabel="L"

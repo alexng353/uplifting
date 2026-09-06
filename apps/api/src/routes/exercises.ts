@@ -317,7 +317,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
         ? {
             weight: Number(pr[0].weight),
             weight_unit: pr[0].weight_unit,
-            reps: pr[0].reps,
+            reps: Number(pr[0].reps),
             created_at: new Date(pr[0].created_at).toISOString(),
           }
         : null,
@@ -363,7 +363,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
           });
         }
         workoutMap.get(wid)!.sets.push({
-          reps: r.reps as number,
+          reps: Number(r.reps),
           weight: Number(r.weight),
           weight_unit: r.weight_unit as string,
           side: r.side as string | null,

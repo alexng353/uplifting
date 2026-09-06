@@ -262,18 +262,22 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 
   const addSet = useCallback(
     (exerciseId: string, weightUnit: string, reps?: number, weight?: number, side?: "L" | "R") => {
-      if (!workout) return;
-      saveWorkout(addSetMutation(workout, exerciseId, weightUnit, reps, weight, side));
+      // Auto-add follows updateSet in the same event, before React rerenders.
+      const current = getCurrentWorkout();
+      if (!current) return;
+      saveWorkout(addSetMutation(current, exerciseId, weightUnit, reps, weight, side));
     },
-    [workout, saveWorkout],
+    [saveWorkout],
   );
 
   const addUnilateralPair = useCallback(
     (exerciseId: string, weightUnit: string, reps?: number, weight?: number) => {
-      if (!workout) return;
-      saveWorkout(addUnilateralPairMutation(workout, exerciseId, weightUnit, reps, weight));
+      // Use the synchronous cache so auto-add includes the just-saved edit.
+      const current = getCurrentWorkout();
+      if (!current) return;
+      saveWorkout(addUnilateralPairMutation(current, exerciseId, weightUnit, reps, weight));
     },
-    [workout, saveWorkout],
+    [saveWorkout],
   );
 
   const toggleUnilateral = useCallback(

@@ -13,6 +13,7 @@
     "changelog": "bun scripts/generate-changelog.ts",
     "changelog:dry": "bun scripts/generate-changelog.ts --dry-run",
     "bump": "bun scripts/bump-version.ts",
+    "test:api": "bash scripts/test-api.sh",
     "lint": "bunx oxlint .",
     "fmt": "bunx oxfmt --write .",
     "fmt:check": "bunx oxfmt --check .",

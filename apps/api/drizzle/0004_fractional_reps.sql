@@ -1,0 +1,1 @@
+ALTER TABLE "user_sets" ALTER COLUMN "reps" SET DATA TYPE numeric;
