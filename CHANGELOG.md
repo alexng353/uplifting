@@ -10,6 +10,33 @@ and this project adheres to
 
 _No unreleased changes._
 
+## [1.0.2] - 2026-09-06
+
+### Features
+
+- always-visible profile menu icon on exercise slides
+- search ranking, exercise notes, and edit persistence fixes
+- **mobile:** implement autoAddSet and autoRemoveEmptySet behaviors
+- **scripts:** add -y/--yes flag to testflight to skip prompts
+- preload exercise sequences in bootstrap
+- rotating refresh tokens with 401 reauth interceptor
+- add oxlint, oxfmt, and git hooks
+- add splash screen with light/dark mode support
+- add bun release alias for release:ios
+- add --major/--minor/--patch flags and bun testflight script
+- add changelog generation and release automation
+
+### Bug Fixes
+
+- **mobile:** preserve decimal set entry and fractional reps
+- turn off auto remove empty set when auto add set is disabled
+- address comb review + revert unsafe reps:0 save filter
+- remove workout keyboard done bar
+- **mobile:** render keyboard toolbar via KeyboardStickyView under Fabric
+- **mobile:** dedupe session-expired alert across concurrent 401s
+- **api:** drop unknown current_workout_id from activity heartbeat
+- **api:** run drizzle migrations on container start
+
 ## [1.0.1] - 2026-04-12
 
 ### Features
