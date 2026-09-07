@@ -132,6 +132,7 @@ export interface StoredSettings {
 }
 
 export interface StoredPreviousSets {
+  // Each entry keeps the latest bilateral sets and latest unilateral sets independently.
   [key: string]: StoredSet[]; // key = `${exerciseId}_${profileId || 'default'}`
 }
 
@@ -276,9 +277,14 @@ export function updatePreviousSets(
   profileId: string | null,
   sets: StoredSet[],
 ): void {
+  if (sets.length === 0) return;
   const key = `${exerciseId}_${profileId ?? "default"}`;
   const current = getPreviousSets();
-  current[key] = sets;
+  const updatedModes = new Set(sets.map((set) => set.side != null));
+  current[key] = [
+    ...(current[key] ?? []).filter((set) => !updatedModes.has(set.side != null)),
+    ...sets,
+  ];
   setPreviousSets(current);
 }
 

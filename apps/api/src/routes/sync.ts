@@ -16,7 +16,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
           WITH ranked_sets AS (
               SELECT s.exercise_id, s.profile_id, s.reps, s.weight, s.weight_unit, s.side, s.created_at,
                   DENSE_RANK() OVER (
-                      PARTITION BY s.exercise_id, COALESCE(s.profile_id, '00000000-0000-0000-0000-000000000000')
+                      PARTITION BY s.exercise_id, s.profile_id, (s.side IS NOT NULL)
                       ORDER BY w.end_time DESC
                   ) as workout_rank
               FROM user_sets s JOIN workouts w ON s.workout_id = w.id
@@ -47,7 +47,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
         `,
     ]);
 
-    // Group previous_sets by key: {exercise_id}_{profile_id || 'default'}
+    // Keep the existing key format, with the latest workout's sets for each mode.
     const previousSets: Record<string, Record<string, unknown>[]> = {};
     for (const row of previousSetsRows) {
       const key = `${row.exercise_id}_${row.profile_id ?? "default"}`;
@@ -157,7 +157,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
         WITH ranked_sets AS (
             SELECT s.exercise_id, s.profile_id, s.reps, s.weight, s.weight_unit, s.side, s.created_at,
                 DENSE_RANK() OVER (
-                    PARTITION BY s.exercise_id, COALESCE(s.profile_id, '00000000-0000-0000-0000-000000000000')
+                    PARTITION BY s.exercise_id, s.profile_id, (s.side IS NOT NULL)
                     ORDER BY w.end_time DESC
                 ) as workout_rank
             FROM user_sets s JOIN workouts w ON s.workout_id = w.id

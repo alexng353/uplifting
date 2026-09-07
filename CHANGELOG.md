@@ -8,7 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
-_No unreleased changes._
+### Bug Fixes
+
+- Preserve separate bilateral and unilateral weight suggestions across workouts,
+  offline saves, and sync.
 
 ## [1.0.2] - 2026-09-06
 
