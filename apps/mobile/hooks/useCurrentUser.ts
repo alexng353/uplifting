@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../lib/api";
+import { api, unwrap } from "../lib/api";
 import { useAuth } from "./useAuth";
 
 export function useCurrentUser() {
@@ -8,11 +8,7 @@ export function useCurrentUser() {
   return useQuery({
     queryKey: ["currentUser"],
     queryFn: async () => {
-      const { data, error } = await api.api.v1.users.me.get();
-      if (error || !data) {
-        throw new Error("Failed to fetch user profile");
-      }
-      return data;
+      return unwrap(await api.api.v1.users.me.get());
     },
     enabled: isAuthenticated,
   });

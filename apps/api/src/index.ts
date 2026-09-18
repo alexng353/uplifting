@@ -11,6 +11,9 @@ import { gymRoutes } from "./routes/gyms";
 import { muscleRoutes } from "./routes/muscles";
 import { syncRoutes } from "./routes/sync";
 
+import { exerciseAgentRoutes, exerciseAgentService } from "./routes/exercise-agent";
+import { startExerciseWorker } from "./exercise-agent/worker";
+
 const app = new Elysia()
   .use(logger)
   .use(
@@ -32,9 +35,29 @@ const app = new Elysia()
       .use(userRoutes)
       .use(gymRoutes)
       .use(muscleRoutes)
-      .use(syncRoutes),
+      .use(syncRoutes)
+      .use(exerciseAgentRoutes),
   )
-  .listen(Number(process.env.PORT) || 8080);
+  .listen(Number(process.env.PORT ?? 8080));
+
+const stopExerciseWorker = startExerciseWorker(exerciseAgentService);
+let shuttingDown = false;
+async function shutdown() {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  stopExerciseWorker();
+  const deadline = setTimeout(() => process.exit(1), 10000);
+  deadline.unref();
+  await app.stop(true);
+  await exerciseAgentService.sql.end({ timeout: 5 });
+  process.exit(0);
+}
+process.on("SIGTERM", () => {
+  void shutdown();
+});
+process.on("SIGINT", () => {
+  void shutdown();
+});
 
 console.log(`Listening on http://0.0.0.0:${app.server?.port}`);
 

@@ -1,3 +1,4 @@
+import { useCurrentUser } from "../../../hooks/useCurrentUser";
 import { useCallback, useState } from "react";
 import {
   View,
@@ -133,6 +134,7 @@ function PickerRow({
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { data: currentUser } = useCurrentUser();
   const { logout, isAuthenticated } = useAuth();
   const { settings, updateSettings } = useSettings();
   const { data: user, refetch: refetchUser } = useMe(isAuthenticated);
@@ -549,6 +551,16 @@ export default function SettingsScreen() {
           </SettingsRow>
         </View>
 
+        {currentUser?.is_admin && (
+          <>
+            <SectionHeader>Administration</SectionHeader>
+            <View className="bg-white dark:bg-zinc-800 rounded-xl overflow-hidden">
+              <SettingsRow onPress={() => router.push("/(tabs)/settings/exercise-agent")} last>
+                <Text className="text-base dark:text-zinc-100">Exercise drafts</Text>
+              </SettingsRow>
+            </View>
+          </>
+        )}
         {/* Profile / Account */}
         <SectionHeader>Account</SectionHeader>
         <View className="overflow-hidden rounded-xl mx-4">

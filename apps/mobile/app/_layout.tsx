@@ -1,4 +1,5 @@
 import "../global.css";
+import { ExerciseAgentNotifications } from "../components/ExerciseAgentNotifications";
 import { Slot, useRouter, useSegments } from "expo-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -61,6 +62,7 @@ function AuthGate() {
   return (
     <>
       <ActivityTracker />
+      <ExerciseAgentNotifications />
       <Slot />
     </>
   );

@@ -1,5 +1,6 @@
 import {
   pgTable,
+  jsonb,
   pgEnum,
   uuid,
   varchar,
@@ -330,4 +331,53 @@ export const userGymProfileMappings = pgTable(
     unique().on(t.userId, t.gymId, t.exerciseId),
     index("idx_gym_profile_mappings_user_gym").on(t.userId, t.gymId),
   ],
+);
+
+export const exerciseAgentSessions = pgTable(
+  "exercise_agent_sessions",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: varchar({ length: 30 }).notNull().default("queued"),
+    revision: integer().notNull().default(1),
+    messages: jsonb().notNull().default([]),
+    draft: jsonb(),
+    error: text(),
+    exerciseId: uuid("exercise_id").references(() => exercises.id),
+    leaseToken: uuid("lease_token"),
+    leaseUntil: timestamp("lease_until", { withTimezone: true }),
+    attempts: integer().notNull().default(0),
+    availableAt: timestamp("available_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("exercise_agent_owner_idx").on(t.userId, t.createdAt),
+    index("exercise_agent_queue_idx").on(t.status, t.availableAt),
+  ],
+);
+
+export const exerciseAgentPushTokens = pgTable("exercise_agent_push_tokens", {
+  token: text().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const exerciseAgentNotifications = pgTable(
+  "exercise_agent_notifications",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => exerciseAgentSessions.id, { onDelete: "cascade" }),
+    revision: integer().notNull(),
+    attempts: integer().notNull().default(0),
+    availableAt: timestamp("available_at", { withTimezone: true }).notNull().defaultNow(),
+    deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+  },
+  (t) => [unique("exercise_agent_notification_revision").on(t.sessionId, t.revision)],
 );

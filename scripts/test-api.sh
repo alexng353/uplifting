@@ -15,4 +15,7 @@ trap cleanup EXIT
 initdb -D "$test_pg_dir/data" -A trust --no-locale --encoding=UTF8 >/dev/null
 pg_ctl -D "$test_pg_dir/data" -l "$test_pg_dir/server.log" \
   -o "-k $test_pg_dir -c listen_addresses=" -w start >/dev/null
-UPLIFTING_TEST_PG_SOCKET="$test_pg_dir" bun test apps/api/tests
+# Bun module mocks are process-global; each API suite owns its database and imports.
+for test_file in apps/api/tests/*.test.ts; do
+  UPLIFTING_TEST_PG_SOCKET="$test_pg_dir" bun test "$test_file"
+done

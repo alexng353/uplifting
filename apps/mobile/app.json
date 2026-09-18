@@ -54,7 +54,8 @@
           "locationWhenInUsePermission": "Allow Uplifting to use your location to detect nearby gyms."
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-notifications"
     ],
     "extra": {
       "router": {},

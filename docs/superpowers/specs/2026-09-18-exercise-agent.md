@@ -1,0 +1,6 @@
+# Admin exercise drafts
+
+Approved in conversation on 2026-09-18. App and external MCP clients share one authenticated admin-only draft workflow. Creating a session queues generation; no exercise is published until the requesting admin approves an exact revision. Follow-ups preserve history and queue another revision. Cancel prevents late results. Sessions and jobs survive API restarts through Postgres leases. Existing official exercises provide evaluation targets and a controlled vocabulary. OpenRouter credentials stay server-side. Default candidate is openai/gpt-5.6-luna, subject to measured evaluation; web search is off initially.
+Mobile admins can enter a name, leave the screen, receive a push notification, inspect every proposed exercise field, follow up, approve or cancel. In-app persisted status remains available without notification permission.
+MCP uses a stdio adapter with a separately supplied existing admin access token, forwarding to the same HTTP routes and therefore rechecking current admin status. It exposes start/list/get/follow-up/approve/cancel. Approval always requires a revision argument.
+No deployment, shared-branch push or production migration is authorized by this implementation. Live eval calls are authorized once the user's OR credential location is supplied.
