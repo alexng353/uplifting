@@ -11,23 +11,44 @@ import { authPlugin } from "../lib/auth";
  * or finished; the gate reads them, with finished workouts, through /gate/feed.
  *
  * GATE_FEED_USER_ID names the enrolled account and GATE_FEED_TOKEN_SHA256 the
- * gate's read-only token. With either unset or malformed the feature is off:
- * check-ins are accepted and dropped, and the feed answers 401.
+ * gate's read-only token. Both must be set and well formed, or the feature is
+ * off: nobody is enrolled, check-ins are accepted and dropped, and the feed
+ * answers 401.
  */
 
 const DAY_MS = 86_400_000;
 const DEFAULT_LOOKBACK_MS = 14 * DAY_MS;
 /** How far back the feed answers, and how long check-ins are kept. */
 const RETENTION_MS = 60 * DAY_MS;
-/** A check-in's time must fall in [now - 7 d, now + 5 min]; the first report is kept forever. */
+/** Accept check-ins from 7 days ago to 5 minutes ahead; a retry keeps the first report until retention deletes it. */
 const MAX_AGE_MS = 7 * DAY_MS;
 const MAX_FUTURE_MS = 5 * 60_000;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** The enrolled account, or null when the feature is off. */
+function tokenHash(): string | null {
+  const hash = process.env.GATE_FEED_TOKEN_SHA256?.trim().toLowerCase();
+  return hash && /^[0-9a-f]{64}$/.test(hash) ? hash : null;
+}
+
+/**
+ * The enrolled account, or null when the feature is off: both settings must
+ * be present and well formed, or no location is collected at all.
+ */
 export function gateUserId(): string | null {
-  const user = process.env.GATE_FEED_USER_ID?.trim();
-  return user && UUID.test(user) ? user : null;
+  // Lowercase: Postgres and the JWT `sub` print uuids in lowercase, and the
+  // check-in route compares strings.
+  const user = process.env.GATE_FEED_USER_ID?.trim().toLowerCase();
+  return user && UUID.test(user) && tokenHash() ? user : null;
+}
+
+/**
+ * Retention for every account, run on every check-in and every feed read, so
+ * old rows go even after enrollment changes.
+ */
+async function deleteExpired(now: number): Promise<void> {
+  await sql`
+    DELETE FROM gym_checkins WHERE at < ${new Date(now - RETENTION_MS).toISOString()}::timestamptz
+  `;
 }
 
 export const gateCheckinRoutes = new Elysia({ prefix: "/gate" })
@@ -36,14 +57,24 @@ export const gateCheckinRoutes = new Elysia({ prefix: "/gate" })
   .post(
     "/checkins",
     async ({ userId, body, set }) => {
-      const at = Date.parse(body.at);
+      const tapped = Date.parse(body.at);
       const now = Date.now();
-      if (Number.isNaN(at) || at < now - MAX_AGE_MS || at > now + MAX_FUTURE_MS) {
+      if (Number.isNaN(tapped) || tapped < now - MAX_AGE_MS) {
         set.status = 400;
         return { error: "at must be an ISO time within the last 7 days" };
       }
-      // Only the enrolled account's locations are kept; anyone else's are dropped unstored.
-      if (userId !== gateUserId()) return { ok: true, stored: false };
+      // A phone clock running fast is clamped, not refused: the phone drops a 400.
+      const at = Math.min(tapped, now + MAX_FUTURE_MS);
+      await deleteExpired(now);
+      // Unconfigured (or misconfigured) is temporary: 503 makes the phone keep
+      // the check-in and retry, so fixing the config loses nothing. Another
+      // account's check-ins are dropped unstored.
+      const enrolled = gateUserId();
+      if (!enrolled) {
+        set.status = 503;
+        return { error: "gym check-ins are not configured" };
+      }
+      if (userId !== enrolled) return { ok: true, stored: false };
       const located = body.latitude != null && body.longitude != null;
       await db
         .insert(gymCheckins)
@@ -57,11 +88,6 @@ export const gateCheckinRoutes = new Elysia({ prefix: "/gate" })
           accuracyM: body.accuracy_m ?? null,
         })
         .onConflictDoNothing();
-      // Retention: nothing reads check-ins older than the feed's window.
-      await sql`
-        DELETE FROM gym_checkins
-        WHERE user_id = ${userId} AND at < ${new Date(now - RETENTION_MS).toISOString()}::timestamptz
-      `;
       return { ok: true, stored: true };
     },
     {
@@ -77,9 +103,9 @@ export const gateCheckinRoutes = new Elysia({ prefix: "/gate" })
   );
 
 function feedAuthorized(authorization: string | undefined): boolean {
-  const hash = process.env.GATE_FEED_TOKEN_SHA256?.trim().toLowerCase();
+  const hash = tokenHash();
   const token = /^Bearer\s+(.+)$/i.exec(authorization ?? "")?.[1]?.trim();
-  if (!hash || !token || !/^[0-9a-f]{64}$/.test(hash)) return false;
+  if (!hash || !token) return false;
   const given = createHash("sha256").update(token).digest();
   return timingSafeEqual(given, Buffer.from(hash, "hex"));
 }
@@ -105,6 +131,7 @@ export const gateFeedRoutes = new Elysia({ prefix: "/gate" }).get(
       set.status = 503;
       return { error: "gate feed misconfigured: GATE_FEED_USER_ID is not a user" };
     }
+    await deleteExpired(now);
     // postgres.js won't bind a Date here; send ISO text with an explicit cast.
     const from = new Date(Math.max(asked, now - RETENTION_MS)).toISOString();
     const [checkins, workouts] = await Promise.all([

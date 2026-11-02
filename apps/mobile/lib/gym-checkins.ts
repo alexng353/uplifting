@@ -23,8 +23,10 @@ export type GymCheckin = {
 export type QueuedCheckin = GymCheckin & {
   /** The enrolled user it belongs to; it is never sent under another account. */
   user: string;
-  /** Phone time it was queued; a fix that never arrived is given up after LOCATE_GRACE_MS. */
+  /** Phone time it was queued. */
   queued_at: number;
+  /** Which app launch queued it. A lookup left running by an earlier launch will never finish. */
+  launch?: string;
   locating: boolean;
 };
 
@@ -41,12 +43,13 @@ export type CheckinDeps = {
   locate: () => Promise<Fix | null>;
   send: (checkin: GymCheckin) => Promise<SendOutcome>;
   now: () => number;
+  /** This app launch's id. */
+  launch: string;
 };
 
 /** Keep the newest 50; past that the oldest are dropped unsent. */
 const MAX_QUEUE = 50;
 /** A check-in whose fix hasn't arrived after this long (the app was killed meanwhile) is sent without one. */
-export const LOCATE_GRACE_MS = 60_000;
 
 /** What a server answer means for the queue; null status is success. 400/422 are malformed: a retry can't fix them. */
 export function outcomeForStatus(status: number | null): SendOutcome {
@@ -81,6 +84,7 @@ export async function recordCheckin(
     accuracy_m: null,
     user,
     queued_at: deps.now(),
+    launch: deps.launch,
     locating: true,
   });
   deps.save(queue.slice(-MAX_QUEUE));
@@ -104,28 +108,35 @@ export async function recordCheckin(
 let flushing = false;
 
 /**
- * Sends queued check-ins oldest first, skipping ones still waiting for their
- * fix. Entries from another account are dropped. Stops at the first send to
- * retry and keeps it and the rest. A call during a running flush returns at
- * once; the running loop re-reads the queue each pass.
+ * Sends queued check-ins oldest first. One whose lookup is still running in
+ * this launch waits for it, however long iOS suspended the app; one left
+ * locating by an earlier launch (the app was killed) goes without a fix.
+ * Entries from a different enrolled account are dropped; with no enrollment
+ * known right now nothing is sent and nothing is deleted. Stops at the first
+ * send to retry and keeps it and the rest. A call during a running flush
+ * returns at once; the running loop re-reads the queue each pass.
  */
 export async function flushCheckins(deps: CheckinDeps): Promise<void> {
   if (flushing) return;
   flushing = true;
   try {
     const user = deps.enrolledUser();
+    if (!user) return;
     const all = deps.load();
     const theirs = all.filter((c) => c.user === user);
     if (theirs.length !== all.length) deps.save(theirs);
-    if (!user) return;
     for (;;) {
       const next = deps
         .load()
-        .find(
-          (c) => c.user === user && (!c.locating || deps.now() - c.queued_at >= LOCATE_GRACE_MS),
-        );
+        .find((c) => c.user === user && (!c.locating || c.launch !== deps.launch));
       if (!next) return;
-      const { user: _user, queued_at: _queued, locating: _locating, ...payload } = next;
+      const {
+        user: _user,
+        queued_at: _queued,
+        launch: _launch,
+        locating: _locating,
+        ...payload
+      } = next;
       const outcome = await deps.send(payload).catch((): SendOutcome => "retry");
       if (outcome === "retry") return;
       deps.save(deps.load().filter((c) => !same(c, next)));

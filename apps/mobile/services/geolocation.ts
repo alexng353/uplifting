@@ -70,7 +70,8 @@ export async function getFixForCheckin(): Promise<Fix | null> {
     if (status !== Location.PermissionStatus.GRANTED) return null;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const position = await Promise.race([
-      Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }),
+      // iOS rejects when no fix is available; fall through to the last-known one.
+      Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }).catch(() => null),
       new Promise<null>((resolve) => {
         timer = setTimeout(() => resolve(null), FIX_TIMEOUT_MS);
       }),
@@ -89,7 +90,8 @@ export async function getFixForCheckin(): Promise<Fix | null> {
 }
 
 const FIX_TIMEOUT_MS = 15_000;
-const LAST_KNOWN_MAX_AGE_MS = 2 * 60_000;
+/** Short, so a fix from the drive over or the walk out can't stand in for the tap. */
+const LAST_KNOWN_MAX_AGE_MS = 30_000;
 
 export function haversineDistance(a: Coordinates, b: Coordinates): number {
   const R = 6371000; // Earth radius in meters

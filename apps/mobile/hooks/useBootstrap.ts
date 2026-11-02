@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { applyBootstrapData, fetchBootstrapData } from "../services/bootstrap";
 import { detectAndSetNearbyGym } from "../services/geolocation";
+import { useAuth } from "./useAuth";
 
 interface BootstrapState {
   isBootstrapped: boolean;
@@ -9,6 +10,7 @@ interface BootstrapState {
 }
 
 export function useBootstrap() {
+  const { isAuthenticated } = useAuth();
   const [state, setState] = useState<BootstrapState>({
     isBootstrapped: false,
     isLoading: true,
@@ -16,7 +18,14 @@ export function useBootstrap() {
   });
 
   useEffect(() => {
+    // Each signed-in session bootstraps; signing out or in again re-runs it,
+    // and a stale response from the previous session is ignored.
+    if (!isAuthenticated) {
+      setState({ isBootstrapped: false, isLoading: false, error: null });
+      return;
+    }
     let cancelled = false;
+    setState({ isBootstrapped: false, isLoading: true, error: null });
 
     async function bootstrap() {
       try {
@@ -50,7 +59,7 @@ export function useBootstrap() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isAuthenticated]);
 
   return state;
 }

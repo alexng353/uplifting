@@ -1,6 +1,5 @@
 import { beforeEach, expect, test } from "bun:test";
 import {
-  LOCATE_GRACE_MS,
   flushCheckins,
   outcomeForStatus,
   recordCheckin,
@@ -31,6 +30,7 @@ const deps: CheckinDeps = {
     return "done";
   },
   now: () => clock,
+  launch: "launch-now",
 };
 
 beforeEach(() => {
@@ -91,14 +91,65 @@ test("the check-in is queued before the fix arrives, and waits for it", async ()
   expect(sent).toMatchObject([{ kind: "finish", latitude: 49.26346 }]);
 });
 
-test("a fix that never came (app killed) is sent without one after the grace", async () => {
-  locate = () => new Promise(() => {});
-  void recordCheckin(deps, "w1", "start", "2026-11-05T02:00:00.000Z");
+test("a lookup still running in this launch is never sent without its fix, however long the app slept", async () => {
+  let resolveFix!: (f: Fix | null) => void;
+  locate = () => new Promise((r) => (resolveFix = r));
+  const recording = recordCheckin(deps, "w1", "start", "2026-11-05T02:00:00.000Z");
+  // iOS suspended the app for 3 hours; the overdue heartbeat flushes first on resume.
+  clock += 3 * 3_600_000;
   await flushCheckins(deps);
   expect(sent).toEqual([]);
-  clock += LOCATE_GRACE_MS;
+  resolveFix(GOLDS);
+  await recording;
+  expect(sent).toMatchObject([{ kind: "start", latitude: 49.26346 }]);
+});
+
+test("a check-in left locating by an earlier launch (app killed) is sent at once without a fix", async () => {
+  queue = [
+    {
+      client_workout_id: "w1",
+      kind: "start",
+      at: "2026-11-05T02:00:00.000Z",
+      latitude: null,
+      longitude: null,
+      accuracy_m: null,
+      user: "alex",
+      queued_at: clock,
+      launch: "launch-before",
+      locating: true,
+    },
+  ];
   await flushCheckins(deps);
-  expect(sent).toMatchObject([{ kind: "start", latitude: null }]);
+  expect(sent).toEqual([
+    {
+      client_workout_id: "w1",
+      kind: "start",
+      at: "2026-11-05T02:00:00.000Z",
+      latitude: null,
+      longitude: null,
+      accuracy_m: null,
+    },
+  ]);
+});
+
+test("a queue cleared during the lookup stays cleared, even for the same account", async () => {
+  let resolveFix!: (f: Fix | null) => void;
+  locate = () => new Promise((r) => (resolveFix = r));
+  const recording = recordCheckin(deps, "w1", "start", "2026-11-05T02:00:00.000Z");
+  queue = [];
+  resolveFix(GOLDS);
+  await recording;
+  expect({ queue, sent }).toEqual({ queue: [], sent: [] });
+});
+
+test("with no enrollment known, the queue is kept untouched and nothing is sent", async () => {
+  online = false;
+  await recordCheckin(deps, "w1", "start", "2026-11-05T02:00:00.000Z");
+  online = true;
+  user = null;
+  await flushCheckins(deps);
+  expect(sent).toEqual([]);
+  expect(queue).toHaveLength(1);
 });
 
 test("a logout during the lookup drops the check-in; another account never sends it", async () => {

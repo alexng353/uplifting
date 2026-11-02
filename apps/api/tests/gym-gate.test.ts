@@ -154,9 +154,6 @@ describe.skipIf(!socket)("gym gate", () => {
     expect(
       (await checkin({ client_workout_id: "c2", kind: "start", at: ago(24 * 8) })).status,
     ).toBe(400);
-    expect((await checkin({ client_workout_id: "c2", kind: "start", at: ago(-1) })).status).toBe(
-      400,
-    );
     expect(
       (
         await checkin({
@@ -200,10 +197,12 @@ describe.skipIf(!socket)("gym gate", () => {
         ...(side ? { side } : {}),
       }));
     // Three one-sided pairs plus two bilateral sets: five sets, not eight.
+    const startTime = ago(2);
+    const endTime = ago(1);
     const synced = await syncWorkout({
       client_id: "c1",
-      start_time: ago(2),
-      end_time: ago(1),
+      start_time: startTime,
+      end_time: endTime,
       exercises: [
         {
           exercise_id: exerciseId,
@@ -234,21 +233,87 @@ describe.skipIf(!socket)("gym gate", () => {
     const ids = body.workouts.map((w: any) => w.client_id);
     expect(ids).toContain("c1");
     expect(ids).not.toContain("o1");
-    expect(body.workouts.find((w: any) => w.client_id === "c1")).toMatchObject({
+    expect(body.workouts.find((w: any) => w.client_id === "c1")).toEqual({
       id: synced.body.workout_id,
+      client_id: "c1",
+      start_time: startTime,
+      end_time: endTime,
       kind: "workout",
       set_count: 5,
     });
   });
 
-  test("old check-ins are deleted on the next insert", async () => {
+  test("check-ins past 60 days are deleted for every account on the next insert; younger ones stay", async () => {
     await sql`INSERT INTO gym_checkins (user_id, client_workout_id, kind, at) VALUES (${alex}, 'older', 'start', ${ago(24 * 61)}::timestamptz)`;
+    await sql`INSERT INTO gym_checkins (user_id, client_workout_id, kind, at) VALUES (${other}, 'other-old', 'start', ${ago(24 * 61)}::timestamptz)`;
+    await sql`INSERT INTO gym_checkins (user_id, client_workout_id, kind, at) VALUES (${alex}, 'mid', 'start', ${ago(24 * 30)}::timestamptz)`;
     await checkin({ client_workout_id: "c3", kind: "start", at: ago(1) });
     expect(
       (
-        await sql`SELECT count(*)::int AS n FROM gym_checkins WHERE client_workout_id IN ('old', 'older')`
+        await sql`SELECT count(*)::int AS n FROM gym_checkins WHERE client_workout_id IN ('old', 'older', 'other-old')`
       )[0].n,
     ).toBe(0);
+    const { body } = await feed(ago(24 * 90));
+    expect(body.checkins.map((c: any) => c.client_workout_id)).toContain("mid");
+  });
+
+  test("a feed read also deletes expired check-ins", async () => {
+    await sql`INSERT INTO gym_checkins (user_id, client_workout_id, kind, at) VALUES (${other}, 'stale', 'start', ${ago(24 * 61)}::timestamptz)`;
+    expect((await feed()).status).toBe(200);
+    expect(
+      (await sql`SELECT count(*)::int AS n FROM gym_checkins WHERE client_workout_id = 'stale'`)[0]
+        .n,
+    ).toBe(0);
+  });
+
+  test("a phone clock running fast is clamped, not refused", async () => {
+    const r = await checkin({ client_workout_id: "fast", kind: "start", at: ago(-2) });
+    expect(r.body).toEqual({ ok: true, stored: true });
+    const [row] = await sql`SELECT at FROM gym_checkins WHERE client_workout_id = 'fast'`;
+    expect(new Date(row.at).getTime()).toBeLessThanOrEqual(Date.now() + 5 * 60_000);
+  });
+
+  test("concurrent first syncs with one client_id all succeed with one workout", async () => {
+    const body = { client_id: "race-1", start_time: ago(5), end_time: ago(4) };
+    const replies = await Promise.all([syncWorkout(body), syncWorkout(body), syncWorkout(body)]);
+    expect(replies.map((r) => r.status)).toEqual([200, 200, 200]);
+    expect(new Set(replies.map((r) => r.body.workout_id)).size).toBe(1);
+    expect(
+      (await sql`SELECT count(*)::int AS n FROM workouts WHERE client_id = 'race-1'`)[0].n,
+    ).toBe(1);
+    expect((await syncWorkout({ ...body, client_id: "" })).status).toBe(422);
+  });
+
+  test("an uppercase GATE_FEED_USER_ID still enrolls the account", async () => {
+    const saved = process.env.GATE_FEED_USER_ID;
+    try {
+      process.env.GATE_FEED_USER_ID = alex.toUpperCase();
+      expect((await call("/sync/bootstrap")).body.gym_checkins_user_id).toBe(alex);
+      expect(
+        (await checkin({ client_workout_id: "upper", kind: "start", at: ago(1) })).body.stored,
+      ).toBe(true);
+    } finally {
+      process.env.GATE_FEED_USER_ID = saved;
+    }
+  });
+
+  test("without the token hash nobody is enrolled and nothing is stored", async () => {
+    const saved = process.env.GATE_FEED_TOKEN_SHA256;
+    try {
+      delete process.env.GATE_FEED_TOKEN_SHA256;
+      expect((await call("/sync/bootstrap")).body.gym_checkins_user_id).toBeNull();
+      // 503, not a 200 drop: the phone keeps the check-in until the config is fixed.
+      expect(
+        (await checkin({ client_workout_id: "nohash", kind: "start", at: ago(1) })).status,
+      ).toBe(503);
+      expect(
+        (
+          await sql`SELECT count(*)::int AS n FROM gym_checkins WHERE client_workout_id = 'nohash'`
+        )[0].n,
+      ).toBe(0);
+    } finally {
+      process.env.GATE_FEED_TOKEN_SHA256 = saved;
+    }
   });
 
   test("a feed user that isn't a user answers 503; unset or malformed turns the feed off", async () => {

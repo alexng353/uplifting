@@ -1,4 +1,5 @@
 import { Elysia, t } from "elysia";
+import { sql as dsql } from "drizzle-orm";
 import { db, sql } from "../db";
 import { workouts, userSets } from "../db/schema";
 import { authPlugin } from "../lib/auth";
@@ -111,30 +112,30 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
         }
       }
 
-      // A retry after a lost response must not create a second copy: the
-      // phone's id is unique per user (gym check-ins match on it).
-      if (body.client_id) {
-        const existing = await sql`
-          SELECT id FROM workouts WHERE user_id = ${userId} AND client_id = ${body.client_id} LIMIT 1
-        `;
-        if (existing.length > 0) return { workout_id: existing[0].id, previous_sets: {} };
-      }
-
       const workoutId = await db.transaction(async (tx) => {
-        // 1. Create the workout
-        const [workout] = await tx
-          .insert(workouts)
-          .values({
-            userId,
-            name: body.name,
-            startTime: new Date(body.start_time),
-            endTime: new Date(body.end_time),
-            privacy: body.privacy ?? "friends",
-            gymLocation: body.gym_location,
-            kind: body.kind ?? "workout",
-            clientId: body.client_id,
-          })
-          .returning({ id: workouts.id });
+        // 1. Create the workout. A retry after a lost response (even one racing
+        // the first) must not create a second copy: the phone's id is unique
+        // per user, and gym check-ins match on it. The conflict is resolved by
+        // the database, so the loser waits for the winner and inserts nothing.
+        const insert = tx.insert(workouts).values({
+          userId,
+          name: body.name,
+          startTime: new Date(body.start_time),
+          endTime: new Date(body.end_time),
+          privacy: body.privacy ?? "friends",
+          gymLocation: body.gym_location,
+          kind: body.kind ?? "workout",
+          clientId: body.client_id,
+        });
+        const [workout] = await (
+          body.client_id
+            ? insert.onConflictDoNothing({
+                target: [workouts.userId, workouts.clientId],
+                where: dsql`client_id IS NOT NULL`,
+              })
+            : insert
+        ).returning({ id: workouts.id });
+        if (!workout) return null;
 
         // 2. Insert all sets. `position` is the exercise's index in the
         // submitted order so exercise order is preserved independently of
@@ -159,6 +160,13 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
 
         return workout.id;
       });
+
+      if (workoutId === null) {
+        const [existing] = await sql`
+          SELECT id FROM workouts WHERE user_id = ${userId} AND client_id = ${body.client_id!} LIMIT 1
+        `;
+        return { workout_id: existing.id as string, previous_sets: {} };
+      }
 
       // Fetch updated previous_sets for exercises in this workout
       const exerciseIds = body.exercises.map((e) => e.exercise_id);
@@ -211,7 +219,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
         privacy: t.Optional(t.String()),
         gym_location: t.Optional(t.String()),
         kind: t.Optional(t.String()),
-        client_id: t.Optional(t.String({ maxLength: 64 })),
+        client_id: t.Optional(t.String({ minLength: 1, maxLength: 64 })),
         exercises: t.Array(
           t.Object({
             exercise_id: t.String(),
