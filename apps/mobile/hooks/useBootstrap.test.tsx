@@ -50,7 +50,9 @@ test("signing in never draws the app before bootstrap finishes", async () => {
   expect(drawn.length).toBeGreaterThan(0);
   expect(drawn.every((d) => d === "spinner")).toBe(true);
 
-  await act(() => finishBootstrap());
+  await act(async () => {
+    finishBootstrap();
+  });
   expect(drawn.at(-1)).toBe("app");
 });
 
@@ -59,7 +61,9 @@ test("signing in again after a sign-out shows the spinner, not the old session's
   await act(() => {
     renderer = create(<Gate />);
   });
-  await act(() => finishBootstrap());
+  await act(async () => {
+    finishBootstrap();
+  });
   expect(drawn.at(-1)).toBe("app");
 
   signedIn = false;
