@@ -2,6 +2,7 @@ import { Elysia, t } from "elysia";
 import { db, sql } from "../db";
 import { workouts, userSets } from "../db/schema";
 import { authPlugin } from "../lib/auth";
+import { gateUserId } from "./gate";
 
 export const syncRoutes = new Elysia({ prefix: "/sync" })
   .use(authPlugin)
@@ -86,6 +87,8 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
       gym_profile_mappings: gymProfileMappings,
       previous_sets: previousSets,
       exercise_sequences: exerciseSequences,
+      // Only the account enrolled in gym check-ins (routes/gate.ts) gets its id here.
+      gym_checkins_user_id: userId === gateUserId() ? userId : null,
     };
   })
 
@@ -106,6 +109,15 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
         if (existing.length > 0) {
           return { workout_id: existing[0].id, previous_sets: {} };
         }
+      }
+
+      // A retry after a lost response must not create a second copy: the
+      // phone's id is unique per user (gym check-ins match on it).
+      if (body.client_id) {
+        const existing = await sql`
+          SELECT id FROM workouts WHERE user_id = ${userId} AND client_id = ${body.client_id} LIMIT 1
+        `;
+        if (existing.length > 0) return { workout_id: existing[0].id, previous_sets: {} };
       }
 
       const workoutId = await db.transaction(async (tx) => {

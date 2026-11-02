@@ -13,4 +13,5 @@ CREATE TABLE "gym_checkins" (
 --> statement-breakpoint
 ALTER TABLE "workouts" ADD COLUMN "client_id" varchar(64);--> statement-breakpoint
 ALTER TABLE "gym_checkins" ADD CONSTRAINT "gym_checkins_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-CREATE INDEX "idx_gym_checkins_user_at" ON "gym_checkins" USING btree ("user_id","at");
+CREATE INDEX "idx_gym_checkins_user_at" ON "gym_checkins" USING btree ("user_id","at");--> statement-breakpoint
+CREATE UNIQUE INDEX "uq_workouts_user_client_id" ON "workouts" USING btree ("user_id","client_id") WHERE client_id IS NOT NULL;

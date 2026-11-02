@@ -1,12 +1,15 @@
 /**
- * Gym check-ins: where the phone was when a workout started or finished.
- * Alex's hygiene gate reads them to see that he started at the gym on time,
- * before the finished workout syncs. They queue on the phone and are retried
- * until the server takes them, so a gym with no signal only delays them.
+ * Gym check-ins: where the phone was when a workout started or finished, for
+ * the one account the server enrolls (Alex's hygiene gate,
+ * alexng353/claude-codex-proxy src/gym.ts). The gate needs a Start before the
+ * finished workout syncs, so each check-in is queued the moment it is tapped,
+ * located afterwards, and sent when the network allows.
  *
- * Pure: storage, location and the network are passed in, so it is testable
- * without React Native.
+ * Storage, location and the network are injected so this runs under bun test
+ * without React Native. One module-level flag stops flushes from overlapping.
  */
+
+/** What the server takes (apps/api/src/routes/gate.ts). */
 export type GymCheckin = {
   client_workout_id: string;
   kind: "start" | "finish";
@@ -16,73 +19,118 @@ export type GymCheckin = {
   accuracy_m: number | null;
 };
 
-export type Fix = { latitude: number; longitude: number; accuracy: number | null };
-
-export type CheckinDeps = {
-  load: () => GymCheckin[];
-  save: (queue: GymCheckin[]) => void;
-  locate: () => Promise<Fix | null>;
-  /** Resolves when the server stored it; throws on network or server errors. */
-  send: (checkin: GymCheckin) => Promise<"stored" | "rejected">;
+/** A queued check-in: the payload plus who recorded it and whether its fix is still coming. */
+export type QueuedCheckin = GymCheckin & {
+  /** The enrolled user it belongs to; it is never sent under another account. */
+  user: string;
+  /** Phone time it was queued; a fix that never arrived is given up after LOCATE_GRACE_MS. */
+  queued_at: number;
+  locating: boolean;
 };
 
-/** Old check-ins are dropped rather than retried forever. */
-const MAX_QUEUE = 50;
+export type Fix = { latitude: number; longitude: number; accuracy: number | null };
 
-/** Records one check-in with the current location (null when there's no fix), then tries to send. */
+/** How a send ended: `done` leaves the queue (stored, or malformed so a retry can't help); `retry` keeps it. */
+export type SendOutcome = "done" | "retry";
+
+export type CheckinDeps = {
+  load: () => QueuedCheckin[];
+  save: (queue: QueuedCheckin[]) => void;
+  /** The account enrolled for check-ins on this phone, or null. */
+  enrolledUser: () => string | null;
+  locate: () => Promise<Fix | null>;
+  send: (checkin: GymCheckin) => Promise<SendOutcome>;
+  now: () => number;
+};
+
+/** Keep the newest 50; past that the oldest are dropped unsent. */
+const MAX_QUEUE = 50;
+/** A check-in whose fix hasn't arrived after this long (the app was killed meanwhile) is sent without one. */
+export const LOCATE_GRACE_MS = 60_000;
+
+/** What a server answer means for the queue; null status is success. 400/422 are malformed: a retry can't fix them. */
+export function outcomeForStatus(status: number | null): SendOutcome {
+  if (status === null) return "done";
+  return status === 400 || status === 422 ? "done" : "retry";
+}
+
+type Key = { client_workout_id: string; kind: string };
+const same = (a: Key, b: Key) => a.client_workout_id === b.client_workout_id && a.kind === b.kind;
+
+/**
+ * Queues one check-in at once (the first report per workout and kind wins, as
+ * on the server), then adds the location when it arrives and tries to send.
+ * Does nothing unless this phone's account is enrolled.
+ */
 export async function recordCheckin(
   deps: CheckinDeps,
   clientWorkoutId: string,
   kind: GymCheckin["kind"],
   at: string,
 ): Promise<void> {
-  let fix: Fix | null = null;
-  try {
-    fix = await deps.locate();
-  } catch {
-    fix = null;
-  }
-  const queue = deps
-    .load()
-    .filter((c) => !(c.client_workout_id === clientWorkoutId && c.kind === kind));
+  const user = deps.enrolledUser();
+  if (!user) return;
+  const key = { client_workout_id: clientWorkoutId, kind };
+  const queue = deps.load();
+  if (queue.some((c) => same(c, key))) return;
   queue.push({
-    client_workout_id: clientWorkoutId,
-    kind,
+    ...key,
     at,
-    latitude: fix?.latitude ?? null,
-    longitude: fix?.longitude ?? null,
-    accuracy_m: fix?.accuracy ?? null,
+    latitude: null,
+    longitude: null,
+    accuracy_m: null,
+    user,
+    queued_at: deps.now(),
+    locating: true,
   });
   deps.save(queue.slice(-MAX_QUEUE));
+
+  const fix = await deps.locate().catch(() => null);
+  // Re-read: a logout meanwhile cleared the queue, and then this entry must not come back.
+  const current = deps.load();
+  const entry = current.find((c) => same(c, key) && c.user === user);
+  if (!entry) return;
+  entry.locating = false;
+  if (fix)
+    Object.assign(entry, {
+      latitude: fix.latitude,
+      longitude: fix.longitude,
+      accuracy_m: fix.accuracy,
+    });
+  deps.save(current);
   await flushCheckins(deps);
 }
 
-let flushing: Promise<void> | null = null;
+let flushing = false;
 
-/** Sends queued check-ins oldest first; stops at the first network error and keeps the rest. */
-export function flushCheckins(deps: CheckinDeps): Promise<void> {
-  flushing ??= (async () => {
-    try {
-      for (;;) {
-        const [next] = deps.load();
-        if (!next) return;
-        try {
-          await deps.send(next);
-        } catch {
-          return;
-        }
-        // Stored, or refused as malformed (retrying can't fix that): drop it either way.
-        deps.save(
-          deps
-            .load()
-            .filter(
-              (c) => !(c.client_workout_id === next.client_workout_id && c.kind === next.kind),
-            ),
+/**
+ * Sends queued check-ins oldest first, skipping ones still waiting for their
+ * fix. Entries from another account are dropped. Stops at the first send to
+ * retry and keeps it and the rest. A call during a running flush returns at
+ * once; the running loop re-reads the queue each pass.
+ */
+export async function flushCheckins(deps: CheckinDeps): Promise<void> {
+  if (flushing) return;
+  flushing = true;
+  try {
+    const user = deps.enrolledUser();
+    const all = deps.load();
+    const theirs = all.filter((c) => c.user === user);
+    if (theirs.length !== all.length) deps.save(theirs);
+    if (!user) return;
+    for (;;) {
+      const next = deps
+        .load()
+        .find(
+          (c) => c.user === user && (!c.locating || deps.now() - c.queued_at >= LOCATE_GRACE_MS),
         );
-      }
-    } finally {
-      flushing = null;
+      if (!next) return;
+      const { user: _user, queued_at: _queued, locating: _locating, ...payload } = next;
+      const outcome = await deps.send(payload).catch((): SendOutcome => "retry");
+      if (outcome === "retry") return;
+      deps.save(deps.load().filter((c) => !same(c, next)));
     }
-  })();
-  return flushing;
+  } finally {
+    flushing = false;
+  }
 }

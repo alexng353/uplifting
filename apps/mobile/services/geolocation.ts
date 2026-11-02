@@ -1,4 +1,5 @@
 import * as Location from "expo-location";
+import type { Fix } from "../lib/gym-checkins";
 import { getGyms, setCurrentGymId } from "./storage";
 
 export const GYM_PROXIMITY_THRESHOLD_METERS = 300;
@@ -55,32 +56,40 @@ export async function requestAndGetPosition(): Promise<Coordinates | null> {
 }
 
 /**
- * One fix with its accuracy, asking for When-In-Use access if it hasn't been
- * decided yet. For gym check-ins at Start and Finish, where Alex is in the app.
+ * One fix with its accuracy for a gym check-in, asking for When-In-Use access
+ * if it hasn't been decided yet. Only called for the account the server
+ * enrolled, at Start and Finish while the app is open. Waits at most
+ * FIX_TIMEOUT_MS, then takes a recent last-known position, else null.
  */
-export async function getFixForCheckin(): Promise<{
-  latitude: number;
-  longitude: number;
-  accuracy: number | null;
-} | null> {
+export async function getFixForCheckin(): Promise<Fix | null> {
   try {
     let { status } = await Location.getForegroundPermissionsAsync();
     if (status === Location.PermissionStatus.UNDETERMINED) {
       status = (await Location.requestForegroundPermissionsAsync()).status;
     }
     if (status !== Location.PermissionStatus.GRANTED) return null;
-    const position = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.High,
-    });
-    return {
-      latitude: position.coords.latitude,
-      longitude: position.coords.longitude,
-      accuracy: position.coords.accuracy ?? null,
-    };
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const position = await Promise.race([
+      Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }),
+      new Promise<null>((resolve) => {
+        timer = setTimeout(() => resolve(null), FIX_TIMEOUT_MS);
+      }),
+    ]).finally(() => clearTimeout(timer));
+    const fix =
+      position ?? (await Location.getLastKnownPositionAsync({ maxAge: LAST_KNOWN_MAX_AGE_MS }));
+    if (!fix) return null;
+    const { latitude, longitude, accuracy } = fix.coords;
+    // CoreLocation reports a negative accuracy for an invalid fix.
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || (accuracy ?? 0) < 0)
+      return null;
+    return { latitude, longitude, accuracy: accuracy ?? null };
   } catch {
     return null;
   }
 }
+
+const FIX_TIMEOUT_MS = 15_000;
+const LAST_KNOWN_MAX_AGE_MS = 2 * 60_000;
 
 export function haversineDistance(a: Coordinates, b: Coordinates): number {
   const R = 6371000; // Earth radius in meters

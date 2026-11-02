@@ -1,5 +1,5 @@
 {
-  "id": "89587d0d-36fa-4ed5-b8f0-ddb86dddacf6",
+  "id": "9a7de2da-9101-41b5-a476-279d0a48e9ec",
   "prevId": "bdb46ca4-49e9-4db3-b83d-b1363cfe5d36",
   "version": "7",
   "dialect": "postgresql",
@@ -1777,6 +1777,28 @@
             }
           ],
           "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "uq_workouts_user_client_id": {
+          "name": "uq_workouts_user_client_id",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "client_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "client_id IS NOT NULL",
           "concurrently": false,
           "method": "btree",
           "with": {}

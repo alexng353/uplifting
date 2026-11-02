@@ -1,32 +1,31 @@
 import { api } from "../lib/api";
 import {
   flushCheckins,
+  outcomeForStatus,
   recordCheckin,
   type CheckinDeps,
   type GymCheckin,
 } from "../lib/gym-checkins";
 import { getFixForCheckin } from "./geolocation";
-import { getGymCheckinQueue, setGymCheckinQueue } from "./storage";
+import { getGymCheckinQueue, getGymCheckinUser, setGymCheckinQueue } from "./storage";
 
 const deps: CheckinDeps = {
-  load: () => getGymCheckinQueue<GymCheckin>(),
-  save: (queue) => setGymCheckinQueue(queue),
+  load: getGymCheckinQueue,
+  save: setGymCheckinQueue,
+  enrolledUser: getGymCheckinUser,
   locate: getFixForCheckin,
   send: async (checkin) => {
     const { error } = await api.api.v1.gate.checkins.post(checkin);
-    if (!error) return "stored";
     // Eden types only the validation status (422); the route also answers 400 for a bad time.
-    const status: number = error.status;
-    // Malformed: retrying can't fix it. Anything else (auth, server, network) is retried.
-    if (status === 400 || status === 422) return "rejected";
-    throw new Error(`check-in failed: ${status}`);
+    return outcomeForStatus(error ? (error.status as number) : null);
   },
+  now: Date.now,
 };
 
-/** Records where the phone is now for this workout's Start or Finish. Never throws. */
+/** Records where the phone is now for this workout's Start or Finish (enrolled account only). Never throws. */
 export function recordGymCheckin(
   clientWorkoutId: string,
-  kind: "start" | "finish",
+  kind: GymCheckin["kind"],
   at: string,
 ): void {
   recordCheckin(deps, clientWorkoutId, kind, at).catch(() => {});

@@ -13,29 +13,7 @@ import {
 } from "../services/storage";
 import { api } from "../lib/api";
 import { useSyncedSave } from "./useSyncedSave";
-import { useSyncWorkout } from "./useSyncWorkout";
-
-interface SyncWorkoutRequest {
-  name?: string;
-  start_time: string;
-  end_time: string;
-  privacy?: string;
-  gym_location?: string;
-  kind?: string;
-  client_id?: string;
-  exercises: {
-    exercise_id: string;
-    profile_id?: string;
-    sets: {
-      reps: number;
-      weight: number;
-      weight_unit: string;
-      created_at?: string;
-      side?: string;
-      bodyweight?: number;
-    }[];
-  }[];
-}
+import { type SyncWorkoutRequest, useSyncWorkout } from "./useSyncWorkout";
 
 /**
  * Hook for syncing workouts to the server.

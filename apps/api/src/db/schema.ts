@@ -12,7 +12,9 @@ import {
   doublePrecision,
   unique,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // ── Enums ──────────────────────────────────────────────────────────────────
 
@@ -99,7 +101,12 @@ export const workouts = pgTable(
     // workout synced can be matched to it. Null for workouts from older builds.
     clientId: varchar("client_id", { length: 64 }),
   },
-  (t) => [index("idx_workouts_user_kind").on(t.userId, t.kind)],
+  (t) => [
+    index("idx_workouts_user_kind").on(t.userId, t.kind),
+    uniqueIndex("uq_workouts_user_client_id")
+      .on(t.userId, t.clientId)
+      .where(sql`client_id IS NOT NULL`),
+  ],
 );
 
 // ── Gym Check-ins ──────────────────────────────────────────────────────────

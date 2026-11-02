@@ -1,14 +1,15 @@
 import { useMutation } from "@tanstack/react-query";
 import { api, unwrap } from "../lib/api";
 
-interface SyncWorkoutRequest {
+export interface SyncWorkoutRequest {
   name?: string;
   start_time: string;
   end_time: string;
   privacy?: string;
   gym_location?: string;
   kind?: string;
-  client_id?: string;
+  /** The phone's workout id; gym check-ins carry it too. */
+  client_id: string;
   exercises: {
     exercise_id: string;
     profile_id?: string;

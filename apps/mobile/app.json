@@ -51,7 +51,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Allow Uplifting to use your location to detect nearby gyms."
+          "locationWhenInUsePermission": "Allow Uplifting to use your location to detect nearby gyms and, on accounts with gym check-ins turned on, to record where workouts start and finish."
         }
       ],
       "@react-native-community/datetimepicker",

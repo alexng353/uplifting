@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Crypto from "expo-crypto";
 import { z } from "zod";
+import type { QueuedCheckin } from "../lib/gym-checkins";
 
 // In-memory cache for synchronous reads, persisted to AsyncStorage
 const cache = new Map<string, string>();
@@ -53,6 +54,7 @@ export const STORAGE_KEYS = {
   EXERCISE_SEQUENCES: "exercise_sequences",
   TODAY_REST_DAY: "today_rest_day",
   GYM_CHECKINS: "gym_checkins",
+  GYM_CHECKINS_USER: "gym_checkins_user",
 } as const;
 
 // Workout kind type
@@ -311,13 +313,23 @@ export function getPendingWorkout(): StoredWorkout | null {
 }
 
 /** Gym check-ins waiting to reach the server (lib/gym-checkins.ts). */
-export function getGymCheckinQueue<T>(): T[] {
-  return getJSON<T[]>(STORAGE_KEYS.GYM_CHECKINS) ?? [];
+export function getGymCheckinQueue(): QueuedCheckin[] {
+  return getJSON<QueuedCheckin[]>(STORAGE_KEYS.GYM_CHECKINS) ?? [];
 }
 
-export function setGymCheckinQueue<T>(queue: T[]): void {
+export function setGymCheckinQueue(queue: QueuedCheckin[]): void {
   if (queue.length === 0) deleteKey(STORAGE_KEYS.GYM_CHECKINS);
   else setJSON(STORAGE_KEYS.GYM_CHECKINS, queue);
+}
+
+/** The account the server enrolled for gym check-ins (from bootstrap), or null. */
+export function getGymCheckinUser(): string | null {
+  return storage.getString(STORAGE_KEYS.GYM_CHECKINS_USER) ?? null;
+}
+
+export function setGymCheckinUser(userId: string | null): void {
+  if (userId) storage.set(STORAGE_KEYS.GYM_CHECKINS_USER, userId);
+  else storage.delete(STORAGE_KEYS.GYM_CHECKINS_USER);
 }
 
 export function setPendingWorkout(workout: StoredWorkout | null): void {

@@ -8,6 +8,7 @@ import {
   type StoredSet,
   setExerciseSequences,
   setGyms,
+  setGymCheckinUser,
   setGymProfileMap,
   setPreviousSets,
   setProfiles,
@@ -19,6 +20,8 @@ export interface BootstrapData {
   gymProfileMappings: GymProfileMapping;
   previousSets: StoredPreviousSets;
   exerciseSequences: StoredExerciseSequences;
+  /** Set only for the account enrolled in gym check-ins (Alex's hygiene gate). */
+  gymCheckinUserId: string | null;
 }
 
 export async function fetchBootstrapData(): Promise<BootstrapData> {
@@ -85,6 +88,7 @@ export async function fetchBootstrapData(): Promise<BootstrapData> {
     gymProfileMappings,
     previousSets,
     exerciseSequences,
+    gymCheckinUserId: data.gym_checkins_user_id ?? null,
   };
 }
 
@@ -94,4 +98,5 @@ export function applyBootstrapData(data: BootstrapData): void {
   setGymProfileMap(data.gymProfileMappings);
   setPreviousSets(data.previousSets);
   setExerciseSequences(data.exerciseSequences);
+  setGymCheckinUser(data.gymCheckinUserId);
 }
