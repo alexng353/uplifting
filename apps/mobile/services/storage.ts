@@ -52,6 +52,7 @@ export const STORAGE_KEYS = {
   GYM_PROFILE_MAP: "gym_profile_map",
   EXERCISE_SEQUENCES: "exercise_sequences",
   TODAY_REST_DAY: "today_rest_day",
+  GYM_CHECKINS: "gym_checkins",
 } as const;
 
 // Workout kind type
@@ -307,6 +308,16 @@ export function setLastSyncTime(date: Date): void {
 
 export function getPendingWorkout(): StoredWorkout | null {
   return getJSON<StoredWorkout>(STORAGE_KEYS.PENDING_WORKOUT);
+}
+
+/** Gym check-ins waiting to reach the server (lib/gym-checkins.ts). */
+export function getGymCheckinQueue<T>(): T[] {
+  return getJSON<T[]>(STORAGE_KEYS.GYM_CHECKINS) ?? [];
+}
+
+export function setGymCheckinQueue<T>(queue: T[]): void {
+  if (queue.length === 0) deleteKey(STORAGE_KEYS.GYM_CHECKINS);
+  else setJSON(STORAGE_KEYS.GYM_CHECKINS, queue);
 }
 
 export function setPendingWorkout(workout: StoredWorkout | null): void {

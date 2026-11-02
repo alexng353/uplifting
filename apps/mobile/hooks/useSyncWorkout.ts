@@ -8,6 +8,7 @@ interface SyncWorkoutRequest {
   privacy?: string;
   gym_location?: string;
   kind?: string;
+  client_id?: string;
   exercises: {
     exercise_id: string;
     profile_id?: string;

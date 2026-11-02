@@ -12,6 +12,11 @@ mock.module("@react-native-async-storage/async-storage", () => ({
 }));
 mock.module("expo-crypto", () => ({ randomUUID: () => crypto.randomUUID() }));
 mock.module("../services/geolocation", () => ({ detectAndSetNearbyGym: async () => null }));
+const checkins: Array<{ id: string; kind: string; at: string }> = [];
+mock.module("../services/gym-checkins", () => ({
+  recordGymCheckin: (id: string, kind: string, at: string) => checkins.push({ id, kind, at }),
+  flushGymCheckins: () => {},
+}));
 
 const { WorkoutProvider, useWorkout } = await import("./useWorkout");
 const {
@@ -103,4 +108,25 @@ test("finishing alternating workout modes preserves independent offline suggesti
   // An exercise without logged sets must not erase either mode's history.
   updatePreviousSets("press", null, []);
   expect(getPreviousSets().press_default).toEqual(synced);
+});
+
+test("Start and Finish each record a gym check-in for the same workout", async () => {
+  checkins.length = 0;
+  await act(() => {
+    renderer = create(
+      <WorkoutProvider>
+        <Probe />
+      </WorkoutProvider>,
+    );
+  });
+  await act(() => actions.startWorkout());
+  const started = actions.workout!;
+  let finished!: ReturnType<typeof actions.finishWorkout>;
+  await act(() => {
+    finished = actions.finishWorkout();
+  });
+  expect(checkins).toEqual([
+    { id: started.id, kind: "start", at: started.startTime },
+    { id: started.id, kind: "finish", at: finished.endTime! },
+  ]);
 });

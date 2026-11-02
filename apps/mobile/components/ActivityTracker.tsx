@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { useWorkout } from "../hooks/useWorkout";
 import { api } from "../lib/api";
+import { flushGymCheckins } from "../services/gym-checkins";
 
 const HEARTBEAT_INTERVAL = 60_000; // 60 seconds
 
@@ -24,6 +25,8 @@ export function ActivityTracker() {
     if (!isAuthenticated) return;
 
     const sendHeartbeat = async () => {
+      // Gym check-ins that couldn't be sent at the gym go out on the next beat.
+      flushGymCheckins();
       try {
         await api.api.v1.friends.activity.post({
           current_workout_id: workoutIdRef.current ?? undefined,

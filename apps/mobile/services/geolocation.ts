@@ -54,6 +54,34 @@ export async function requestAndGetPosition(): Promise<Coordinates | null> {
   }
 }
 
+/**
+ * One fix with its accuracy, asking for When-In-Use access if it hasn't been
+ * decided yet. For gym check-ins at Start and Finish, where Alex is in the app.
+ */
+export async function getFixForCheckin(): Promise<{
+  latitude: number;
+  longitude: number;
+  accuracy: number | null;
+} | null> {
+  try {
+    let { status } = await Location.getForegroundPermissionsAsync();
+    if (status === Location.PermissionStatus.UNDETERMINED) {
+      status = (await Location.requestForegroundPermissionsAsync()).status;
+    }
+    if (status !== Location.PermissionStatus.GRANTED) return null;
+    const position = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.High,
+    });
+    return {
+      latitude: position.coords.latitude,
+      longitude: position.coords.longitude,
+      accuracy: position.coords.accuracy ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function haversineDistance(a: Coordinates, b: Coordinates): number {
   const R = 6371000; // Earth radius in meters
   const toRad = (deg: number) => (deg * Math.PI) / 180;

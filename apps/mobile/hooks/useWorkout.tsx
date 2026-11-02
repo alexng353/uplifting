@@ -1,5 +1,6 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
 import { detectAndSetNearbyGym } from "../services/geolocation";
+import { recordGymCheckin } from "../services/gym-checkins";
 import {
   addExerciseSequence,
   clearTodayRestDay,
@@ -143,6 +144,8 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 
     // Auto-detect nearby gym (fire-and-forget)
     detectAndSetNearbyGym().catch(() => {});
+    // Where Start was tapped, for Alex's gym gate (fire-and-forget, queued offline).
+    recordGymCheckin(newWorkout.id, "start", newWorkout.startTime);
   }, [saveWorkout, todayRestDayState]);
 
   const logRestDay = useCallback((): StoredWorkout | null => {
@@ -363,6 +366,8 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 
       // Mark as pending sync
       setPendingWorkout(finishedWorkout);
+      // Where Finish was tapped, for Alex's gym gate (fire-and-forget, queued offline).
+      recordGymCheckin(finishedWorkout.id, "finish", finishedWorkout.endTime!);
       setCurrentWorkout(null);
       setWorkout(null);
       setHasPendingWorkout(true);

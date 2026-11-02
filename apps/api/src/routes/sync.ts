@@ -120,6 +120,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
             privacy: body.privacy ?? "friends",
             gymLocation: body.gym_location,
             kind: body.kind ?? "workout",
+            clientId: body.client_id,
           })
           .returning({ id: workouts.id });
 
@@ -198,6 +199,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
         privacy: t.Optional(t.String()),
         gym_location: t.Optional(t.String()),
         kind: t.Optional(t.String()),
+        client_id: t.Optional(t.String({ maxLength: 64 })),
         exercises: t.Array(
           t.Object({
             exercise_id: t.String(),

@@ -22,6 +22,7 @@ interface SyncWorkoutRequest {
   privacy?: string;
   gym_location?: string;
   kind?: string;
+  client_id?: string;
   exercises: {
     exercise_id: string;
     profile_id?: string;
@@ -61,6 +62,8 @@ export function useSync() {
       privacy: local.privacy,
       gym_location: local.gymLocation,
       kind: local.kind,
+      // Matches the gym check-ins the phone sent at Start and Finish.
+      client_id: local.id,
       exercises: local.exercises.map((e) => ({
         exercise_id: e.exerciseId,
         profile_id: e.profileId,

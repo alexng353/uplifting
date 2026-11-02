@@ -10,6 +10,7 @@ import { userRoutes } from "./routes/users";
 import { gymRoutes } from "./routes/gyms";
 import { muscleRoutes } from "./routes/muscles";
 import { syncRoutes } from "./routes/sync";
+import { gateCheckinRoutes, gateFeedRoutes } from "./routes/gate";
 
 import { exerciseAgentRoutes, exerciseAgentService } from "./routes/exercise-agent";
 import { startExerciseWorker } from "./exercise-agent/worker";
@@ -36,6 +37,8 @@ const app = new Elysia()
       .use(gymRoutes)
       .use(muscleRoutes)
       .use(syncRoutes)
+      .use(gateCheckinRoutes)
+      .use(gateFeedRoutes)
       .use(exerciseAgentRoutes),
   )
   .listen(Number(process.env.PORT ?? 8080));

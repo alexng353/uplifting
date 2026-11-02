@@ -95,8 +95,37 @@ export const workouts = pgTable(
     privacy: varchar({ length: 20 }).notNull().default("friends"),
     gymLocation: varchar("gym_location", { length: 255 }),
     kind: varchar({ length: 20 }).notNull().default("workout"),
+    // The phone's own id for the workout, so gym check-ins sent before the
+    // workout synced can be matched to it. Null for workouts from older builds.
+    clientId: varchar("client_id", { length: 64 }),
   },
   (t) => [index("idx_workouts_user_kind").on(t.userId, t.kind)],
+);
+
+// ── Gym Check-ins ──────────────────────────────────────────────────────────
+
+// Where the phone was when a workout was started or finished. Sent at once,
+// before the workout itself syncs, so Alex's hygiene gate can see a start in
+// time (alexng353/claude-codex-proxy src/gym.ts).
+export const gymCheckins = pgTable(
+  "gym_checkins",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    clientWorkoutId: varchar("client_workout_id", { length: 64 }).notNull(),
+    kind: varchar({ length: 10 }).notNull(),
+    at: timestamp("at", { withTimezone: true }).notNull(),
+    latitude: doublePrecision(),
+    longitude: doublePrecision(),
+    accuracyM: doublePrecision("accuracy_m"),
+    receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique().on(t.userId, t.clientWorkoutId, t.kind),
+    index("idx_gym_checkins_user_at").on(t.userId, t.at),
+  ],
 );
 
 // ── Exercise Profiles ──────────────────────────────────────────────────────
