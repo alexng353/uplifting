@@ -96,7 +96,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
   // POST /workout — sync a completed workout with all sets
   .post(
     "/workout",
-    async ({ userId, body }) => {
+    async ({ userId, body, set }) => {
       // Dedup check for rest days
       if (body.kind === "rest") {
         const startDate = new Date(body.start_time);
@@ -165,6 +165,12 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
         const [existing] = await sql`
           SELECT id FROM workouts WHERE user_id = ${userId} AND client_id = ${body.client_id!} LIMIT 1
         `;
+        // The first copy was deleted between its commit and this read (from
+        // another device): a conflict, not a crash. The phone retries.
+        if (!existing) {
+          set.status = 409;
+          return { error: "workout changed during sync; retry" };
+        }
         return { workout_id: existing.id as string, previous_sets: {} };
       }
 

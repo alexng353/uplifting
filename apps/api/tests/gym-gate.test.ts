@@ -23,6 +23,7 @@ describe.skipIf(!socket)("gym gate", () => {
   let exerciseId: string;
   let actingAs = "";
   let app: Elysia;
+  let resetRetention: () => void = () => {};
 
   beforeAll(async () => {
     await admin`CREATE DATABASE ${admin(database)}`;
@@ -55,7 +56,9 @@ describe.skipIf(!socket)("gym gate", () => {
       authPlugin: new Elysia().derive({ as: "scoped" }, () => ({ userId: actingAs })),
     }));
     const { syncRoutes } = await import("../src/routes/sync");
-    const { gateCheckinRoutes, gateFeedRoutes } = await import("../src/routes/gate");
+    const { gateCheckinRoutes, gateFeedRoutes, resetRetentionClock } =
+      await import("../src/routes/gate");
+    resetRetention = resetRetentionClock;
     app = new Elysia().use(syncRoutes).use(gateCheckinRoutes).use(gateFeedRoutes);
   });
 
@@ -247,6 +250,7 @@ describe.skipIf(!socket)("gym gate", () => {
     await sql`INSERT INTO gym_checkins (user_id, client_workout_id, kind, at) VALUES (${alex}, 'older', 'start', ${ago(24 * 61)}::timestamptz)`;
     await sql`INSERT INTO gym_checkins (user_id, client_workout_id, kind, at) VALUES (${other}, 'other-old', 'start', ${ago(24 * 61)}::timestamptz)`;
     await sql`INSERT INTO gym_checkins (user_id, client_workout_id, kind, at) VALUES (${alex}, 'mid', 'start', ${ago(24 * 30)}::timestamptz)`;
+    resetRetention();
     await checkin({ client_workout_id: "c3", kind: "start", at: ago(1) });
     expect(
       (
@@ -259,6 +263,7 @@ describe.skipIf(!socket)("gym gate", () => {
 
   test("a feed read also deletes expired check-ins", async () => {
     await sql`INSERT INTO gym_checkins (user_id, client_workout_id, kind, at) VALUES (${other}, 'stale', 'start', ${ago(24 * 61)}::timestamptz)`;
+    resetRetention();
     expect((await feed()).status).toBe(200);
     expect(
       (await sql`SELECT count(*)::int AS n FROM gym_checkins WHERE client_workout_id = 'stale'`)[0]
@@ -266,18 +271,77 @@ describe.skipIf(!socket)("gym gate", () => {
     ).toBe(0);
   });
 
-  test("a phone clock running fast is clamped, not refused", async () => {
+  test("retention runs at most once a minute, and never for an account that isn't enrolled", async () => {
+    resetRetention();
+    actingAs = other;
+    try {
+      await sql`INSERT INTO gym_checkins (user_id, client_workout_id, kind, at) VALUES (${other}, 'stale-2', 'start', ${ago(24 * 61)}::timestamptz)`;
+      expect(
+        (await checkin({ client_workout_id: "o-ret", kind: "start", at: ago(1) })).body.stored,
+      ).toBe(false);
+      const stale = async () =>
+        (
+          await sql`SELECT count(*)::int AS n FROM gym_checkins WHERE client_workout_id = 'stale-2'`
+        )[0].n;
+      expect(await stale()).toBe(1);
+      actingAs = alex;
+      await checkin({ client_workout_id: "ret-1", kind: "start", at: ago(1) });
+      expect(await stale()).toBe(0);
+      await sql`INSERT INTO gym_checkins (user_id, client_workout_id, kind, at) VALUES (${other}, 'stale-2', 'start', ${ago(24 * 61)}::timestamptz)`;
+      await checkin({ client_workout_id: "ret-2", kind: "start", at: ago(1) });
+      expect(await stale()).toBe(1);
+    } finally {
+      actingAs = alex;
+    }
+  });
+
+  test("a phone clock running fast is clamped to the server's receive time, not refused", async () => {
     const r = await checkin({ client_workout_id: "fast", kind: "start", at: ago(-2) });
     expect(r.body).toEqual({ ok: true, stored: true });
     const [row] = await sql`SELECT at FROM gym_checkins WHERE client_workout_id = 'fast'`;
-    expect(new Date(row.at).getTime()).toBeLessThanOrEqual(Date.now() + 5 * 60_000);
+    expect(new Date(row.at).getTime()).toBeLessThanOrEqual(Date.now());
   });
 
-  test("concurrent first syncs with one client_id all succeed with one workout", async () => {
+  test("a sync racing an uncommitted first sync waits for it and returns its workout", async () => {
     const body = { client_id: "race-1", start_time: ago(5), end_time: ago(4) };
-    const replies = await Promise.all([syncWorkout(body), syncWorkout(body), syncWorkout(body)]);
-    expect(replies.map((r) => r.status)).toEqual([200, 200, 200]);
-    expect(new Set(replies.map((r) => r.body.workout_id)).size).toBe(1);
+    // A second connection holds the first sync's insert open, so the route's
+    // insert really overlaps it (the route's own pool has one connection).
+    const holder = postgres({ host: socket, database, max: 1 });
+    let release: () => void = () => {};
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let winner = "";
+    let inserted: () => void = () => {};
+    const insertedP = new Promise<void>((resolve) => {
+      inserted = resolve;
+    });
+    const first = holder.begin(async (tx) => {
+      const [w] =
+        await tx`INSERT INTO workouts (user_id, start_time, end_time, client_id) VALUES (${alex}, ${body.start_time}::timestamptz, ${body.end_time}::timestamptz, 'race-1') RETURNING id`;
+      winner = w.id;
+      inserted();
+      await held;
+    });
+    try {
+      await insertedP;
+      let settled = false;
+      const second = syncWorkout(body).finally(() => {
+        settled = true;
+      });
+      await Bun.sleep(300);
+      expect(settled).toBe(false);
+      release();
+      await first;
+      const reply = await second;
+      expect(reply.status).toBe(200);
+      expect(reply.body.workout_id).toBe(winner);
+    } finally {
+      release();
+      await first.catch(() => {});
+      await holder.end();
+    }
+    expect((await syncWorkout(body)).body.workout_id).toBe(winner);
     expect(
       (await sql`SELECT count(*)::int AS n FROM workouts WHERE client_id = 'race-1'`)[0].n,
     ).toBe(1);

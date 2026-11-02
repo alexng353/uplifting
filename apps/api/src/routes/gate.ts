@@ -12,7 +12,8 @@ import { authPlugin } from "../lib/auth";
  *
  * GATE_FEED_USER_ID names the enrolled account and GATE_FEED_TOKEN_SHA256 the
  * gate's read-only token. Both must be set and well formed, or the feature is
- * off: nobody is enrolled, check-ins are accepted and dropped, and the feed
+ * off: nobody is enrolled (bootstrap tells phones so, and they record
+ * nothing), check-ins already queued get 503 and stay queued, and the feed
  * answers 401.
  */
 
@@ -20,9 +21,10 @@ const DAY_MS = 86_400_000;
 const DEFAULT_LOOKBACK_MS = 14 * DAY_MS;
 /** How far back the feed answers, and how long check-ins are kept. */
 const RETENTION_MS = 60 * DAY_MS;
-/** Accept check-ins from 7 days ago to 5 minutes ahead; a retry keeps the first report until retention deletes it. */
+/** Accept check-ins from up to 7 days ago; a retry keeps the first report until retention deletes it. */
 const MAX_AGE_MS = 7 * DAY_MS;
-const MAX_FUTURE_MS = 5 * 60_000;
+/** Retention runs at most this often per process; it is housekeeping, not a guarantee. */
+const RETENTION_EVERY_MS = 60_000;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function tokenHash(): string | null {
@@ -42,13 +44,22 @@ export function gateUserId(): string | null {
 }
 
 /**
- * Retention for every account, run on every check-in and every feed read, so
- * old rows go even after enrollment changes.
+ * Retention for every account, so old rows go even after enrollment changes.
+ * Run from the enrolled check-in path and feed reads, at most once a minute.
+ * The feed also filters by the retention window, so a skipped run hides nothing.
  */
+let lastRetention = Number.NEGATIVE_INFINITY;
 async function deleteExpired(now: number): Promise<void> {
+  if (now - lastRetention < RETENTION_EVERY_MS && now >= lastRetention) return;
+  lastRetention = now;
   await sql`
     DELETE FROM gym_checkins WHERE at < ${new Date(now - RETENTION_MS).toISOString()}::timestamptz
   `;
+}
+
+/** Tests only: let the next call run retention again. */
+export function resetRetentionClock(): void {
+  lastRetention = Number.NEGATIVE_INFINITY;
 }
 
 export const gateCheckinRoutes = new Elysia({ prefix: "/gate" })
@@ -63,18 +74,19 @@ export const gateCheckinRoutes = new Elysia({ prefix: "/gate" })
         set.status = 400;
         return { error: "at must be an ISO time within the last 7 days" };
       }
-      // A phone clock running fast is clamped, not refused: the phone drops a 400.
-      const at = Math.min(tapped, now + MAX_FUTURE_MS);
-      await deleteExpired(now);
+      // A phone clock running fast is clamped, not refused (the phone drops a
+      // 400): the tap cannot have happened after the server received it.
+      const at = Math.min(tapped, now);
       // Unconfigured (or misconfigured) is temporary: 503 makes the phone keep
-      // the check-in and retry, so fixing the config loses nothing. Another
-      // account's check-ins are dropped unstored.
+      // the check-ins it already queued and retry them. Another account's
+      // check-ins are dropped unstored.
       const enrolled = gateUserId();
       if (!enrolled) {
         set.status = 503;
         return { error: "gym check-ins are not configured" };
       }
       if (userId !== enrolled) return { ok: true, stored: false };
+      await deleteExpired(now);
       const located = body.latitude != null && body.longitude != null;
       await db
         .insert(gymCheckins)

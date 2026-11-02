@@ -49,7 +49,6 @@ export type CheckinDeps = {
 
 /** Keep the newest 50; past that the oldest are dropped unsent. */
 const MAX_QUEUE = 50;
-/** A check-in whose fix hasn't arrived after this long (the app was killed meanwhile) is sent without one. */
 
 /** What a server answer means for the queue; null status is success. 400/422 are malformed: a retry can't fix them. */
 export function outcomeForStatus(status: number | null): SendOutcome {
