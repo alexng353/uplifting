@@ -23,20 +23,45 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     willConnectTo session: UISceneSession,
     options connectionOptions: UIScene.ConnectionOptions
   ) {
-    guard let windowScene = scene as? UIWindowScene,
-          let appDelegate = UIApplication.shared.delegate as? AppDelegate,
-          let factory = appDelegate.reactNativeFactory else { return }
+    guard let windowScene = scene as? UIWindowScene else { return }
+    guard let appDelegate = UIApplication.shared.delegate as? AppDelegate,
+          let factory = appDelegate.reactNativeFactory else {
+      fatalError("SceneDelegate: AppDelegate has no React Native factory; check plugins/withSceneLifecycle.js")
+    }
     let window = UIWindow(windowScene: windowScene)
     self.window = window
+
+    // iOS may drop a background scene and connect a new one in the same process.
+    // Move the running React root over instead of starting a second app.
+    if let rootViewController = appDelegate.window?.rootViewController {
+      appDelegate.window?.rootViewController = nil
+      window.rootViewController = rootViewController
+      appDelegate.window = window
+      window.makeKeyAndVisible()
+      return
+    }
+
     appDelegate.window = window
+    // With scenes, a cold-start link is not in the launch options; put it back so
+    // Linking.getInitialURL() sees it.
+    var launchOptions = appDelegate.launchOptions ?? [:]
+    if let url = connectionOptions.urlContexts.first?.url {
+      launchOptions[.url] = url
+    }
+    if let activity = connectionOptions.userActivities.first {
+      launchOptions[.userActivityDictionary] = [
+        UIApplication.LaunchOptionsKey.userActivityType: activity.activityType,
+        "UIApplicationLaunchOptionsUserActivityKey": activity,
+      ] as [AnyHashable: Any]
+    }
     factory.startReactNative(
       withModuleName: "main",
       in: window,
-      launchOptions: appDelegate.launchOptions)
+      launchOptions: launchOptions)
 
-    // With scenes, cold-start links arrive here instead of in launch options.
+    // Also hand them to the app delegate, where expo-router's linking subscriber listens.
     for context in connectionOptions.urlContexts {
-      _ = appDelegate.application(UIApplication.shared, open: context.url, options: [:])
+      _ = appDelegate.application(UIApplication.shared, open: context.url, options: openOptions(context))
     }
     for activity in connectionOptions.userActivities {
       _ = appDelegate.application(UIApplication.shared, continue: activity, restorationHandler: { _ in })
@@ -46,8 +71,17 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
   func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
     guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
     for context in URLContexts {
-      _ = appDelegate.application(UIApplication.shared, open: context.url, options: [:])
+      _ = appDelegate.application(UIApplication.shared, open: context.url, options: openOptions(context))
     }
+  }
+
+  private func openOptions(_ context: UIOpenURLContext) -> [UIApplication.OpenURLOptionsKey: Any] {
+    var options: [UIApplication.OpenURLOptionsKey: Any] = [
+      .openInPlace: context.options.openInPlace,
+    ]
+    if let source = context.options.sourceApplication { options[.sourceApplication] = source }
+    if let annotation = context.options.annotation { options[.annotation] = annotation }
+    return options
   }
 
   func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
