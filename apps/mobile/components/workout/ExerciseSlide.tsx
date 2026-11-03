@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -21,7 +21,12 @@ import { setFieldKey } from "../../lib/set-field-order";
 import { useThemeColors } from "../../hooks/useThemeColors";
 import { useSettings } from "../../hooks/useSettings";
 import { usePreviousSets } from "../../hooks/usePreviousSets";
-import { useCreateExerciseProfile, useExerciseProfiles } from "../../hooks/useExerciseProfiles";
+import {
+  useCreateExerciseProfile,
+  useExerciseProfiles,
+  useRenameExerciseProfile,
+} from "../../hooks/useExerciseProfiles";
+import { exerciseTitle, stripProfileSuffix, withoutPickerHint } from "../../lib/profile-names";
 import { useExerciseNotes, useSetExerciseNote } from "../../hooks/useExerciseNotes";
 import { useGymProfileSuggestion } from "../../hooks/useGymProfileSuggestion";
 import type { SetSuggestion } from "../../lib/previous-sets";
@@ -283,12 +288,15 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   const targetSetCount = getTargetSetCount(exercise.exerciseId);
   const { data: profiles = [] } = useExerciseProfiles(exercise.exerciseId);
   const createProfileMutation = useCreateExerciseProfile(exercise.exerciseId);
+  const renameProfileMutation = useRenameExerciseProfile();
   const { getSuggestedProfile, recordProfileUsage, currentGymId } = useGymProfileSuggestion();
   const isBodyweight = exercise.exerciseType === "Bodyweight";
   const scrollRef = useRef<ScrollView>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showCreateProfileModal, setShowCreateProfileModal] = useState(false);
   const [newProfileName, setNewProfileName] = useState("");
+  // Set while the profile sheet renames an existing profile instead of creating one.
+  const [renamingProfileId, setRenamingProfileId] = useState<string | null>(null);
 
   // Persistent per-exercise note (cue) — shows every time you do this exercise.
   const { data: exerciseNotes } = useExerciseNotes();
@@ -439,14 +447,39 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   // Extract base exercise name (without profile suffix)
   const baseName = useMemo(() => {
     if (exercise.profileId) {
-      return exercise.exerciseName.replace(/\s*\([^)]+\)$/, "");
+      return stripProfileSuffix(exercise.exerciseName);
     }
     return exercise.exerciseName;
   }, [exercise.exerciseName, exercise.profileId]);
 
+  // The title follows the profile's current name, so renames show at once and a
+  // picker hint saved by older builds never shows.
+  const currentProfileName = (profiles as Array<{ id: string; name: string }>).find(
+    (p) => p.id === exercise.profileId,
+  )?.name;
+  const title = exercise.profileId
+    ? currentProfileName != null
+      ? exerciseTitle(baseName, currentProfileName)
+      : withoutPickerHint(exercise.exerciseName)
+    : exercise.exerciseName;
+
+  // Keep the stored name in step (it shows in the summary and in this workout later).
+  useEffect(() => {
+    if (exercise.profileId && currentProfileName != null && title !== exercise.exerciseName) {
+      changeExerciseProfile(exercise.exerciseId, exercise.profileId, title);
+    }
+  }, [
+    title,
+    currentProfileName,
+    exercise.exerciseId,
+    exercise.profileId,
+    exercise.exerciseName,
+    changeExerciseProfile,
+  ]);
+
   const handleChangeProfile = useCallback(
     (profileId?: string, profileName?: string) => {
-      const displayName = profileName ? `${baseName} (${profileName})` : baseName;
+      const displayName = exerciseTitle(baseName, profileName);
       changeExerciseProfile(exercise.exerciseId, profileId, displayName);
 
       if (profileId) {
@@ -473,6 +506,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 
   const handleOpenProfileCreator = useCallback(() => {
     setNewProfileName("");
+    setRenamingProfileId(null);
     if (showProfileModal) {
       // Let the picker sheet finish dismissing before presenting the next one.
       setShowProfileModal(false);
@@ -482,9 +516,32 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
     }
   }, [showProfileModal]);
 
+  const handleOpenProfileRename = useCallback((profileId: string, name: string) => {
+    setNewProfileName(name);
+    setRenamingProfileId(profileId);
+    // Let the picker sheet finish dismissing before presenting the next one.
+    setShowProfileModal(false);
+    setTimeout(() => setShowCreateProfileModal(true), 350);
+  }, []);
+
   const handleCreateProfile = useCallback(async () => {
     const name = newProfileName.trim();
     if (!name) return;
+    if (renamingProfileId) {
+      try {
+        await renameProfileMutation.mutateAsync({
+          exerciseId: exercise.exerciseId,
+          profileId: renamingProfileId,
+          name,
+        });
+        setShowCreateProfileModal(false);
+        setRenamingProfileId(null);
+        setNewProfileName("");
+      } catch {
+        Alert.alert("Error", "Failed to rename profile.");
+      }
+      return;
+    }
     try {
       const profile = await createProfileMutation.mutateAsync(name);
       setShowCreateProfileModal(false);
@@ -493,7 +550,16 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
     } catch {
       Alert.alert("Error", "Failed to create profile.");
     }
-  }, [newProfileName, createProfileMutation, handleChangeProfile]);
+  }, [
+    newProfileName,
+    renamingProfileId,
+    renameProfileMutation,
+    exercise.exerciseId,
+    createProfileMutation,
+    handleChangeProfile,
+  ]);
+
+  const profileBusy = createProfileMutation.isPending || renameProfileMutation.isPending;
 
   const canRemove = exercise.isUnilateral ? setGroups.length > 1 : exercise.sets.length > 1;
   const canDuplicate = exercise.sets.length > 0;
@@ -510,9 +576,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
           className="flex-row items-center gap-1.5 active:opacity-60"
         >
           <Ionicons name="ellipsis-horizontal-circle" size={22} color={colors.accentIcon} />
-          <Text className="flex-1 text-xl font-bold dark:text-zinc-100">
-            {exercise.exerciseName}
-          </Text>
+          <Text className="flex-1 text-xl font-bold dark:text-zinc-100">{title}</Text>
         </Pressable>
         {exercise.exerciseType && (
           <View className="mt-1 flex-row items-center gap-2">
@@ -698,23 +762,41 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
               { id: undefined, name: "Default (no profile)" },
               ...profiles.map((p: any) => ({
                 id: p.id as string,
-                name:
-                  p.id === suggestedProfileId && currentGymId
-                    ? `${p.name} (last used here)`
-                    : (p.name as string),
+                name: p.name as string,
+                lastUsedHere: p.id === suggestedProfileId && !!currentGymId,
               })),
             ]}
             keyExtractor={(item) => item.id ?? "default"}
             renderItem={({ item }) => {
               const isCurrent =
                 item.id === exercise.profileId || (item.id === undefined && !exercise.profileId);
+              const profileId = item.id;
               return (
                 <Pressable
                   onPress={() => handleChangeProfile(item.id, item.id ? item.name : undefined)}
                   className="flex-row items-center justify-between border-b border-zinc-100 dark:border-zinc-800 px-4 py-3.5 active:bg-zinc-50 dark:active:bg-zinc-800"
                 >
-                  <Text className="text-base dark:text-zinc-100">{item.name}</Text>
+                  <View className="flex-1">
+                    <Text className="text-base dark:text-zinc-100">{item.name}</Text>
+                    {"lastUsedHere" in item && item.lastUsedHere && (
+                      <Text className="text-xs text-zinc-500 dark:text-zinc-400">
+                        Last used at this gym
+                      </Text>
+                    )}
+                  </View>
                   {isCurrent && <Ionicons name="checkmark" size={20} color={colors.accentIcon} />}
+                  {profileId && (
+                    <Pressable
+                      testID="rename-profile"
+                      accessibilityRole="button"
+                      accessibilityLabel={`Rename ${item.name}`}
+                      onPress={() => handleOpenProfileRename(profileId, item.name)}
+                      hitSlop={8}
+                      className="ml-3 h-9 w-9 items-center justify-center rounded-full active:bg-zinc-200 dark:active:bg-zinc-700"
+                    >
+                      <Ionicons name="pencil" size={18} color={colors.placeholder} />
+                    </Pressable>
+                  )}
                 </Pressable>
               );
             }}
@@ -743,7 +825,9 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
           className="flex-1 bg-white dark:bg-zinc-900"
         >
           <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-4 pb-3 pt-4">
-            <Text className="text-lg font-bold dark:text-zinc-100">New profile</Text>
+            <Text className="text-lg font-bold dark:text-zinc-100">
+              {renamingProfileId ? "Rename profile" : "New profile"}
+            </Text>
             <Pressable
               onPress={() => setShowCreateProfileModal(false)}
               className="rounded-lg px-3 py-1.5 active:bg-zinc-100 dark:active:bg-zinc-800"
@@ -769,21 +853,27 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
             />
             <Pressable
               onPress={handleCreateProfile}
-              disabled={createProfileMutation.isPending || !newProfileName.trim()}
+              disabled={profileBusy || !newProfileName.trim()}
               className={`mt-4 items-center rounded-lg py-3 ${
-                createProfileMutation.isPending || !newProfileName.trim()
+                profileBusy || !newProfileName.trim()
                   ? "bg-zinc-200 dark:bg-zinc-700"
                   : "bg-blue-500 active:bg-blue-600"
               }`}
             >
               <Text
                 className={`text-base font-semibold ${
-                  createProfileMutation.isPending || !newProfileName.trim()
+                  profileBusy || !newProfileName.trim()
                     ? "text-zinc-400 dark:text-zinc-500"
                     : "text-white"
                 }`}
               >
-                {createProfileMutation.isPending ? "Creating..." : "Create"}
+                {renamingProfileId
+                  ? renameProfileMutation.isPending
+                    ? "Saving..."
+                    : "Save"
+                  : createProfileMutation.isPending
+                    ? "Creating..."
+                    : "Create"}
               </Text>
             </Pressable>
           </View>

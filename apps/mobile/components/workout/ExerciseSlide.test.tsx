@@ -40,16 +40,22 @@ mock.module("../../hooks/usePreviousSets", () => ({
     getTargetSetCount: () => target,
   }),
 }));
+let profiles: Array<{ id: string; name: string }> = [];
 mock.module("../../hooks/useExerciseProfiles", () => ({
-  useExerciseProfiles: () => ({ data: [] }),
+  useExerciseProfiles: () => ({ data: profiles }),
   useCreateExerciseProfile: () => ({}),
+  useRenameExerciseProfile: () => ({}),
 }));
 mock.module("../../hooks/useExerciseNotes", () => ({
   useExerciseNotes: () => ({}),
   useSetExerciseNote: () => ({}),
 }));
 mock.module("../../hooks/useGymProfileSuggestion", () => ({
-  useGymProfileSuggestion: () => ({ getSuggestedProfile: () => undefined }),
+  useGymProfileSuggestion: () => ({
+    getSuggestedProfile: () => "black",
+    currentGymId: "golds",
+    recordProfileUsage: () => {},
+  }),
 }));
 mock.module("./RestTimer", () => ({ default: () => null }));
 
@@ -88,6 +94,11 @@ mock.module("../../hooks/useWorkoutActions", () => ({
         ],
       }),
     trimTrailingEmptySets,
+    changeExerciseProfile: (
+      _exerciseId: string,
+      profileId: string | undefined,
+      exerciseName: string,
+    ) => updateExercise({ ...exercise, profileId, exerciseName }),
   }),
 }));
 
@@ -133,6 +144,61 @@ afterEach(async () => {
   mode = "editing";
   target = null;
   suggestionFor = (_setNumber, side) => (side === "L" ? LEFT_HISTORY : HISTORY);
+  profiles = [];
+});
+
+describe("profile names", () => {
+  async function renderProfiled(exerciseName: string) {
+    function Harness() {
+      const [state, setState] = useState<StoredWorkoutExercise>({
+        exerciseId: "press",
+        exerciseName,
+        profileId: "black",
+        sets: [makeSet("1")],
+      });
+      exercise = state;
+      setExerciseState = setState;
+      return <ExerciseSlide exercise={state} />;
+    }
+    await act(() => {
+      renderer = create(<Harness />);
+    });
+  }
+  const texts = () =>
+    renderer.root.findAllByType("Text" as never).map((t) => [t.props.children].flat().join(""));
+
+  test("heals a title that saved the picker hint, and the stored name with it", async () => {
+    profiles = [{ id: "black", name: "Black machine broadway" }];
+    await renderProfiled("Machine Shoulder Press (Black machine broadway (last used here))");
+    expect(texts()).toContain("Machine Shoulder Press (Black machine broadway)");
+    expect(texts().some((t) => t.includes("last used here"))).toBe(false);
+    expect(exercise.exerciseName).toBe("Machine Shoulder Press (Black machine broadway)");
+  });
+
+  test("the picker shows the hint as a note and selects the clean name", async () => {
+    profiles = [{ id: "black", name: "Black machine broadway" }];
+    await renderProfiled("Machine Shoulder Press (Black machine broadway)");
+    const menu = renderer.root.findByProps({ name: "ellipsis-horizontal-circle" }).parent!;
+    await act(() => menu.props.onPress());
+    expect(texts()).toContain("Profile for Machine Shoulder Press");
+    const list = renderer.root.findByType("FlatList" as never);
+    let row!: ReactTestRenderer;
+    await act(() => {
+      row = create(list.props.renderItem({ item: list.props.data[1] }));
+    });
+    const rowTexts = row.root
+      .findAllByType("Text" as never)
+      .map((t) => [t.props.children].flat().join(""));
+    expect(rowTexts).toEqual(["Black machine broadway", "Last used at this gym"]);
+    await act(() => row.root.findAllByType("Pressable" as never)[0].props.onPress());
+    expect(exercise.exerciseName).toBe("Machine Shoulder Press (Black machine broadway)");
+  });
+
+  test("a renamed profile renames the title", async () => {
+    profiles = [{ id: "black", name: "Hammer Strength" }];
+    await renderProfiled("Machine Shoulder Press (Black machine broadway)");
+    expect(exercise.exerciseName).toBe("Machine Shoulder Press (Hammer Strength)");
+  });
 });
 
 function acceptButton(row: number) {
