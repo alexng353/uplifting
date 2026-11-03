@@ -29,19 +29,21 @@ import { exerciseTitle, stripProfileSuffix, withoutPickerHint } from "../../lib/
 import { useExerciseNotes, useSetExerciseNote } from "../../hooks/useExerciseNotes";
 import { useGymProfileSuggestion } from "../../hooks/useGymProfileSuggestion";
 import type { SetSuggestion } from "../../lib/previous-sets";
-import { SIDE_MODES, sideModeOf } from "../../lib/side-mode";
+import {
+  isRowEmpty,
+  MODE_LABEL,
+  NEXT_MODE,
+  rowIndexOf,
+  rowMode,
+  toRows,
+  type SideMode,
+} from "../../lib/set-rows";
 import { convertWeight } from "../../lib/units";
 import type { StoredSet, StoredWorkoutExercise } from "../../services/storage";
 import RestTimer from "./RestTimer";
 
 interface ExerciseSlideProps {
   exercise: StoredWorkoutExercise;
-}
-
-interface SetPair {
-  setNumber: number;
-  rightSet?: StoredSet;
-  leftSet?: StoredSet;
 }
 
 const DEFAULT_REPS = 10;
@@ -83,41 +85,68 @@ function SetNumberCell({
   label,
   isTarget,
   ringDone,
+  mode,
+  onCycleMode,
 }: {
   setNumber: number;
   label: string;
   isTarget?: boolean;
   ringDone: boolean;
+  /** The row's mode; shown small under the number when the number can be tapped. */
+  mode?: SideMode;
+  onCycleMode?: () => void;
 }) {
   const colors = useThemeColors();
-  if (!isTarget) {
-    return (
-      <Text className="w-8 text-center text-sm font-medium text-zinc-400 dark:text-zinc-500">
-        {label}
+  const number = !isTarget ? (
+    <Text className="text-center text-sm font-medium text-zinc-400 dark:text-zinc-500">
+      {label}
+    </Text>
+  ) : (
+    <View
+      testID="target-set"
+      accessibilityLabel={`Set ${setNumber}, your usual last set${ringDone ? ", done" : ""}`}
+      className="items-center justify-center rounded-full"
+      style={{
+        width: TARGET_RING_SIZE,
+        height: TARGET_RING_SIZE,
+        borderWidth: 2,
+        borderColor: ringDone ? colors.successIcon : colors.targetSet,
+      }}
+    >
+      <Text
+        className="text-sm font-bold"
+        style={{ color: ringDone ? colors.successIcon : colors.targetSet }}
+      >
+        {String(setNumber)}
       </Text>
-    );
-  }
+    </View>
+  );
+  if (!onCycleMode || !mode) return <View className="w-8 items-center">{number}</View>;
+  // Tapping the set number cycles this row: Bilateral -> Unilateral -> Split.
   return (
-    <View className="w-8 items-center">
-      <View
-        testID="target-set"
-        accessibilityLabel={`Set ${setNumber}, your usual last set${ringDone ? ", done" : ""}`}
-        className="items-center justify-center rounded-full"
+    <Pressable
+      testID="set-mode"
+      accessibilityRole="button"
+      accessibilityLabel={`Set ${setNumber}, ${MODE_LABEL[mode]}. Tap for ${MODE_LABEL[NEXT_MODE[mode]]}`}
+      onPress={onCycleMode}
+      hitSlop={6}
+      className="w-8 items-center active:opacity-50"
+    >
+      {number}
+      <Text
+        className="mt-0.5 text-[8px] font-bold uppercase tracking-wide"
         style={{
-          width: TARGET_RING_SIZE,
-          height: TARGET_RING_SIZE,
-          borderWidth: 2,
-          borderColor: ringDone ? colors.successIcon : colors.targetSet,
+          color:
+            mode === "bilateral"
+              ? colors.placeholder
+              : mode === "unilateral"
+                ? colors.leftSideText
+                : colors.rightSideText,
         }}
       >
-        <Text
-          className="text-sm font-bold"
-          style={{ color: ringDone ? colors.successIcon : colors.targetSet }}
-        >
-          {String(setNumber)}
-        </Text>
-      </View>
-    </View>
+        {mode === "bilateral" ? "bi" : mode === "unilateral" ? "uni" : "split"}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -181,6 +210,7 @@ function PairRow({
   rightSuggestion,
   isBodyweight,
   isTarget,
+  onCycleMode,
 }: {
   leftSet: StoredSet;
   rightSet: StoredSet;
@@ -194,6 +224,8 @@ function PairRow({
   rightSuggestion: SetSuggestion;
   isBodyweight?: boolean;
   isTarget?: boolean;
+  onCycleMode?: () => void;
+  showSideColumn?: boolean;
 }) {
   const colors = useThemeColors();
   const left = acceptValues(leftSet, leftSuggestion, isBodyweight);
@@ -209,6 +241,8 @@ function PairRow({
         label={String(setNumber)}
         isTarget={isTarget}
         ringDone={isRowDone(leftSet, isBodyweight) && isRowDone(rightSet, isBodyweight)}
+        mode="unilateral"
+        onCycleMode={onCycleMode}
       />
       {sides.map(({ set, values }, i) => (
         <View key={set.id} className={`flex-1 flex-row gap-1 ${i === 1 ? "ml-1.5" : ""}`}>
@@ -225,7 +259,13 @@ function PairRow({
                 onBlur={onBlur}
                 onChangeValue={(value) => updateSet(exerciseId, set.id, { [field]: value })}
                 className={INPUT_CLASS}
-                style={{ height: INPUT_HEIGHT, fontSize: 15, textAlignVertical: "center" }}
+                // Tint each side's inputs so L and R read apart without a header.
+                style={{
+                  height: INPUT_HEIGHT,
+                  fontSize: 15,
+                  textAlignVertical: "center",
+                  borderColor: i === 0 ? colors.leftSideBg : colors.rightSideBg,
+                }}
                 selectTextOnFocus
               />
             </View>
@@ -311,6 +351,9 @@ function SetRow({
   isBodyweight,
   isTarget,
   targetDone,
+  mode,
+  onCycleMode,
+  showSideColumn,
 }: {
   set: StoredSet;
   setNumber: number;
@@ -325,6 +368,10 @@ function SetRow({
   isTarget?: boolean;
   /** Whether the target set is complete; a unilateral pair passes both sides. */
   targetDone?: boolean;
+  mode?: SideMode;
+  onCycleMode?: () => void;
+  /** Some row is split, so bilateral rows leave room for the side badge. */
+  showSideColumn?: boolean;
 }) {
   const colors = useThemeColors();
   const { updates, canAccept, isFilled, suggestedReps, suggestedWeight } = acceptValues(
@@ -342,8 +389,12 @@ function SetRow({
         label={sideLabel === "L" ? "" : String(setNumber)}
         isTarget={isTarget}
         ringDone={ringDone}
+        mode={mode}
+        onCycleMode={onCycleMode}
       />
-      {sideLabel != null && (
+      {sideLabel == null ? (
+        showSideColumn && <View className="w-7" />
+      ) : (
         <View
           className="w-7 items-center justify-center rounded"
           style={{
@@ -413,9 +464,8 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
     addSet,
     addUnilateralPair,
     updateSet,
-    setSideMode,
+    setRowMode,
     removeLastSet,
-    removeLastUnilateralPair,
     trimTrailingEmptySets,
     changeExerciseProfile,
     mode,
@@ -455,75 +505,47 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 
   const displayUnit = getDisplayUnit();
 
-  // Group sets into pairs for unilateral mode
-  const setGroups = useMemo((): SetPair[] => {
-    if (!exercise.isUnilateral) {
-      return exercise.sets.map((set, index) => ({
-        setNumber: index + 1,
-        rightSet: set,
-      }));
-    }
+  // One numbered row per set; each row has its own mode (bilateral, unilateral, split).
+  const rows = useMemo(() => toRows(exercise.sets), [exercise.sets]);
+  const lastRow = rows[rows.length - 1];
+  const lastMode: SideMode = lastRow ? rowMode(lastRow) : "bilateral";
+  const showSideColumn = rows.some((row) => rowMode(row) === "split");
+  const allUnilateral = rows.length > 0 && rows.every((row) => rowMode(row) === "unilateral");
 
-    const pairs: SetPair[] = [];
-    const rightSets = exercise.sets.filter((s) => s.side === "R");
-    const leftSets = exercise.sets.filter((s) => s.side === "L");
-    const maxLen = Math.max(rightSets.length, leftSets.length);
-
-    for (let i = 0; i < maxLen; i++) {
-      pairs.push({
-        setNumber: i + 1,
-        rightSet: rightSets[i],
-        leftSet: leftSets[i],
-      });
-    }
-
-    return pairs;
-  }, [exercise.sets, exercise.isUnilateral]);
+  // New rows follow the last row's mode, so "2 bilateral then unilateral" stays unilateral.
+  const addRow = useCallback(
+    (rowModeToAdd: SideMode, weightUnit: string, reps?: number, weight?: number) => {
+      if (rowModeToAdd === "bilateral") addSet(exercise.exerciseId, weightUnit, reps, weight);
+      else
+        addUnilateralPair(
+          exercise.exerciseId,
+          weightUnit,
+          reps,
+          weight,
+          rowModeToAdd === "unilateral" ? "combined" : undefined,
+        );
+    },
+    [exercise.exerciseId, addSet, addUnilateralPair],
+  );
 
   const handleAddSet = useCallback(() => {
-    if (exercise.isUnilateral) {
-      addUnilateralPair(exercise.exerciseId, displayUnit);
-    } else {
-      addSet(exercise.exerciseId, displayUnit);
-    }
+    addRow(lastMode, displayUnit);
     // Scroll to bottom after add
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
-  }, [exercise.exerciseId, exercise.isUnilateral, addSet, addUnilateralPair, displayUnit]);
+  }, [addRow, lastMode, displayUnit]);
 
   const handleUpdateSet = useCallback(
     (exerciseId: string, setId: string, updates: Partial<StoredSet>) => {
-      const set = exercise.sets.find((s) => s.id === setId);
+      const index = rowIndexOf(rows, setId);
       updateSet(exerciseId, setId, updates);
 
-      if (mode !== "live" || !settings.autoAddSet || !set) return;
-
-      const wasEmpty = set.reps == null && set.weight == null;
-      if (!wasEmpty) return;
-      const becomesNonEmpty = updates.reps != null || updates.weight != null;
-      if (!becomesNonEmpty) return;
-
-      if (exercise.isUnilateral) {
-        const sideSets = exercise.sets.filter((s) => s.side === set.side);
-        const setIndex = sideSets.findIndex((s) => s.id === setId);
-        if (setIndex !== setGroups.length - 1) return;
-        const otherSet = exercise.sets.filter((s) => s.side !== set.side)[setIndex];
-        if (otherSet && (otherSet.reps != null || otherSet.weight != null)) return;
-        addUnilateralPair(exercise.exerciseId, displayUnit);
-      } else {
-        if (exercise.sets[exercise.sets.length - 1]?.id !== setId) return;
-        addSet(exercise.exerciseId, displayUnit);
-      }
+      // Auto-add one row like this one when the last row gets its first value.
+      if (mode !== "live" || !settings.autoAddSet || index < 0) return;
+      if (index !== rows.length - 1 || !isRowEmpty(rows[index])) return;
+      if (updates.reps == null && updates.weight == null) return;
+      addRow(rowMode(rows[index]), displayUnit);
     },
-    [
-      exercise,
-      updateSet,
-      mode,
-      settings.autoAddSet,
-      addSet,
-      addUnilateralPair,
-      displayUnit,
-      setGroups,
-    ],
+    [rows, updateSet, mode, settings.autoAddSet, addRow, displayUnit],
   );
 
   const handleSetBlur = useCallback(() => {
@@ -537,54 +559,32 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
     exercise.exerciseId,
   ]);
 
-  const lastSet = exercise.sets[exercise.sets.length - 1];
-  const lastRightSet = exercise.isUnilateral
-    ? exercise.sets.filter((s) => s.side === "R").slice(-1)[0]
-    : null;
-
   const handleDuplicateLastSet = useCallback(() => {
-    if (exercise.isUnilateral) {
-      if (!lastRightSet) return;
-      addUnilateralPair(
-        exercise.exerciseId,
-        lastRightSet.weightUnit,
-        lastRightSet.reps ?? DEFAULT_REPS,
-        lastRightSet.weight ?? DEFAULT_WEIGHT,
-      );
-    } else {
-      if (!lastSet) return;
-      addSet(
-        exercise.exerciseId,
-        lastSet.weightUnit,
-        lastSet.reps ?? DEFAULT_REPS,
-        lastSet.weight ?? DEFAULT_WEIGHT,
-      );
-    }
+    if (!lastRow) return;
+    const source = lastRow.kind === "bilateral" ? lastRow.set : (lastRow.right ?? lastRow.left)!;
+    addRow(
+      lastMode,
+      source.weightUnit,
+      source.reps ?? DEFAULT_REPS,
+      source.weight ?? DEFAULT_WEIGHT,
+    );
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
-  }, [
-    exercise.exerciseId,
-    exercise.isUnilateral,
-    lastSet,
-    lastRightSet,
-    addSet,
-    addUnilateralPair,
-  ]);
+  }, [lastRow, lastMode, addRow]);
 
   const handleRemoveLastSet = useCallback(() => {
-    if (exercise.isUnilateral) {
-      removeLastUnilateralPair(exercise.exerciseId);
-    } else {
-      removeLastSet(exercise.exerciseId);
-    }
-  }, [exercise.exerciseId, exercise.isUnilateral, removeLastSet, removeLastUnilateralPair]);
+    removeLastSet(exercise.exerciseId);
+  }, [exercise.exerciseId, removeLastSet]);
 
-  const sideMode = sideModeOf(exercise);
-  // Combined rows need both sides; a lopsided pair (e.g. one side deleted) shows split.
-  const isCombined =
-    sideMode === "unilateral" && setGroups.every((g) => g.leftSet != null && g.rightSet != null);
+  const handleCycleMode = useCallback(
+    (rowIndex: number) => {
+      const row = rows[rowIndex];
+      if (row) setRowMode(exercise.exerciseId, rowIndex, NEXT_MODE[rowMode(row)]);
+    },
+    [rows, exercise.exerciseId, setRowMode],
+  );
 
-  // A combined row accepts both sides at once. The first write goes through
-  // handleUpdateSet so live auto-add opens one new pair; the second is a plain write.
+  // A unilateral row accepts both sides at once. The first write goes through
+  // handleUpdateSet so live auto-add opens one new row; the second is a plain write.
   const handleAcceptPair = useCallback(
     (
       leftSet: StoredSet,
@@ -720,7 +720,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 
   const profileBusy = createProfileMutation.isPending || renameProfileMutation.isPending;
 
-  const canRemove = exercise.isUnilateral ? setGroups.length > 1 : exercise.sets.length > 1;
+  const canRemove = rows.length > 1;
   const canDuplicate = exercise.sets.length > 0;
 
   const suggestedProfileId = getSuggestedProfile(exercise.exerciseId);
@@ -747,36 +747,6 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                 {exercise.exerciseType}
               </Text>
             </View>
-            <View
-              accessibilityRole="radiogroup"
-              className="flex-row rounded-lg bg-zinc-200 p-0.5 dark:bg-zinc-800"
-            >
-              {SIDE_MODES.map(({ mode: option, label }) => {
-                const selected = option === sideMode;
-                return (
-                  <Pressable
-                    key={option}
-                    testID={`side-mode-${option}`}
-                    accessibilityRole="radio"
-                    accessibilityLabel={label}
-                    accessibilityState={{ selected }}
-                    onPress={() => !selected && setSideMode(exercise.exerciseId, option)}
-                    hitSlop={4}
-                    className={`rounded-md px-2.5 py-1 ${selected ? "bg-white dark:bg-zinc-600" : ""}`}
-                  >
-                    <Text
-                      className={`text-xs font-semibold ${
-                        selected
-                          ? "text-zinc-900 dark:text-zinc-50"
-                          : "text-zinc-500 dark:text-zinc-400"
-                      }`}
-                    >
-                      {label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
           </View>
         )}
 
@@ -797,7 +767,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
       </View>
 
       {/* Set Table Header */}
-      {isCombined ? (
+      {allUnilateral ? (
         <View className="mb-1 flex-row items-center gap-1.5 px-2">
           <Text className="w-8 text-center text-xs font-bold uppercase text-zinc-400 dark:text-zinc-500">
             Set
@@ -807,20 +777,12 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
               key={side}
               className={`flex-1 flex-row items-center gap-1 ${i === 1 ? "ml-1.5" : ""}`}
             >
-              <View
-                className="items-center justify-center rounded px-1.5"
-                style={{
-                  height: SIDE_BADGE_HEIGHT,
-                  backgroundColor: side === "R" ? colors.rightSideBg : colors.leftSideBg,
-                }}
+              <Text
+                className="text-xs font-bold"
+                style={{ color: side === "R" ? colors.rightSideText : colors.leftSideText }}
               >
-                <Text
-                  className="text-xs font-bold"
-                  style={{ color: side === "R" ? colors.rightSideText : colors.leftSideText }}
-                >
-                  {side}
-                </Text>
-              </View>
+                {side}
+              </Text>
               <Text className="flex-1 text-center text-[10px] font-bold uppercase text-zinc-400 dark:text-zinc-500">
                 Reps
               </Text>
@@ -836,7 +798,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
           <Text className="w-8 text-center text-xs font-bold uppercase text-zinc-400 dark:text-zinc-500">
             Set
           </Text>
-          {exercise.isUnilateral && (
+          {showSideColumn && (
             <Text className="w-7 text-center text-xs font-bold uppercase text-zinc-400 dark:text-zinc-500">
               Side
             </Text>
@@ -860,115 +822,75 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
         bottomOffset={KEYBOARD_BAR_HEIGHT + 16}
         keyboardShouldPersistTaps="handled"
       >
-        {isCombined
-          ? setGroups.map((group) => {
-              const { leftSet, rightSet } = group;
-              if (!leftSet || !rightSet) return null;
-              return (
-                <PairRow
-                  key={`${leftSet.id}-${rightSet.id}`}
-                  leftSet={leftSet}
-                  rightSet={rightSet}
-                  setNumber={group.setNumber}
-                  exerciseId={exercise.exerciseId}
-                  displayUnit={displayUnit}
-                  updateSet={handleUpdateSet}
-                  onAccept={(left, right) => handleAcceptPair(leftSet, rightSet, left, right)}
-                  onBlur={handleSetBlur}
-                  leftSuggestion={getSuggestion(
-                    exercise.exerciseId,
-                    exercise.profileId,
-                    group.setNumber,
-                    "L",
-                  )}
-                  rightSuggestion={getSuggestion(
-                    exercise.exerciseId,
-                    exercise.profileId,
-                    group.setNumber,
-                    "R",
-                  )}
-                  isBodyweight={isBodyweight}
-                  isTarget={group.setNumber === targetSetCount}
+        {rows.map((row, index) => {
+          const setNumber = index + 1;
+          const rowModeNow = rowMode(row);
+          const isTarget = setNumber === targetSetCount;
+          const cycle = () => handleCycleMode(index);
+          const suggestionFor = (side?: "L" | "R") =>
+            getSuggestion(exercise.exerciseId, exercise.profileId, setNumber, side);
+          const common = {
+            setNumber,
+            exerciseId: exercise.exerciseId,
+            displayUnit,
+            updateSet: handleUpdateSet,
+            onBlur: handleSetBlur,
+            isBodyweight,
+            showSideColumn,
+          };
+          if (row.kind === "bilateral") {
+            return (
+              <SetRow
+                key={row.set.id}
+                {...common}
+                set={row.set}
+                suggestion={suggestionFor()}
+                isTarget={isTarget}
+                mode="bilateral"
+                onCycleMode={cycle}
+              />
+            );
+          }
+          const { left, right } = row;
+          if (rowModeNow === "unilateral" && left && right) {
+            return (
+              <PairRow
+                key={`${right.id}-${left.id}`}
+                {...common}
+                leftSet={left}
+                rightSet={right}
+                onAccept={(l, r) => handleAcceptPair(left, right, l, r)}
+                leftSuggestion={suggestionFor("L")}
+                rightSuggestion={suggestionFor("R")}
+                isTarget={isTarget}
+                onCycleMode={cycle}
+              />
+            );
+          }
+          // Split rows (or a unilateral row missing a side): R row, then L row.
+          const pairDone = [right, left].every((s) => s == null || isRowDone(s, isBodyweight));
+          const sides = [
+            right && { set: right, label: "R" as const },
+            left && { set: left, label: "L" as const },
+          ].filter((x): x is { set: StoredSet; label: "R" | "L" } => !!x);
+          return (
+            <View key={sides.map((x) => x.set.id).join("-")}>
+              {sides.map(({ set, label }, i) => (
+                <SetRow
+                  key={set.id}
+                  {...common}
+                  set={set}
+                  sideLabel={label}
+                  suggestion={suggestionFor(label)}
+                  isTarget={isTarget && i === 0}
+                  targetDone={pairDone}
+                  mode={i === 0 ? rowModeNow : undefined}
+                  onCycleMode={i === 0 ? cycle : undefined}
                 />
-              );
-            })
-          : exercise.isUnilateral
-            ? setGroups.map((group) => {
-                const rightSuggestion = getSuggestion(
-                  exercise.exerciseId,
-                  exercise.profileId,
-                  group.setNumber,
-                  "R",
-                );
-                const leftSuggestion = getSuggestion(
-                  exercise.exerciseId,
-                  exercise.profileId,
-                  group.setNumber,
-                  "L",
-                );
-                const isTargetPair = group.setNumber === targetSetCount;
-                const pairDone = [group.rightSet, group.leftSet].every(
-                  (side) => side == null || isRowDone(side, isBodyweight),
-                );
-                return (
-                  <View key={group.setNumber}>
-                    {group.rightSet && (
-                      <SetRow
-                        key={group.rightSet.id}
-                        set={group.rightSet}
-                        setNumber={group.setNumber}
-                        sideLabel="R"
-                        exerciseId={exercise.exerciseId}
-                        displayUnit={displayUnit}
-                        updateSet={handleUpdateSet}
-                        onBlur={handleSetBlur}
-                        suggestion={rightSuggestion}
-                        isBodyweight={isBodyweight}
-                        isTarget={isTargetPair}
-                        targetDone={pairDone}
-                      />
-                    )}
-                    {group.leftSet && (
-                      <SetRow
-                        key={group.leftSet.id}
-                        set={group.leftSet}
-                        setNumber={group.setNumber}
-                        sideLabel="L"
-                        exerciseId={exercise.exerciseId}
-                        displayUnit={displayUnit}
-                        updateSet={handleUpdateSet}
-                        onBlur={handleSetBlur}
-                        suggestion={leftSuggestion}
-                        isBodyweight={isBodyweight}
-                        // The ring sits on the R row, or here when the pair has no R row.
-                        isTarget={isTargetPair && !group.rightSet}
-                        targetDone={pairDone}
-                      />
-                    )}
-                  </View>
-                );
-              })
-            : exercise.sets.map((set, index) => {
-                const suggestion = getSuggestion(
-                  exercise.exerciseId,
-                  exercise.profileId,
-                  index + 1,
-                );
-                return (
-                  <SetRow
-                    key={set.id}
-                    set={set}
-                    setNumber={index + 1}
-                    exerciseId={exercise.exerciseId}
-                    displayUnit={displayUnit}
-                    updateSet={handleUpdateSet}
-                    onBlur={handleSetBlur}
-                    suggestion={suggestion}
-                    isBodyweight={isBodyweight}
-                    isTarget={index + 1 === targetSetCount}
-                  />
-                );
-              })}
+              ))}
+            </View>
+          );
+        })}
       </KeyboardAwareScrollView>
 
       {/* Rest Timer */}

@@ -86,9 +86,6 @@ export interface StoredWorkoutExercise {
   exerciseType?: string;
   sets: StoredSet[];
   isUnilateral?: boolean;
-  // How sided sets are laid out: "split" (default, one row per side) or "combined"
-  // (L and R in one row). Display only; the sets are the same either way.
-  sideLayout?: "split" | "combined";
 }
 
 export interface StoredSet {
@@ -97,6 +94,9 @@ export interface StoredSet {
   weight?: number;
   weightUnit: string;
   createdAt: string;
+  // On sided sets: "combined" shows this L/R pair in one row (unilateral mode). Absent
+  // means separate rows (split). Device-only; the server never sees it.
+  layout?: "combined";
   side?: "L" | "R";
   bodyweight?: number;
 }

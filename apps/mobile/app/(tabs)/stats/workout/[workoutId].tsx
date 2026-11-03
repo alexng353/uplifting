@@ -9,6 +9,7 @@ import { useSettings } from "../../../../hooks/useSettings";
 import { useThemeColors } from "../../../../hooks/useThemeColors";
 import { api, unwrap } from "../../../../lib/api";
 import { convertWeight } from "../../../../services/storage";
+import { toRows } from "../../../../lib/set-rows";
 
 export default function WorkoutDetailScreen() {
   const { workoutId } = useLocalSearchParams<{ workoutId: string }>();
@@ -118,21 +119,18 @@ export default function WorkoutDetailScreen() {
     };
 
     if (group.is_unilateral) {
-      const rightSets = group.sets.filter((s: any) => s.side === "R");
-      const leftSets = group.sets.filter((s: any) => s.side === "L");
-      const pairCount = Math.max(rightSets.length, leftSets.length);
-      const pairs: string[] = [];
-      for (let i = 0; i < pairCount; i++) {
-        const r = rightSets[i];
-        const l = leftSets[i];
-        if (r && l && formatSingleSet(r) === formatSingleSet(l)) {
-          pairs.push(`${formatSingleSet(r)} L/R`);
-        } else {
-          if (r) pairs.push(`${formatSingleSet(r)} R`);
-          if (l) pairs.push(`${formatSingleSet(l)} L`);
-        }
-      }
-      return `${pairCount} sets/side · ${pairs.join(", ")}`;
+      // Rows, so an exercise mixing bilateral and L/R sets lists all of them in order.
+      const rows = toRows(group.sets);
+      const parts = rows.map((row) => {
+        if (row.kind === "bilateral") return formatSingleSet(row.set);
+        const { right: r, left: l } = row;
+        if (r && l && formatSingleSet(r) === formatSingleSet(l)) return `${formatSingleSet(r)} L/R`;
+        return [r && `${formatSingleSet(r)} R`, l && `${formatSingleSet(l)} L`]
+          .filter(Boolean)
+          .join(", ");
+      });
+      const allSided = rows.every((row) => row.kind === "sided");
+      return `${rows.length} ${allSided ? "sets/side" : "sets"} · ${parts.join(", ")}`;
     }
 
     return `${group.sets.length} sets · ${group.sets.map(formatSingleSet).join(", ")}`;

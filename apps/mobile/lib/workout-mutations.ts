@@ -5,7 +5,12 @@ import {
   type StoredWorkout,
   type StoredWorkoutExercise,
 } from "../services/storage";
-import type { SideMode } from "./side-mode";
+import { convertRow, fromRows, isRowEmpty, toRows, type SideMode } from "./set-rows";
+
+// isUnilateral now only means "has sided sets"; keep it in step with the rows.
+function withSets(e: StoredWorkoutExercise, sets: StoredSet[]): StoredWorkoutExercise {
+  return { ...e, sets, isUnilateral: sets.some((s) => s.side != null) };
+}
 
 /**
  * Pure workout mutation functions.
@@ -109,6 +114,7 @@ export function addUnilateralPairMutation(
   weightUnit: string,
   reps?: number,
   weight?: number,
+  layout?: "combined",
 ): StoredWorkout {
   const bodyweight = getBodyweightForExercise(workout, exerciseId);
   const rightSet: StoredSet = {
@@ -119,6 +125,7 @@ export function addUnilateralPairMutation(
     createdAt: new Date().toISOString(),
     side: "R",
     bodyweight,
+    ...(layout ? { layout } : {}),
   };
 
   const leftSet: StoredSet = {
@@ -129,12 +136,13 @@ export function addUnilateralPairMutation(
     createdAt: new Date().toISOString(),
     side: "L",
     bodyweight,
+    ...(layout ? { layout } : {}),
   };
 
   return {
     ...workout,
     exercises: workout.exercises.map((e) =>
-      e.exerciseId === exerciseId ? { ...e, sets: [...e.sets, rightSet, leftSet] } : e,
+      e.exerciseId === exerciseId ? withSets(e, [...e.sets, rightSet, leftSet]) : e,
     ),
   };
 }
@@ -172,10 +180,11 @@ export function removeSetMutation(
 }
 
 export function removeLastSetMutation(workout: StoredWorkout, exerciseId: string): StoredWorkout {
+  // Removes the last row: one bilateral set or a whole L/R pair.
   return {
     ...workout,
     exercises: workout.exercises.map((e) =>
-      e.exerciseId === exerciseId ? { ...e, sets: e.sets.slice(0, -1) } : e,
+      e.exerciseId === exerciseId ? withSets(e, fromRows(toRows(e.sets).slice(0, -1))) : e,
     ),
   };
 }
@@ -184,83 +193,30 @@ export function removeLastUnilateralPairMutation(
   workout: StoredWorkout,
   exerciseId: string,
 ): StoredWorkout {
-  const exercise = workout.exercises.find((e) => e.exerciseId === exerciseId);
-  if (!exercise) return workout;
-
-  const rightSets = exercise.sets.filter((s) => s.side === "R");
-  const leftSets = exercise.sets.filter((s) => s.side === "L");
-  const lastRight = rightSets[rightSets.length - 1];
-  const lastLeft = leftSets[leftSets.length - 1];
-
-  const idsToRemove = new Set<string>();
-  if (lastRight) idsToRemove.add(lastRight.id);
-  if (lastLeft) idsToRemove.add(lastLeft.id);
-
-  return {
-    ...workout,
-    exercises: workout.exercises.map((e) =>
-      e.exerciseId === exerciseId
-        ? { ...e, sets: e.sets.filter((s) => !idsToRemove.has(s.id)) }
-        : e,
-    ),
-  };
+  return removeLastSetMutation(workout, exerciseId);
 }
 
-function isSetEmpty(s: StoredSet): boolean {
-  return s.reps == null && s.weight == null;
-}
-
-/**
- * Remove trailing empty sets from an exercise, keeping at most `keepCount`
- * empty sets at the end. An "empty" set has neither reps nor weight; for
- * unilateral exercises, a "pair" is empty when both its R and L sides
- * (or the only side present) are empty.
- */
 export function trimTrailingEmptySetsMutation(
   workout: StoredWorkout,
   exerciseId: string,
   keepCount: number = 0,
 ): StoredWorkout {
+  // Keep at most `keepCount` empty rows at the end; a row is empty when all its sides are.
   return {
     ...workout,
     exercises: workout.exercises.map((e) => {
       if (e.exerciseId !== exerciseId) return e;
-
-      if (e.isUnilateral) {
-        const rightSets = e.sets.filter((s) => s.side === "R");
-        const leftSets = e.sets.filter((s) => s.side === "L");
-        const maxLen = Math.max(rightSets.length, leftSets.length);
-
-        let lastNonEmpty = -1;
-        for (let i = maxLen - 1; i >= 0; i -= 1) {
-          const r = rightSets[i];
-          const l = leftSets[i];
-          if ((r && !isSetEmpty(r)) || (l && !isSetEmpty(l))) {
-            lastNonEmpty = i;
-            break;
-          }
-        }
-
-        const keepUntil = lastNonEmpty + 1 + keepCount;
-        if (keepUntil >= maxLen) return e;
-
-        const keepIds = new Set<string>([
-          ...rightSets.slice(0, keepUntil).map((s) => s.id),
-          ...leftSets.slice(0, keepUntil).map((s) => s.id),
-        ]);
-        return { ...e, sets: e.sets.filter((s) => keepIds.has(s.id)) };
-      }
-
+      const rows = toRows(e.sets);
       let lastNonEmpty = -1;
-      for (let i = e.sets.length - 1; i >= 0; i -= 1) {
-        if (!isSetEmpty(e.sets[i])) {
+      for (let i = rows.length - 1; i >= 0; i -= 1) {
+        if (!isRowEmpty(rows[i])) {
           lastNonEmpty = i;
           break;
         }
       }
       const keepUntil = lastNonEmpty + 1 + keepCount;
-      if (keepUntil >= e.sets.length) return e;
-      return { ...e, sets: e.sets.slice(0, keepUntil) };
+      if (keepUntil >= rows.length) return e;
+      return withSets(e, fromRows(rows.slice(0, keepUntil)));
     }),
   };
 }
@@ -324,26 +280,20 @@ export function toggleUnilateralMutation(
   };
 }
 
-export function setSideModeMutation(
+export function setRowModeMutation(
   workout: StoredWorkout,
   exerciseId: string,
+  rowIndex: number,
   mode: SideMode,
 ): StoredWorkout {
-  const exercise = workout.exercises.find((e) => e.exerciseId === exerciseId);
-  if (!exercise) return workout;
-  const wantsSides = mode !== "bilateral";
-  // Only bilateral <-> sided changes the sets; unilateral <-> split is layout only.
-  const next =
-    (exercise.isUnilateral ?? false) === wantsSides
-      ? workout
-      : toggleUnilateralMutation(workout, exerciseId);
   return {
-    ...next,
-    exercises: next.exercises.map((e) => {
+    ...workout,
+    exercises: workout.exercises.map((e) => {
       if (e.exerciseId !== exerciseId) return e;
-      const { sideLayout: _old, ...rest } = e;
-      if (mode === "bilateral") return rest;
-      return { ...rest, sideLayout: mode === "unilateral" ? "combined" : "split" };
+      const rows = toRows(e.sets);
+      if (!rows[rowIndex]) return e;
+      rows[rowIndex] = convertRow(rows[rowIndex], mode, generateId);
+      return withSets(e, fromRows(rows));
     }),
   };
 }
