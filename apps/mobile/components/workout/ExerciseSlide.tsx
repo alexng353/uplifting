@@ -39,6 +39,7 @@ const DEFAULT_WEIGHT = 20;
 
 const INPUT_HEIGHT = 36;
 const SIDE_BADGE_HEIGHT = 22;
+const ACCEPT_BUTTON_SIZE = 36;
 
 function SetNumberInput({
   value,
@@ -97,6 +98,16 @@ function SetRow({
   isBodyweight?: boolean;
 }) {
   const colors = useThemeColors();
+  const isFilled = set.reps != null && set.weight != null;
+
+  // Fill only the empty fields so a value typed by hand is never overwritten.
+  const acceptSuggestion = useCallback(() => {
+    const updates: Partial<StoredSet> = {};
+    if (set.reps == null) updates.reps = suggestedReps;
+    if (set.weight == null) updates.weight = suggestedWeight;
+    if (updates.reps == null && updates.weight == null) return;
+    updateSet(exerciseId, set.id, updates);
+  }, [set.reps, set.weight, set.id, suggestedReps, suggestedWeight, updateSet, exerciseId]);
 
   return (
     <View className="mb-1 flex-row items-center gap-2 px-2 py-1">
@@ -153,6 +164,31 @@ function SetRow({
         />
       </View>
       <Text className="w-8 text-xs text-zinc-400 dark:text-zinc-500">{displayUnit}</Text>
+      <Pressable
+        testID="accept-suggestion"
+        accessibilityRole="button"
+        accessibilityLabel={
+          isFilled
+            ? `Set ${setNumber} filled`
+            : `Use suggested ${suggestedReps} reps at ${suggestedWeight} ${displayUnit}`
+        }
+        accessibilityState={{ disabled: isFilled }}
+        disabled={isFilled}
+        onPress={acceptSuggestion}
+        hitSlop={6}
+        className={`items-center justify-center rounded-full ${
+          isFilled
+            ? "bg-green-500/15"
+            : "border border-zinc-300 dark:border-zinc-600 active:bg-zinc-200 dark:active:bg-zinc-700"
+        }`}
+        style={{ width: ACCEPT_BUTTON_SIZE, height: ACCEPT_BUTTON_SIZE }}
+      >
+        <Ionicons
+          name="checkmark"
+          size={20}
+          color={isFilled ? colors.successIcon : colors.placeholder}
+        />
+      </Pressable>
     </View>
   );
 }
@@ -461,6 +497,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
           Weight
         </Text>
         <Text className="w-8 text-xs text-transparent">kg</Text>
+        <View style={{ width: ACCEPT_BUTTON_SIZE }} />
       </View>
 
       {/* Sets */}
