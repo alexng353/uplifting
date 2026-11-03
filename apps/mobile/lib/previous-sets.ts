@@ -1,13 +1,11 @@
 import type { StoredPreviousSets, StoredSet } from "../services/storage";
 
+// A null field means the history has no value for it; callers pick their own fallback.
 export interface SetSuggestion {
   reps: number | null;
   weight: number | null;
   weightUnit: string | null;
 }
-
-const DEFAULT_REPS = 10;
-const DEFAULT_WEIGHT = 20;
 
 export function getPreviousSetSuggestion(
   previousSets: StoredPreviousSets,
@@ -38,9 +36,10 @@ export function getPreviousSetSuggestion(
   }
 
   const targetSet = sets[Math.min(setNumber - 1, sets.length - 1)];
+  if (!targetSet) return { reps: null, weight: null, weightUnit: null };
   return {
-    reps: targetSet?.reps ?? DEFAULT_REPS,
-    weight: targetSet?.weight ?? DEFAULT_WEIGHT,
-    weightUnit: targetSet?.weightUnit ?? null,
+    reps: targetSet.reps ?? null,
+    weight: targetSet.weight ?? null,
+    weightUnit: targetSet.weightUnit,
   };
 }

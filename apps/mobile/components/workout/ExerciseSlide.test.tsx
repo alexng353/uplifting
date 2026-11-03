@@ -2,6 +2,7 @@ import { afterEach, describe, expect, mock, test } from "bun:test";
 import { act, useState, type ReactNode } from "react";
 import { create, type ReactTestRenderer } from "react-test-renderer";
 import type { StoredSet, StoredWorkoutExercise } from "../../services/storage";
+import type { SetSuggestion } from "../../lib/previous-sets";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 
@@ -23,11 +24,18 @@ mock.module("@expo/vector-icons", () => ({ Ionicons: "Ionicons" }));
 mock.module("../../hooks/useThemeColors", () => ({ useThemeColors: () => ({}) }));
 let settings: Record<string, unknown> = {};
 let mode = "editing";
+const HISTORY: SetSuggestion = { reps: 6, weight: 220, weightUnit: "kg" };
+const LEFT_HISTORY: SetSuggestion = { reps: 5, weight: 100, weightUnit: "kg" };
+let suggestionFor = (_setNumber: number, side?: "L" | "R"): SetSuggestion =>
+  side === "L" ? LEFT_HISTORY : HISTORY;
 mock.module("../../hooks/useSettings", () => ({
   useSettings: () => ({ settings, getDisplayUnit: () => "kg" }),
 }));
 mock.module("../../hooks/usePreviousSets", () => ({
-  usePreviousSets: () => ({ getSuggestion: () => ({ reps: 6, weight: 220 }) }),
+  usePreviousSets: () => ({
+    getSuggestion: (_exerciseId: string, _profileId: string, setNumber: number, side?: "L" | "R") =>
+      suggestionFor(setNumber, side),
+  }),
 }));
 mock.module("../../hooks/useExerciseProfiles", () => ({
   useExerciseProfiles: () => ({ data: [] }),
@@ -67,6 +75,15 @@ mock.module("../../hooks/useWorkoutActions", () => ({
           makeSet(String(exercise.sets.length + 1), { weightUnit, reps, weight }),
         ],
       }),
+    addUnilateralPair: (_exerciseId: string, weightUnit: string) =>
+      updateExercise({
+        ...exercise,
+        sets: [
+          ...exercise.sets,
+          makeSet(`R${exercise.sets.length}`, { weightUnit, side: "R" }),
+          makeSet(`L${exercise.sets.length}`, { weightUnit, side: "L" }),
+        ],
+      }),
     trimTrailingEmptySets,
   }),
 }));
@@ -80,13 +97,14 @@ function makeSet(id: string, values: Partial<StoredSet> = {}): StoredSet {
 
 let renderer: ReactTestRenderer;
 
-async function renderSets(sets: StoredSet[], isUnilateral = false) {
+async function renderSets(sets: StoredSet[], isUnilateral = false, exerciseType?: string) {
   function Harness() {
     const [state, setState] = useState<StoredWorkoutExercise>({
       exerciseId: "exercise",
       exerciseName: "Squat",
       sets,
       isUnilateral,
+      exerciseType,
     });
     exercise = state;
     setExerciseState = setState;
@@ -110,6 +128,7 @@ afterEach(async () => {
   trimTrailingEmptySets.mockClear();
   settings = {};
   mode = "editing";
+  suggestionFor = (_setNumber, side) => (side === "L" ? LEFT_HISTORY : HISTORY);
 });
 
 function acceptButton(row: number) {
@@ -128,17 +147,64 @@ describe("accept suggestion", () => {
     expect(acceptButton(0).props.disabled).toBe(true);
   });
 
-  test("keeps a value typed by hand and fills only the empty field", async () => {
+  test("keeps typed reps and fills only the empty weight", async () => {
     await renderSets([makeSet("1", { reps: 8 })]);
     await act(() => acceptButton(0).props.onPress());
     expect(exercise.sets[0]).toMatchObject({ reps: 8, weight: 220 });
   });
 
-  test("accepts each unilateral side on its own", async () => {
+  test("keeps a typed weight and fills only the empty reps", async () => {
+    await renderSets([makeSet("1", { weight: 180 })]);
+    await act(() => acceptButton(0).props.onPress());
+    expect(exercise.sets[0]).toMatchObject({ reps: 6, weight: 180 });
+  });
+
+  test("accepts each unilateral side with its own history", async () => {
     await renderSets([makeSet("R", { side: "R" }), makeSet("L", { side: "L" })], true);
     await act(() => acceptButton(1).props.onPress());
     expect(exercise.sets[0].reps).toBeUndefined();
-    expect(exercise.sets[1]).toMatchObject({ reps: 6, weight: 220 });
+    expect(exercise.sets[1]).toMatchObject({ reps: 5, weight: 100 });
+    await act(() => acceptButton(0).props.onPress());
+    expect(exercise.sets[0]).toMatchObject({ reps: 6, weight: 220 });
+  });
+
+  test("converts history logged in another unit into the set's unit", async () => {
+    suggestionFor = () => ({ reps: 5, weight: 220, weightUnit: "lbs" });
+    await renderSets([makeSet("1")]);
+    expect(input(0, "weight").props.placeholder).toBe("99.8");
+    await act(() => acceptButton(0).props.onPress());
+    expect(exercise.sets[0]).toMatchObject({ reps: 5, weight: 99.8, weightUnit: "kg" });
+  });
+
+  test("accepts reps-only bodyweight history as no added weight", async () => {
+    suggestionFor = () => ({ reps: 12, weight: null, weightUnit: "kg" });
+    await renderSets([makeSet("1")], false, "Bodyweight");
+    await act(() => acceptButton(0).props.onPress());
+    expect(exercise.sets[0]).toMatchObject({ reps: 12, weight: 0 });
+  });
+
+  test("cannot accept made-up defaults when there is no history", async () => {
+    suggestionFor = () => ({ reps: null, weight: null, weightUnit: null });
+    await renderSets([makeSet("1")]);
+    expect(input(0, "reps").props.placeholder).toBe("10");
+    expect(acceptButton(0).props.disabled).toBe(true);
+  });
+
+  test("shows the accepted value over a cleared draft in the focused field", async () => {
+    await renderSets([makeSet("1")]);
+    await enter(0, "reps", "8");
+    await enter(0, "reps", "");
+    await act(() => acceptButton(0).props.onPress());
+    expect(input(0, "reps").props.value).toBe("6");
+  });
+
+  test("adds the next unilateral pair during a live workout when auto-add is on", async () => {
+    mode = "live";
+    settings = { autoAddSet: true };
+    await renderSets([makeSet("R", { side: "R" }), makeSet("L", { side: "L" })], true);
+    await act(() => acceptButton(0).props.onPress());
+    expect(exercise.sets).toHaveLength(4);
+    expect(exercise.sets[0]).toMatchObject({ reps: 6, weight: 220 });
   });
 
   test("adds the next set during a live workout when auto-add is on", async () => {

@@ -26,8 +26,8 @@ test("suggests each mode's own sets, including side and set number", () => {
   });
 });
 
-test("uses defaults when only the other mode has history, including legacy caches", () => {
-  const defaults = { weight: 20, reps: 10, weightUnit: null };
+test("suggests nothing when only the other mode has history, including legacy caches", () => {
+  const defaults = { weight: null, reps: null, weightUnit: null };
   expect(
     getPreviousSetSuggestion({ press_default: [set(100, "R")] }, "press", undefined, 1),
   ).toEqual(defaults);
@@ -51,7 +51,16 @@ test("profile fallbacks search for the requested mode and stay within the exerci
   expect(getPreviousSetSuggestion(history, "press", "current", 1, "R").weight).toBe(100);
   expect(getPreviousSetSuggestion(history, "press", "alternative", 1).weight).toBe(220);
   expect(getPreviousSetSuggestion(history, "press", "missing", 1).weight).toBe(200);
-  expect(getPreviousSetSuggestion(history, "unknown", undefined, 1).weight).toBe(20);
+  expect(getPreviousSetSuggestion(history, "unknown", undefined, 1).weight).toBeNull();
+});
+
+test("keeps a missing weight missing instead of inventing one", () => {
+  const repsOnly: StoredSet = { id: "1", reps: 12, weightUnit: "kg", createdAt: "2026-09-07" };
+  expect(getPreviousSetSuggestion({ pullup_default: [repsOnly] }, "pullup", undefined, 1)).toEqual({
+    reps: 12,
+    weight: null,
+    weightUnit: "kg",
+  });
 });
 
 test("a missing side may use the other unilateral side, never bilateral sets", () => {

@@ -75,7 +75,7 @@ test("finishing alternating workout modes preserves independent offline suggesti
     );
   });
   for (const [unilateral, weight, expectedBilateral, expectedUnilateral] of [
-    [false, 200, 200, 20],
+    [false, 200, 200, null],
     [true, 100, 200, 100],
     [false, 210, 210, 100],
     [true, 110, 210, 110],

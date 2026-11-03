@@ -21,6 +21,8 @@ import { usePreviousSets } from "../../hooks/usePreviousSets";
 import { useCreateExerciseProfile, useExerciseProfiles } from "../../hooks/useExerciseProfiles";
 import { useExerciseNotes, useSetExerciseNote } from "../../hooks/useExerciseNotes";
 import { useGymProfileSuggestion } from "../../hooks/useGymProfileSuggestion";
+import type { SetSuggestion } from "../../lib/previous-sets";
+import { convertWeight } from "../../lib/units";
 import type { StoredSet, StoredWorkoutExercise } from "../../services/storage";
 import RestTimer from "./RestTimer";
 
@@ -41,6 +43,11 @@ const INPUT_HEIGHT = 36;
 const SIDE_BADGE_HEIGHT = 22;
 const ACCEPT_BUTTON_SIZE = 36;
 
+function parseDraft(text: string): number | undefined {
+  const normalized = text.replace(",", ".");
+  return normalized === "" || normalized === "." ? undefined : Number(normalized);
+}
+
 function SetNumberInput({
   value,
   onChangeValue,
@@ -52,16 +59,17 @@ function SetNumberInput({
 }) {
   // Keep intermediate text such as "20." while saving numeric values on every edit.
   const [draft, setDraft] = useState<string | null>(null);
+  // A value changed from outside (e.g. accepting a suggestion) wins over a stale draft.
+  const shownDraft = draft != null && parseDraft(draft) === value ? draft : null;
 
   return (
     <TextInput
       {...props}
       keyboardType="decimal-pad"
-      value={draft ?? (value != null ? String(value) : "")}
+      value={shownDraft ?? (value != null ? String(value) : "")}
       onChangeText={(text) => {
         if (!/^\d*(?:[.,]\d*)?$/.test(text)) return;
-        const normalized = text.replace(",", ".");
-        const next = normalized === "" || normalized === "." ? undefined : Number(normalized);
+        const next = parseDraft(text);
         if (next != null && !Number.isFinite(next)) return;
         setDraft(text);
         onChangeValue(next);
@@ -82,8 +90,7 @@ function SetRow({
   displayUnit,
   updateSet,
   onBlur,
-  suggestedReps,
-  suggestedWeight,
+  suggestion,
   isBodyweight,
 }: {
   set: StoredSet;
@@ -93,21 +100,33 @@ function SetRow({
   displayUnit: string;
   updateSet: (exerciseId: string, setId: string, updates: Partial<StoredSet>) => void;
   onBlur?: () => void;
-  suggestedReps: number;
-  suggestedWeight: number;
+  suggestion: SetSuggestion;
   isBodyweight?: boolean;
 }) {
   const colors = useThemeColors();
+  // Only values from history can be accepted, in this set's unit; defaults stay hints.
+  const acceptReps = suggestion.reps ?? undefined;
+  const acceptWeight =
+    suggestion.weight != null
+      ? convertWeight(suggestion.weight, suggestion.weightUnit ?? set.weightUnit, set.weightUnit)
+      : isBodyweight && acceptReps != null
+        ? 0
+        : undefined;
+  const pendingReps = set.reps == null ? acceptReps : undefined;
+  const pendingWeight = set.weight == null ? acceptWeight : undefined;
+  const canAccept = pendingReps != null || pendingWeight != null;
   const isFilled = set.reps != null && set.weight != null;
+  const suggestedReps = acceptReps ?? DEFAULT_REPS;
+  const suggestedWeight = acceptWeight ?? (isBodyweight ? 0 : DEFAULT_WEIGHT);
 
   // Fill only the empty fields so a value typed by hand is never overwritten.
   const acceptSuggestion = useCallback(() => {
     const updates: Partial<StoredSet> = {};
-    if (set.reps == null) updates.reps = suggestedReps;
-    if (set.weight == null) updates.weight = suggestedWeight;
-    if (updates.reps == null && updates.weight == null) return;
+    if (pendingReps != null) updates.reps = pendingReps;
+    if (pendingWeight != null) updates.weight = pendingWeight;
+    if (Object.keys(updates).length === 0) return;
     updateSet(exerciseId, set.id, updates);
-  }, [set.reps, set.weight, set.id, suggestedReps, suggestedWeight, updateSet, exerciseId]);
+  }, [pendingReps, pendingWeight, set.id, updateSet, exerciseId]);
 
   return (
     <View className="mb-1 flex-row items-center gap-2 px-2 py-1">
@@ -170,16 +189,20 @@ function SetRow({
         accessibilityLabel={
           isFilled
             ? `Set ${setNumber} filled`
-            : `Use suggested ${suggestedReps} reps at ${suggestedWeight} ${displayUnit}`
+            : canAccept
+              ? `Use last time's ${suggestedReps} reps at ${suggestedWeight} ${displayUnit}`
+              : `No previous set to copy`
         }
-        accessibilityState={{ disabled: isFilled }}
-        disabled={isFilled}
+        accessibilityState={{ disabled: !canAccept }}
+        disabled={!canAccept}
         onPress={acceptSuggestion}
         hitSlop={6}
         className={`items-center justify-center rounded-full ${
           isFilled
             ? "bg-green-500/15"
-            : "border border-zinc-300 dark:border-zinc-600 active:bg-zinc-200 dark:active:bg-zinc-700"
+            : canAccept
+              ? "border border-zinc-300 dark:border-zinc-600 active:bg-zinc-200 dark:active:bg-zinc-700"
+              : "opacity-30"
         }`}
         style={{ width: ACCEPT_BUTTON_SIZE, height: ACCEPT_BUTTON_SIZE }}
       >
@@ -528,10 +551,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                       displayUnit={displayUnit}
                       updateSet={handleUpdateSet}
                       onBlur={handleSetBlur}
-                      suggestedReps={rightSuggestion.reps ?? DEFAULT_REPS}
-                      suggestedWeight={
-                        rightSuggestion.weight ?? (isBodyweight ? 0 : DEFAULT_WEIGHT)
-                      }
+                      suggestion={rightSuggestion}
                       isBodyweight={isBodyweight}
                     />
                   )}
@@ -545,8 +565,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                       displayUnit={displayUnit}
                       updateSet={handleUpdateSet}
                       onBlur={handleSetBlur}
-                      suggestedReps={leftSuggestion.reps ?? DEFAULT_REPS}
-                      suggestedWeight={leftSuggestion.weight ?? (isBodyweight ? 0 : DEFAULT_WEIGHT)}
+                      suggestion={leftSuggestion}
                       isBodyweight={isBodyweight}
                     />
                   )}
@@ -564,8 +583,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                   displayUnit={displayUnit}
                   updateSet={handleUpdateSet}
                   onBlur={handleSetBlur}
-                  suggestedReps={suggestion.reps ?? DEFAULT_REPS}
-                  suggestedWeight={suggestion.weight ?? (isBodyweight ? 0 : DEFAULT_WEIGHT)}
+                  suggestion={suggestion}
                   isBodyweight={isBodyweight}
                 />
               );
