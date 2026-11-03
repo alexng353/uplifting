@@ -426,7 +426,35 @@ describe("set weight entry", () => {
     expect(exercise.sets[row].weight).toBe(20.5);
   });
 
-  test("accepts decimals in a duplicated set", async () => {
+  test("copy fills a trailing empty row from the last filled set", async () => {
+    await renderSets([
+      makeSet("1", { reps: 6, weight: 100 }),
+      makeSet("2", { reps: 6, weight: 150 }),
+      makeSet("3"),
+    ]);
+    const copyIcon = renderer.root.findByProps({ name: "copy-outline" });
+    await act(() => copyIcon.parent!.props.onPress());
+    expect(exercise.sets).toHaveLength(3);
+    expect(exercise.sets[2]).toMatchObject({ reps: 6, weight: 150 });
+  });
+
+  test("copy keeps each side of a split set", async () => {
+    await renderSets(
+      [
+        makeSet("R1", { side: "R", reps: 8, weight: 20 }),
+        makeSet("L1", { side: "L", reps: 7, weight: 18 }),
+        makeSet("R2", { side: "R" }),
+        makeSet("L2", { side: "L" }),
+      ],
+      true,
+    );
+    const copyIcon = renderer.root.findByProps({ name: "copy-outline" });
+    await act(() => copyIcon.parent!.props.onPress());
+    expect(exercise.sets.find((s) => s.id === "R2")).toMatchObject({ reps: 8, weight: 20 });
+    expect(exercise.sets.find((s) => s.id === "L2")).toMatchObject({ reps: 7, weight: 18 });
+  });
+
+  test("copy appends when the last row is filled (decimals)", async () => {
     await renderSets([makeSet("1", { reps: 10, weight: 20 })]);
     const copyIcon = renderer.root.findByProps({ name: "copy-outline" });
     await act(() => copyIcon.parent!.props.onPress());

@@ -38,6 +38,7 @@ import {
   rowMode,
   toRows,
   type SideMode,
+  type SetRow as RowModel,
 } from "../../lib/set-rows";
 import { convertWeight } from "../../lib/units";
 import type { StoredSet, StoredWorkoutExercise } from "../../services/storage";
@@ -193,9 +194,6 @@ function AcceptButton({
     </Pressable>
   );
 }
-
-const INPUT_CLASS =
-  "rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-1 text-center dark:text-zinc-100";
 
 function parseDraft(text: string): number | undefined {
   const normalized = text.replace(",", ".");
@@ -475,15 +473,43 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 
   const handleDuplicateLastSet = useCallback(() => {
     if (!lastRow) return;
-    const source = lastRow.kind === "bilateral" ? lastRow.set : (lastRow.right ?? lastRow.left)!;
-    addRow(
-      lastMode,
-      source.weightUnit,
-      source.reps ?? DEFAULT_REPS,
-      source.weight ?? DEFAULT_WEIGHT,
-    );
+    // Copy the last row with real values; empty rows and grey placeholders don't count.
+    let sourceIndex = rows.length - 1;
+    while (sourceIndex >= 0 && isRowEmpty(rows[sourceIndex])) sourceIndex--;
+    const source = rows[sourceIndex];
+    const sideOf = (row: RowModel, side: "R" | "L"): StoredSet =>
+      row.kind === "bilateral"
+        ? row.set
+        : side === "R"
+          ? (row.right ?? row.left)!
+          : (row.left ?? row.right)!;
+    const valuesOf = (set: StoredSet) => ({
+      reps: set.reps ?? DEFAULT_REPS,
+      weight: set.weight ?? DEFAULT_WEIGHT,
+    });
+
+    // A trailing empty row (e.g. auto-added) gets the copy instead of a new row below it.
+    if (source && sourceIndex < rows.length - 1) {
+      const target = lastRow;
+      if (target.kind === "bilateral") {
+        updateSet(exercise.exerciseId, target.set.id, valuesOf(sideOf(source, "R")));
+      } else {
+        // Split copies each side; a unilateral row keeps L = R.
+        const leftFrom = target.layout === "combined" ? "R" : "L";
+        if (target.right)
+          updateSet(exercise.exerciseId, target.right.id, valuesOf(sideOf(source, "R")));
+        if (target.left)
+          updateSet(exercise.exerciseId, target.left.id, valuesOf(sideOf(source, leftFrom)));
+      }
+      return;
+    }
+
+    const from = source ?? lastRow;
+    const set = sideOf(from, "R");
+    const { reps, weight } = valuesOf(set);
+    addRow(rowMode(from), set.weightUnit, reps, weight);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
-  }, [lastRow, lastMode, addRow]);
+  }, [rows, lastRow, addRow, updateSet, exercise.exerciseId]);
 
   const handleRemoveLastSet = useCallback(() => {
     removeLastSet(exercise.exerciseId);
