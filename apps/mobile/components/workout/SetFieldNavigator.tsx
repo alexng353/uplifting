@@ -11,8 +11,8 @@ import {
 import { neighbourStop, setFieldOrder } from "../../lib/set-field-order";
 import type { StoredWorkoutExercise } from "../../services/storage";
 
-// Long enough for the pager to bring the next exercise on screen before focusing it.
-const PAGE_SETTLE_MS = 250;
+// Fallback if the pager never reports the new page (e.g. it was already there).
+const PAGE_SETTLE_MS = 600;
 
 /**
  * Safari-style Previous / Next / Done bar above the number pad for set inputs.
@@ -40,11 +40,22 @@ export default function SetFieldNavigator({
   const { height: windowHeight } = useWindowDimensions();
   const stops = useMemo(() => setFieldOrder(exercises), [exercises]);
   const pendingFocus = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Field to focus once the pager shows its exercise; focusing mid-scroll is dropped.
+  const pendingKey = useRef<string | null>(null);
   const clearPendingFocus = () => {
     if (pendingFocus.current) clearTimeout(pendingFocus.current);
     pendingFocus.current = null;
+    pendingKey.current = null;
   };
   useEffect(() => clearPendingFocus, []);
+
+  useEffect(() => {
+    const key = pendingKey.current;
+    if (!key) return;
+    if (stops.find((stop) => stop.key === key)?.exerciseIndex !== activeExerciseIndex) return;
+    clearPendingFocus();
+    requestAnimationFrame(() => inputs.current.get(key)?.focus());
+  }, [activeExerciseIndex, stops]);
 
   const focus = useMemo<SetFieldFocus>(
     () => ({
@@ -77,8 +88,12 @@ export default function SetFieldNavigator({
       if (target.exerciseIndex === activeExerciseIndex) {
         focusTarget();
       } else {
+        pendingKey.current = target.key;
         showExercise(target.exerciseIndex);
-        pendingFocus.current = setTimeout(focusTarget, PAGE_SETTLE_MS);
+        pendingFocus.current = setTimeout(() => {
+          pendingKey.current = null;
+          focusTarget();
+        }, PAGE_SETTLE_MS);
       }
     },
     [stops, showExercise, activeExerciseIndex],

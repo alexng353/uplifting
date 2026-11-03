@@ -378,7 +378,7 @@ function EditWorkoutContent() {
         exercises={workout?.exercises ?? NO_EXERCISES}
         activeExerciseIndex={activeSlide - 1}
         // Page 0 is the details page, so exercise pages start at 1.
-        showExercise={(index) => pagerRef.current?.setPage(index + 1)}
+        showExercise={(index) => pagerRef.current?.setPageWithoutAnimation(index + 1)}
       >
         <PagerView
           ref={pagerRef}
