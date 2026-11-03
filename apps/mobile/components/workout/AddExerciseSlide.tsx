@@ -17,6 +17,7 @@ export default function AddExerciseSlide({ onExerciseAdded }: AddExerciseSlidePr
   const { addExercise } = useWorkoutActions();
   const colors = useThemeColors();
   const [searchText, setSearchText] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
 
   const { data: exercises, isLoading } = useExercises(searchText);
   const { data: allProfiles } = useAllExerciseProfiles();
@@ -184,13 +185,25 @@ export default function AddExerciseSlide({ onExerciseAdded }: AddExerciseSlidePr
       <Text className="mb-2 px-4 text-xl font-bold dark:text-zinc-100">Add Exercise</Text>
 
       {/* Search bar */}
-      <View className="mx-4 mb-2 flex-row items-center rounded-lg border border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800 px-3">
-        <Ionicons name="search" size={18} color={colors.mutedIcon} />
+      <View
+        testID="exercise-search-box"
+        className={`mx-4 mb-2 flex-row items-center rounded-lg border bg-zinc-50 dark:bg-zinc-800 px-3 ${
+          searchFocused
+            ? "border-blue-500 dark:border-blue-400"
+            : "border-zinc-300 dark:border-zinc-600"
+        }`}
+      >
+        <Ionicons name="search" size={18} color={searchFocused ? colors.caret : colors.mutedIcon} />
         <TextInput
+          testID="exercise-search"
           value={searchText}
           onChangeText={setSearchText}
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
           placeholder="Search exercises..."
           placeholderTextColor={colors.placeholder}
+          selectionColor={colors.caret}
+          cursorColor={colors.caret}
           className="ml-2 flex-1 py-2.5 dark:text-zinc-100"
           style={{ fontSize: 16 }}
           autoCapitalize="none"

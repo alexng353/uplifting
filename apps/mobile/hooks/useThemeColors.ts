@@ -27,6 +27,8 @@ export function useThemeColors() {
     // Inputs
     placeholder: dark ? "#52525b" : "#a1a1aa",
     inputBorder: dark ? "#3f3f46" : "#d4d4d8",
+    // The system-blue caret is hard to see on zinc-800 fields, so use a brighter one.
+    caret: dark ? "#60a5fa" : "#2563eb",
 
     // Switch
     switchTrackFalse: dark ? "#3f3f46" : "#d4d4d8",

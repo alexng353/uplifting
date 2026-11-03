@@ -216,6 +216,7 @@ function SetRow({
           fieldKey={setFieldKey(set.id, "reps")}
           placeholder={String(suggestedReps)}
           placeholderTextColor={colors.placeholder}
+          selectionColor={colors.caret}
           onBlur={onBlur}
           onChangeValue={(reps) =>
             updateSet(exerciseId, set.id, {
@@ -234,6 +235,7 @@ function SetRow({
           fieldKey={setFieldKey(set.id, "weight")}
           placeholder={String(suggestedWeight)}
           placeholderTextColor={colors.placeholder}
+          selectionColor={colors.caret}
           onBlur={onBlur}
           onChangeValue={(weight) =>
             updateSet(exerciseId, set.id, {
