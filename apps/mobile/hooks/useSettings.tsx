@@ -69,7 +69,9 @@ export function useSettings() {
 
   const updateSettings = useCallback(
     async (updates: Partial<StoredSettings>) => {
-      const newSettings = { ...settings, ...updates };
+      // Merge onto the stored settings: a handler may await (e.g. a permission sheet)
+      // while a server sync lands, and a render-time snapshot would undo it.
+      const newSettings = { ...getSettings(), ...updates };
       setSettingsState(newSettings);
       saveSettings(newSettings);
 

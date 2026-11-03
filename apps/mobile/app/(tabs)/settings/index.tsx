@@ -459,13 +459,18 @@ export default function SettingsScreen() {
                   value={settings.appleHealth}
                   onValueChange={async (on) => {
                     if (!on) return updateSettings({ appleHealth: false });
-                    if (await connectAppleHealth().catch(() => false)) {
-                      return updateSettings({ appleHealth: true });
+                    const result = await connectAppleHealth().catch(() => "error" as const);
+                    if (result === "granted") return updateSettings({ appleHealth: true });
+                    if (result === "denied") {
+                      Alert.alert(
+                        "Health access is off",
+                        "Allow Uplifting under Settings > Health > Data Access & Devices to save workouts.",
+                      );
+                    } else if (result === "unavailable") {
+                      Alert.alert("Apple Health isn't available", "This device has no Health app.");
+                    } else {
+                      Alert.alert("Couldn't connect to Health", "Please try again.");
                     }
-                    Alert.alert(
-                      "Health access is off",
-                      "Allow Uplifting under Settings > Health > Data Access & Devices to save workouts.",
-                    );
                   }}
                 />
               </SettingsRow>

@@ -7,20 +7,22 @@ const loadHealthKit = () => import("@kingstinct/react-native-healthkit");
 
 const WORKOUT_TYPE = "HKWorkoutTypeIdentifier" as const;
 
+export type HealthConnection = "granted" | "denied" | "unavailable";
+
 /**
  * Asks once for permission to save workouts. Reading Health workouts later (e.g. walks
  * for the gym gate) only needs `toRead` added here; iOS then asks for just the new type.
- * Returns whether saving is allowed.
  */
-export async function connectAppleHealth(): Promise<boolean> {
-  if (Platform.OS !== "ios") return false;
+export async function connectAppleHealth(): Promise<HealthConnection> {
+  if (Platform.OS !== "ios") return "unavailable";
   const healthKit = await loadHealthKit();
-  if (!(await healthKit.isHealthDataAvailableAsync())) return false;
+  if (!(await healthKit.isHealthDataAvailableAsync())) return "unavailable";
   await healthKit.requestAuthorization({ toShare: [WORKOUT_TYPE] });
-  return (
-    healthKit.authorizationStatusFor(WORKOUT_TYPE) ===
+  // requestAuthorization resolves even when the user declines, so read the status.
+  return healthKit.authorizationStatusFor(WORKOUT_TYPE) ===
     healthKit.AuthorizationStatus.sharingAuthorized
-  );
+    ? "granted"
+    : "denied";
 }
 
 export async function saveWorkoutToAppleHealth(workout: StoredWorkout): Promise<void> {
