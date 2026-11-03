@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Keyboard, Pressable, Text, View, useWindowDimensions, type TextInput } from "react-native";
 import { KeyboardStickyView } from "react-native-keyboard-controller";
 import { Ionicons } from "@expo/vector-icons";
@@ -21,10 +21,13 @@ const PAGE_SETTLE_MS = 250;
  */
 export default function SetFieldNavigator({
   exercises,
+  activeExerciseIndex,
   showExercise,
   children,
 }: {
   exercises: StoredWorkoutExercise[];
+  /** The exercise page on screen now; the user may have swiped while typing. */
+  activeExerciseIndex: number;
   showExercise: (exerciseIndex: number) => void;
   children: ReactNode;
 }) {
@@ -36,6 +39,12 @@ export default function SetFieldNavigator({
   const [bottomGap, setBottomGap] = useState(0);
   const { height: windowHeight } = useWindowDimensions();
   const stops = useMemo(() => setFieldOrder(exercises), [exercises]);
+  const pendingFocus = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearPendingFocus = () => {
+    if (pendingFocus.current) clearTimeout(pendingFocus.current);
+    pendingFocus.current = null;
+  };
+  useEffect(() => clearPendingFocus, []);
 
   const focus = useMemo<SetFieldFocus>(
     () => ({
@@ -61,18 +70,18 @@ export default function SetFieldNavigator({
 
   const move = useCallback(
     (direction: 1 | -1) => {
-      const current = stops.find((stop) => stop.key === focusedRef.current);
       const target = neighbourStop(stops, focusedRef.current, direction);
-      if (!current || !target) return;
+      if (!target) return;
+      clearPendingFocus();
       const focusTarget = () => inputs.current.get(target.key)?.focus();
-      if (target.exerciseIndex === current.exerciseIndex) {
+      if (target.exerciseIndex === activeExerciseIndex) {
         focusTarget();
       } else {
         showExercise(target.exerciseIndex);
-        setTimeout(focusTarget, PAGE_SETTLE_MS);
+        pendingFocus.current = setTimeout(focusTarget, PAGE_SETTLE_MS);
       }
     },
-    [stops, showExercise],
+    [stops, showExercise, activeExerciseIndex],
   );
 
   const hasPrev = neighbourStop(stops, focusedKey, -1) != null;

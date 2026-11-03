@@ -52,6 +52,10 @@ const SIDE_BADGE_HEIGHT = 22;
 const ACCEPT_BUTTON_SIZE = 36;
 const TARGET_RING_SIZE = 26;
 
+function isRowDone(set: StoredSet, isBodyweight?: boolean): boolean {
+  return set.reps != null && (isBodyweight || set.weight != null);
+}
+
 function parseDraft(text: string): number | undefined {
   const normalized = text.replace(",", ".");
   return normalized === "" || normalized === "." ? undefined : Number(normalized);
@@ -119,6 +123,7 @@ function SetRow({
   suggestion,
   isBodyweight,
   isTarget,
+  targetDone,
 }: {
   set: StoredSet;
   setNumber: number;
@@ -131,6 +136,8 @@ function SetRow({
   isBodyweight?: boolean;
   /** The set number this exercise usually finishes on. */
   isTarget?: boolean;
+  /** Whether the target set is complete; a unilateral pair passes both sides. */
+  targetDone?: boolean;
 }) {
   const colors = useThemeColors();
   // Only values from history can be accepted, in this set's unit; defaults stay hints.
@@ -145,6 +152,8 @@ function SetRow({
   const pendingWeight = set.weight == null ? acceptWeight : undefined;
   const canAccept = pendingReps != null || pendingWeight != null;
   const isFilled = set.reps != null && set.weight != null;
+  // Finish keeps any set with reps, so a reps-only bodyweight row counts as done.
+  const ringDone = targetDone ?? isRowDone(set, isBodyweight);
   const suggestedReps = acceptReps ?? DEFAULT_REPS;
   const suggestedWeight = acceptWeight ?? (isBodyweight ? 0 : DEFAULT_WEIGHT);
 
@@ -159,22 +168,22 @@ function SetRow({
 
   return (
     <View className="mb-1 flex-row items-center gap-2 px-2 py-1">
-      {isTarget && sideLabel !== "L" ? (
+      {isTarget ? (
         <View className="w-8 items-center">
           <View
             testID="target-set"
-            accessibilityLabel={`Set ${setNumber}, your usual last set${isFilled ? ", done" : ""}`}
+            accessibilityLabel={`Set ${setNumber}, your usual last set${ringDone ? ", done" : ""}`}
             className="items-center justify-center rounded-full"
             style={{
               width: TARGET_RING_SIZE,
               height: TARGET_RING_SIZE,
               borderWidth: 2,
-              borderColor: isFilled ? colors.successIcon : colors.targetSet,
+              borderColor: ringDone ? colors.successIcon : colors.targetSet,
             }}
           >
             <Text
               className="text-sm font-bold"
-              style={{ color: isFilled ? colors.successIcon : colors.targetSet }}
+              style={{ color: ringDone ? colors.successIcon : colors.targetSet }}
             >
               {String(setNumber)}
             </Text>
@@ -285,7 +294,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   const colors = useThemeColors();
   const { settings, getDisplayUnit } = useSettings();
   const { getSuggestion, getTargetSetCount } = usePreviousSets();
-  const targetSetCount = getTargetSetCount(exercise.exerciseId);
+  const targetSetCount = getTargetSetCount(exercise.exerciseId, exercise.profileId);
   const { data: profiles = [] } = useExerciseProfiles(exercise.exerciseId);
   const createProfileMutation = useCreateExerciseProfile(exercise.exerciseId);
   const renameProfileMutation = useRenameExerciseProfile();
@@ -658,6 +667,10 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                 group.setNumber,
                 "L",
               );
+              const isTargetPair = group.setNumber === targetSetCount;
+              const pairDone = [group.rightSet, group.leftSet].every(
+                (side) => side == null || isRowDone(side, isBodyweight),
+              );
               return (
                 <View key={group.setNumber}>
                   {group.rightSet && (
@@ -672,7 +685,8 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                       onBlur={handleSetBlur}
                       suggestion={rightSuggestion}
                       isBodyweight={isBodyweight}
-                      isTarget={group.setNumber === targetSetCount}
+                      isTarget={isTargetPair}
+                      targetDone={pairDone}
                     />
                   )}
                   {group.leftSet && (
@@ -687,6 +701,9 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                       onBlur={handleSetBlur}
                       suggestion={leftSuggestion}
                       isBodyweight={isBodyweight}
+                      // The ring sits on the R row, or here when the pair has no R row.
+                      isTarget={isTargetPair && !group.rightSet}
+                      targetDone={pairDone}
                     />
                   )}
                 </View>

@@ -14,13 +14,21 @@ function sets(n: number, side?: "L" | "R"): StoredSet[] {
 }
 
 test("the usual count wins, ties go to the most recent", () => {
-  expect(targetSetCount({ lat: [4, 3, 4, 4, 3] }, {}, "lat")).toBe(4);
-  expect(targetSetCount({ lat: [3, 4] }, {}, "lat")).toBe(4);
-  expect(targetSetCount({ lat: [4, 3] }, {}, "lat")).toBe(3);
+  expect(targetSetCount({ lat_default: [4, 3, 4, 4, 3] }, {}, "lat")).toBe(4);
+  expect(targetSetCount({ lat_default: [3, 4] }, {}, "lat")).toBe(4);
+  expect(targetSetCount({ lat_default: [4, 3] }, {}, "lat")).toBe(3);
 });
 
-test("warm-up-only sessions are ignored", () => {
-  expect(targetSetCount({ lat: [1, 1, 1, 4] }, {}, "lat")).toBe(4);
+test("warm-up-only sessions are ignored and one big day does not take over", () => {
+  expect(targetSetCount({ lat_default: [1, 1, 1, 4] }, {}, "lat")).toBe(4);
+  expect(targetSetCount({ lat_default: [4, 4, 4, 4, 4, 4, 4, 10] }, {}, "lat")).toBe(4);
+  expect(targetSetCount({ lat_default: [1, 1] }, {}, "lat")).toBe(1);
+});
+
+test("each profile keeps its own target", () => {
+  const history = { lat_default: [3, 3], lat_cable: [5, 5] };
+  expect(targetSetCount(history, {}, "lat")).toBe(3);
+  expect(targetSetCount(history, {}, "lat", "cable")).toBe(5);
 });
 
 test("falls back to the cached last session, else no target", () => {

@@ -11,7 +11,7 @@ export function usePreviousSets(): {
     setNumber: number,
     side?: "L" | "R",
   ) => SetSuggestion;
-  getTargetSetCount: (exerciseId: string) => number | null;
+  getTargetSetCount: (exerciseId: string, profileId?: string) => number | null;
 } {
   // The hydrated cache is synchronous, so no loading state is needed.
   const previousSets = useMemo(() => getPreviousSets(), []);
@@ -29,7 +29,8 @@ export function usePreviousSets(): {
   );
 
   const getTargetSetCount = useCallback(
-    (exerciseId: string) => targetSetCount(setCounts, previousSets, exerciseId),
+    (exerciseId: string, profileId?: string) =>
+      targetSetCount(setCounts, previousSets, exerciseId, profileId),
     [setCounts, previousSets],
   );
 
