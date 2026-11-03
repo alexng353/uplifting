@@ -3,6 +3,7 @@ import * as Crypto from "expo-crypto";
 import { z } from "zod";
 import type { QueuedCheckin } from "../lib/gym-checkins";
 import { recordSetCount, setCountKey, type SetCountHistory } from "../lib/target-sets";
+import type { SideMode } from "../lib/set-rows";
 
 // In-memory cache for synchronous reads, persisted to AsyncStorage
 const cache = new Map<string, string>();
@@ -57,6 +58,7 @@ export const STORAGE_KEYS = {
   GYM_CHECKINS: "gym_checkins",
   GYM_CHECKINS_USER: "gym_checkins_user",
   SET_COUNTS: "set_counts",
+  SIDE_DEFAULTS: "side_defaults",
 } as const;
 
 // Workout kind type
@@ -315,6 +317,15 @@ export function recordExerciseSetCount(
   const current = getSetCounts();
   const next = recordSetCount(current, setCountKey(exerciseId, profileId), sets);
   if (next !== current) setJSON(STORAGE_KEYS.SET_COUNTS, next);
+}
+
+export function getSideDefault(exerciseId: string): SideMode | undefined {
+  return getJSON<Record<string, SideMode>>(STORAGE_KEYS.SIDE_DEFAULTS)?.[exerciseId];
+}
+
+export function setSideDefault(exerciseId: string, mode: SideMode): void {
+  const all = getJSON<Record<string, SideMode>>(STORAGE_KEYS.SIDE_DEFAULTS) ?? {};
+  setJSON(STORAGE_KEYS.SIDE_DEFAULTS, { ...all, [exerciseId]: mode });
 }
 
 export function setProfiles(profiles: StoredProfile[]): void {

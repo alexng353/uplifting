@@ -28,6 +28,7 @@ import {
 import { exerciseTitle, stripProfileSuffix, withoutPickerHint } from "../../lib/profile-names";
 import { useExerciseNotes, useSetExerciseNote } from "../../hooks/useExerciseNotes";
 import { useGymProfileSuggestion } from "../../hooks/useGymProfileSuggestion";
+import { useSideDefault } from "../../hooks/useSideDefault";
 import type { SetSuggestion } from "../../lib/previous-sets";
 import {
   isRowEmpty,
@@ -195,93 +196,6 @@ function AcceptButton({
 
 const INPUT_CLASS =
   "rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-1 text-center dark:text-zinc-100";
-
-/** Unilateral layout: one row per set, L reps/weight then R reps/weight. */
-function PairRow({
-  leftSet,
-  rightSet,
-  setNumber,
-  exerciseId,
-  displayUnit,
-  updateSet,
-  onAccept,
-  onBlur,
-  leftSuggestion,
-  rightSuggestion,
-  isBodyweight,
-  isTarget,
-  onCycleMode,
-}: {
-  leftSet: StoredSet;
-  rightSet: StoredSet;
-  setNumber: number;
-  exerciseId: string;
-  displayUnit: string;
-  updateSet: (exerciseId: string, setId: string, updates: Partial<StoredSet>) => void;
-  onAccept: (left: Partial<StoredSet>, right: Partial<StoredSet>) => void;
-  onBlur?: () => void;
-  leftSuggestion: SetSuggestion;
-  rightSuggestion: SetSuggestion;
-  isBodyweight?: boolean;
-  isTarget?: boolean;
-  onCycleMode?: () => void;
-  showSideColumn?: boolean;
-}) {
-  const colors = useThemeColors();
-  const left = acceptValues(leftSet, leftSuggestion, isBodyweight);
-  const right = acceptValues(rightSet, rightSuggestion, isBodyweight);
-  const sides = [
-    { set: leftSet, values: left },
-    { set: rightSet, values: right },
-  ];
-  return (
-    <View className="mb-1 flex-row items-center gap-1.5 px-2 py-1">
-      <SetNumberCell
-        setNumber={setNumber}
-        label={String(setNumber)}
-        isTarget={isTarget}
-        ringDone={isRowDone(leftSet, isBodyweight) && isRowDone(rightSet, isBodyweight)}
-        mode="unilateral"
-        onCycleMode={onCycleMode}
-      />
-      {sides.map(({ set, values }, i) => (
-        <View key={set.id} className={`flex-1 flex-row gap-1 ${i === 1 ? "ml-1.5" : ""}`}>
-          {(["reps", "weight"] as const).map((field) => (
-            <View key={field} className="flex-1">
-              <SetNumberInput
-                value={set[field]}
-                fieldKey={setFieldKey(set.id, field)}
-                placeholder={String(
-                  field === "reps" ? values.suggestedReps : values.suggestedWeight,
-                )}
-                placeholderTextColor={colors.placeholder}
-                selectionColor={colors.caret}
-                onBlur={onBlur}
-                onChangeValue={(value) => updateSet(exerciseId, set.id, { [field]: value })}
-                className={INPUT_CLASS}
-                // Tint each side's inputs so L and R read apart without a header.
-                style={{
-                  height: INPUT_HEIGHT,
-                  fontSize: 15,
-                  textAlignVertical: "center",
-                  borderColor: i === 0 ? colors.leftSideBg : colors.rightSideBg,
-                }}
-                selectTextOnFocus
-              />
-            </View>
-          ))}
-        </View>
-      ))}
-      <AcceptButton
-        setNumber={setNumber}
-        isFilled={left.isFilled && right.isFilled}
-        canAccept={left.canAccept || right.canAccept}
-        label={`Use last time's L ${left.suggestedReps} × ${left.suggestedWeight} and R ${right.suggestedReps} × ${right.suggestedWeight} ${displayUnit}`}
-        onPress={() => onAccept(left.updates, right.updates)}
-      />
-    </View>
-  );
-}
 
 function parseDraft(text: string): number | undefined {
   const normalized = text.replace(",", ".");
@@ -510,9 +424,9 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   const lastRow = rows[rows.length - 1];
   const lastMode: SideMode = lastRow ? rowMode(lastRow) : "bilateral";
   const showSideColumn = rows.some((row) => rowMode(row) === "split");
-  const allUnilateral = rows.length > 0 && rows.every((row) => rowMode(row) === "unilateral");
+  // The exercise default picks the mode for new rows; tapping a set number overrides one row.
+  const [defaultMode, chooseDefaultMode] = useSideDefault(exercise.exerciseId, lastMode);
 
-  // New rows follow the last row's mode, so "2 bilateral then unilateral" stays unilateral.
   const addRow = useCallback(
     (rowModeToAdd: SideMode, weightUnit: string, reps?: number, weight?: number) => {
       if (rowModeToAdd === "bilateral") addSet(exercise.exerciseId, weightUnit, reps, weight);
@@ -529,10 +443,10 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   );
 
   const handleAddSet = useCallback(() => {
-    addRow(lastMode, displayUnit);
+    addRow(defaultMode, displayUnit);
     // Scroll to bottom after add
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
-  }, [addRow, lastMode, displayUnit]);
+  }, [addRow, defaultMode, displayUnit]);
 
   const handleUpdateSet = useCallback(
     (exerciseId: string, setId: string, updates: Partial<StoredSet>) => {
@@ -543,9 +457,9 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
       if (mode !== "live" || !settings.autoAddSet || index < 0) return;
       if (index !== rows.length - 1 || !isRowEmpty(rows[index])) return;
       if (updates.reps == null && updates.weight == null) return;
-      addRow(rowMode(rows[index]), displayUnit);
+      addRow(defaultMode, displayUnit);
     },
-    [rows, updateSet, mode, settings.autoAddSet, addRow, displayUnit],
+    [rows, updateSet, mode, settings.autoAddSet, addRow, displayUnit, defaultMode],
   );
 
   const handleSetBlur = useCallback(() => {
@@ -583,24 +497,15 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
     [rows, exercise.exerciseId, setRowMode],
   );
 
-  // A unilateral row accepts both sides at once. The first write goes through
-  // handleUpdateSet so live auto-add opens one new row; the second is a plain write.
-  const handleAcceptPair = useCallback(
-    (
-      leftSet: StoredSet,
-      rightSet: StoredSet,
-      left: Partial<StoredSet>,
-      right: Partial<StoredSet>,
-    ) => {
-      const hasLeft = Object.keys(left).length > 0;
-      const hasRight = Object.keys(right).length > 0;
-      if (hasLeft) handleUpdateSet(exercise.exerciseId, leftSet.id, left);
-      if (hasRight) {
-        if (hasLeft) updateSet(exercise.exerciseId, rightSet.id, right);
-        else handleUpdateSet(exercise.exerciseId, rightSet.id, right);
-      }
+  // Changing the default also switches rows that have nothing in them yet.
+  const handleDefaultMode = useCallback(
+    (next: SideMode) => {
+      chooseDefaultMode(next);
+      rows.forEach((row, i) => {
+        if (isRowEmpty(row) && rowMode(row) !== next) setRowMode(exercise.exerciseId, i, next);
+      });
     },
-    [exercise.exerciseId, handleUpdateSet, updateSet],
+    [chooseDefaultMode, rows, exercise.exerciseId, setRowMode],
   );
 
   // Extract base exercise name (without profile suffix)
@@ -750,6 +655,39 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
           </View>
         )}
 
+        {/* Default mode for new sets on this exercise */}
+        <View
+          accessibilityRole="radiogroup"
+          className="mt-1.5 flex-row self-start rounded-lg bg-zinc-200 p-0.5 dark:bg-zinc-800"
+        >
+          {(["bilateral", "unilateral", "split"] as const).map((option) => {
+            const selected = option === defaultMode;
+            return (
+              <Pressable
+                key={option}
+                testID={`side-default-${option}`}
+                accessibilityRole="radio"
+                accessibilityLabel={`New sets: ${MODE_LABEL[option]}`}
+                accessibilityState={{ selected }}
+                onPress={() => !selected && handleDefaultMode(option)}
+                hitSlop={4}
+                className={`rounded-md px-3 py-1 ${selected ? "bg-white dark:bg-zinc-600" : ""}`}
+              >
+                <Text
+                  maxFontSizeMultiplier={1.4}
+                  className={`text-xs font-semibold ${
+                    selected
+                      ? "text-zinc-900 dark:text-zinc-50"
+                      : "text-zinc-500 dark:text-zinc-400"
+                  }`}
+                >
+                  {option === "bilateral" ? "Bi" : option === "unilateral" ? "Uni" : "Split"}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
         {/* Persistent note (cue) */}
         <Pressable onPress={openNoteEditor} className="mt-1.5 flex-row items-start gap-1.5">
           <Ionicons
@@ -767,40 +705,19 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
       </View>
 
       {/* Set Table Header */}
-      {allUnilateral ? (
-        <View className="mb-1 flex-row items-center gap-1.5 px-2">
-          <Text className="w-8 text-center text-xs font-bold uppercase text-zinc-400 dark:text-zinc-500">
-            Set
-          </Text>
-          {(["L", "R"] as const).map((side, i) => (
-            <View
-              key={side}
-              className={`flex-1 flex-row items-center gap-1 ${i === 1 ? "ml-1.5" : ""}`}
-            >
-              <Text
-                className="text-xs font-bold"
-                style={{ color: side === "R" ? colors.rightSideText : colors.leftSideText }}
-              >
-                {side}
-              </Text>
-              <Text className="flex-1 text-center text-[10px] font-bold uppercase text-zinc-400 dark:text-zinc-500">
-                Reps
-              </Text>
-              <Text className="flex-1 text-center text-[10px] font-bold uppercase text-zinc-400 dark:text-zinc-500">
-                {isBodyweight ? `+${displayUnit}` : displayUnit}
-              </Text>
-            </View>
-          ))}
-          <View style={{ width: ACCEPT_BUTTON_SIZE }} />
-        </View>
-      ) : (
+      {
         <View className="mb-1 flex-row items-center gap-2 px-2">
           <Text className="w-8 text-center text-xs font-bold uppercase text-zinc-400 dark:text-zinc-500">
             Set
           </Text>
           {showSideColumn && (
-            <Text className="w-7 text-center text-xs font-bold uppercase text-zinc-400 dark:text-zinc-500">
-              Side
+            // Short label on one line: "SIDE" wrapped to "SID / E" at w-7.
+            <Text
+              numberOfLines={1}
+              maxFontSizeMultiplier={1.2}
+              className="w-7 text-center text-xs font-bold uppercase text-zinc-400 dark:text-zinc-500"
+            >
+              L/R
             </Text>
           )}
           <Text className="flex-1 text-center text-xs font-bold uppercase text-zinc-400 dark:text-zinc-500">
@@ -813,7 +730,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
           <Text className="w-8 text-xs text-transparent">kg</Text>
           <View style={{ width: ACCEPT_BUTTON_SIZE }} />
         </View>
-      )}
+      }
 
       {/* Sets */}
       <KeyboardAwareScrollView
@@ -853,16 +770,20 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
           }
           const { left, right } = row;
           if (rowModeNow === "unilateral" && left && right) {
+            const rightSuggestion = suggestionFor("R");
             return (
-              <PairRow
+              <SetRow
                 key={`${right.id}-${left.id}`}
                 {...common}
-                leftSet={left}
-                rightSet={right}
-                onAccept={(l, r) => handleAcceptPair(left, right, l, r)}
-                leftSuggestion={suggestionFor("L")}
-                rightSuggestion={suggestionFor("R")}
+                set={right}
+                // L = R implied: every edit and accept writes both sides.
+                updateSet={(exerciseId, _setId, updates) => {
+                  handleUpdateSet(exerciseId, right.id, updates);
+                  updateSet(exerciseId, left.id, updates);
+                }}
+                suggestion={rightSuggestion.reps != null ? rightSuggestion : suggestionFor("L")}
                 isTarget={isTarget}
+                mode="unilateral"
                 onCycleMode={cycle}
               />
             );

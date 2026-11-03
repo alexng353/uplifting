@@ -12,12 +12,12 @@ export function setFieldKey(setId: string, field: SetField): string {
   return `${setId}:${field}`;
 }
 
-// Sets in the order ExerciseSlide shows their fields: a unilateral row shows L then R;
-// a split row is an R row then an L row.
+// Sets in the order ExerciseSlide shows their fields: a unilateral row has one set of
+// fields (stored on R, mirrored to L); a split row is an R row then an L row.
 function displaySets(exercise: StoredWorkoutExercise): StoredSet[] {
   return toRows(exercise.sets).flatMap((row) => {
     if (row.kind === "bilateral") return [row.set];
-    const order = row.layout === "combined" ? [row.left, row.right] : [row.right, row.left];
+    const order = row.layout === "combined" ? [row.right ?? row.left] : [row.right, row.left];
     return order.filter((s): s is StoredSet => s != null);
   });
 }

@@ -1,6 +1,7 @@
 import {
   generateId,
   getSettings,
+  getSideDefault,
   type StoredSet,
   type StoredWorkout,
   type StoredWorkoutExercise,
@@ -55,6 +56,15 @@ export function addExerciseMutation(
     profileId,
     sets: [firstSet],
   };
+  const sideDefault = getSideDefault(exerciseId);
+  if (sideDefault && sideDefault !== "bilateral") {
+    const layout = sideDefault === "unilateral" ? { layout: "combined" as const } : {};
+    newExercise.isUnilateral = true;
+    newExercise.sets = [
+      { ...firstSet, side: "R", ...layout },
+      { ...firstSet, id: generateId(), side: "L", ...layout },
+    ];
+  }
 
   return {
     ...workout,
