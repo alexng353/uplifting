@@ -30,12 +30,12 @@ import {
   removeLastSetMutation,
   removeLastUnilateralPairMutation,
   toggleUnilateralMutation,
-  setSideModeMutation,
+  setRowModeMutation,
   changeExerciseProfileMutation,
   trimTrailingEmptySetsMutation,
 } from "../lib/workout-mutations";
 import { saveWorkoutToAppleHealth } from "../services/apple-health";
-import type { SideMode } from "../lib/side-mode";
+import type { SideMode } from "../lib/set-rows";
 
 interface WorkoutContextValue {
   workout: StoredWorkout | null;
@@ -65,6 +65,7 @@ interface WorkoutContextValue {
     weightUnit: string,
     reps?: number,
     weight?: number,
+    layout?: "combined",
   ) => void;
   updateSet: (exerciseId: string, setId: string, updates: Partial<StoredSet>) => void;
   removeSet: (exerciseId: string, setId: string) => void;
@@ -72,7 +73,7 @@ interface WorkoutContextValue {
   removeLastUnilateralPair: (exerciseId: string) => void;
   trimTrailingEmptySets: (exerciseId: string, keepCount?: number) => void;
   toggleUnilateral: (exerciseId: string) => void;
-  setSideMode: (exerciseId: string, mode: SideMode) => void;
+  setRowMode: (exerciseId: string, rowIndex: number, mode: SideMode) => void;
   changeExerciseProfile: (
     exerciseId: string,
     profileId: string | undefined,
@@ -280,11 +281,17 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   );
 
   const addUnilateralPair = useCallback(
-    (exerciseId: string, weightUnit: string, reps?: number, weight?: number) => {
+    (
+      exerciseId: string,
+      weightUnit: string,
+      reps?: number,
+      weight?: number,
+      layout?: "combined",
+    ) => {
       // Use the synchronous cache so auto-add includes the just-saved edit.
       const current = getCurrentWorkout();
       if (!current) return;
-      saveWorkout(addUnilateralPairMutation(current, exerciseId, weightUnit, reps, weight));
+      saveWorkout(addUnilateralPairMutation(current, exerciseId, weightUnit, reps, weight, layout));
     },
     [saveWorkout],
   );
@@ -316,11 +323,11 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     [workout, saveWorkout],
   );
 
-  const setSideMode = useCallback(
-    (exerciseId: string, mode: SideMode) => {
+  const setRowMode = useCallback(
+    (exerciseId: string, rowIndex: number, mode: SideMode) => {
       const current = getCurrentWorkout() ?? workout;
       if (!current) return;
-      saveWorkout(setSideModeMutation(current, exerciseId, mode));
+      saveWorkout(setRowModeMutation(current, exerciseId, rowIndex, mode));
     },
     [workout, saveWorkout],
   );
@@ -424,7 +431,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
         removeLastUnilateralPair,
         trimTrailingEmptySets,
         toggleUnilateral,
-        setSideMode,
+        setRowMode,
         changeExerciseProfile,
         finishWorkout,
         cancelWorkout,

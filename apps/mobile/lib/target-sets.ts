@@ -1,4 +1,5 @@
 import type { StoredPreviousSets, StoredSet } from "../services/storage";
+import { toRows } from "./set-rows";
 
 // Recent finished set counts per exercise and profile key, oldest first.
 export type SetCountHistory = Record<string, number[]>;
@@ -10,12 +11,9 @@ export function setCountKey(exerciseId: string, profileId?: string | null): stri
   return `${exerciseId}_${profileId ?? "default"}`;
 }
 
-// A unilateral set is one R/L pair, so count the longer side.
+// One numbered set per row: a bilateral set, or an L/R pair in either layout.
 export function countSetGroups(sets: StoredSet[]): number {
-  if (!sets.some((set) => set.side != null)) return sets.length;
-  const right = sets.filter((set) => set.side === "R").length;
-  const left = sets.filter((set) => set.side === "L").length;
-  return Math.max(right, left);
+  return toRows(sets).length;
 }
 
 export function recordSetCount(

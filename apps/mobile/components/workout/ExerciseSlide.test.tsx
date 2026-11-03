@@ -67,7 +67,7 @@ function updateExercise(next: StoredWorkoutExercise) {
   setExerciseState(next);
 }
 const trimTrailingEmptySets = mock(() => {});
-const sideModeCalls: string[] = [];
+const rowModeCalls: [number, string][] = [];
 
 mock.module("../../hooks/useWorkoutActions", () => ({
   useWorkoutActions: () => ({
@@ -85,17 +85,23 @@ mock.module("../../hooks/useWorkoutActions", () => ({
           makeSet(String(exercise.sets.length + 1), { weightUnit, reps, weight }),
         ],
       }),
-    addUnilateralPair: (_exerciseId: string, weightUnit: string) =>
+    addUnilateralPair: (
+      _exerciseId: string,
+      weightUnit: string,
+      _reps?: number,
+      _weight?: number,
+      layout?: "combined",
+    ) =>
       updateExercise({
         ...exercise,
         sets: [
           ...exercise.sets,
-          makeSet(`R${exercise.sets.length}`, { weightUnit, side: "R" }),
-          makeSet(`L${exercise.sets.length}`, { weightUnit, side: "L" }),
+          makeSet(`R${exercise.sets.length}`, { weightUnit, side: "R", layout }),
+          makeSet(`L${exercise.sets.length}`, { weightUnit, side: "L", layout }),
         ],
       }),
     trimTrailingEmptySets,
-    setSideMode: (_exerciseId: string, mode: string) => sideModeCalls.push(mode),
+    setRowMode: (_exerciseId: string, row: number, mode: string) => rowModeCalls.push([row, mode]),
     changeExerciseProfile: (
       _exerciseId: string,
       profileId: string | undefined,
@@ -113,12 +119,7 @@ function makeSet(id: string, values: Partial<StoredSet> = {}): StoredSet {
 
 let renderer: ReactTestRenderer;
 
-async function renderSets(
-  sets: StoredSet[],
-  isUnilateral = false,
-  exerciseType?: string,
-  sideLayout?: "split" | "combined",
-) {
+async function renderSets(sets: StoredSet[], isUnilateral = false, exerciseType?: string) {
   function Harness() {
     const [state, setState] = useState<StoredWorkoutExercise>({
       exerciseId: "exercise",
@@ -126,7 +127,6 @@ async function renderSets(
       sets,
       isUnilateral,
       exerciseType,
-      sideLayout,
     });
     exercise = state;
     setExerciseState = setState;
@@ -220,10 +220,12 @@ describe("accept suggestion", () => {
     mode = "live";
     settings = { autoAddSet: true };
     await renderSets(
-      [makeSet("R", { side: "R" }), makeSet("L", { side: "L" })],
+      [
+        makeSet("R", { side: "R", layout: "combined" }),
+        makeSet("L", { side: "L", layout: "combined" }),
+      ],
       true,
       "Barbell",
-      "combined",
     );
     const inputs = renderer.root.findAllByType(TextInput);
     expect(inputs.map((i) => i.props.placeholder)).toEqual(["5", "100", "6", "220"]);
@@ -237,22 +239,58 @@ describe("accept suggestion", () => {
     const right = exercise.sets.find((s) => s.id === "R");
     expect(left).toMatchObject({ reps: 5, weight: 100 });
     expect(right).toMatchObject({ reps: 6, weight: 220 });
-    // Auto-add opens exactly one new pair.
+    // Auto-add opens exactly one new row, in the same (unilateral) mode.
     expect(exercise.sets).toHaveLength(4);
+    expect(exercise.sets.slice(2).map((s) => [s.side, s.layout])).toEqual([
+      ["R", "combined"],
+      ["L", "combined"],
+    ]);
   });
 
-  test("the three-way control shows the current mode and asks for a new one", async () => {
-    sideModeCalls.length = 0;
-    await renderSets([makeSet("R", { side: "R" }), makeSet("L", { side: "L" })], true, "Barbell");
-    const option = (m: string) =>
+  test("tapping a set number cycles that row bilateral, unilateral, split", async () => {
+    rowModeCalls.length = 0;
+    await renderSets(
+      [
+        makeSet("b"),
+        makeSet("R", { side: "R", layout: "combined" }),
+        makeSet("L", { side: "L", layout: "combined" }),
+        makeSet("R2", { side: "R" }),
+        makeSet("L2", { side: "L" }),
+      ],
+      true,
+    );
+    const cells = renderer.root.findAll(
+      (n) => n.props.testID === "set-mode" && typeof n.type === "string",
+    );
+    expect(cells.map((c) => c.props.accessibilityLabel)).toEqual([
+      "Set 1, Bilateral. Tap for Unilateral",
+      "Set 2, Unilateral. Tap for Split",
+      "Set 3, Split. Tap for Bilateral",
+    ]);
+    for (const cell of cells) await act(() => cell.props.onPress());
+    expect(rowModeCalls).toEqual([
+      [0, "unilateral"],
+      [1, "split"],
+      [2, "bilateral"],
+    ]);
+  });
+
+  test("a mixed exercise shows a bilateral row then a one-row L/R set", async () => {
+    await renderSets(
+      [
+        makeSet("b"),
+        makeSet("R", { side: "R", layout: "combined" }),
+        makeSet("L", { side: "L", layout: "combined" }),
+      ],
+      true,
+    );
+    // 2 inputs for the bilateral row, 4 for the unilateral row; one check each.
+    expect(renderer.root.findAllByType(TextInput)).toHaveLength(6);
+    expect(
       renderer.root.findAll(
-        (n) => n.props.testID === `side-mode-${m}` && typeof n.type === "string",
-      )[0];
-    expect(option("split").props.accessibilityState).toEqual({ selected: true });
-    expect(option("unilateral").props.accessibilityState).toEqual({ selected: false });
-    await act(() => option("unilateral").props.onPress());
-    await act(() => option("split").props.onPress());
-    expect(sideModeCalls).toEqual(["unilateral"]);
+        (n) => n.props.testID === "accept-suggestion" && typeof n.type === "string",
+      ),
+    ).toHaveLength(2);
   });
 
   test("rings the usual last set, green once it is filled", async () => {

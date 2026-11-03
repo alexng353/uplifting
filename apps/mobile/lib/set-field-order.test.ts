@@ -45,3 +45,24 @@ test("the ends have no neighbour, and an unknown field has none", () => {
   expect(neighbourStop(stops, "gone:reps", 1)).toBeNull();
   expect(neighbourStop(stops, null, 1)).toBeNull();
 });
+
+test("a mixed exercise walks bilateral rows, then a unilateral row L then R", () => {
+  const mixed: StoredWorkoutExercise = {
+    exerciseId: "curl",
+    exerciseName: "Curl",
+    isUnilateral: true,
+    sets: [
+      set("b1"),
+      { ...set("r1", "R"), layout: "combined" },
+      { ...set("l1", "L"), layout: "combined" },
+    ],
+  };
+  expect(setFieldOrder([mixed]).map((s) => s.key)).toEqual([
+    "b1:reps",
+    "b1:weight",
+    "l1:reps",
+    "l1:weight",
+    "r1:reps",
+    "r1:weight",
+  ]);
+});

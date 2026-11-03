@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 import type { StoredSet, StoredWorkout } from "../services/storage";
-import type { SideMode } from "../lib/side-mode";
+import type { SideMode } from "../lib/set-rows";
 import { useWorkout } from "./useWorkout";
 
 export interface WorkoutActions {
@@ -27,6 +27,7 @@ export interface WorkoutActions {
     weightUnit: string,
     reps?: number,
     weight?: number,
+    layout?: "combined",
   ) => void;
   updateSet: (exerciseId: string, setId: string, updates: Partial<StoredSet>) => void;
   removeSet: (exerciseId: string, setId: string) => void;
@@ -34,7 +35,7 @@ export interface WorkoutActions {
   removeLastUnilateralPair: (exerciseId: string) => void;
   trimTrailingEmptySets: (exerciseId: string, keepCount?: number) => void;
   toggleUnilateral: (exerciseId: string) => void;
-  setSideMode: (exerciseId: string, mode: SideMode) => void;
+  setRowMode: (exerciseId: string, rowIndex: number, mode: SideMode) => void;
   changeExerciseProfile: (
     exerciseId: string,
     profileId: string | undefined,
@@ -93,7 +94,7 @@ export function useWorkoutActions(): WorkoutActions {
     removeLastUnilateralPair: liveWorkout.removeLastUnilateralPair,
     trimTrailingEmptySets: liveWorkout.trimTrailingEmptySets,
     toggleUnilateral: liveWorkout.toggleUnilateral,
-    setSideMode: liveWorkout.setSideMode,
+    setRowMode: liveWorkout.setRowMode,
     changeExerciseProfile: liveWorkout.changeExerciseProfile,
   };
 }
