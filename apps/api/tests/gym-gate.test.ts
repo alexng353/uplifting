@@ -206,6 +206,7 @@ describe.skipIf(!socket)("gym gate", () => {
       client_id: "c1",
       start_time: startTime,
       end_time: endTime,
+      gym_location: "Gold's Gym Broadway",
       exercises: [
         {
           exercise_id: exerciseId,
@@ -243,6 +244,7 @@ describe.skipIf(!socket)("gym gate", () => {
       end_time: endTime,
       kind: "workout",
       set_count: 5,
+      gym_location: "Gold's Gym Broadway",
     });
   });
 

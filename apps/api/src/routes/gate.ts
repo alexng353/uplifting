@@ -155,7 +155,7 @@ export const gateFeedRoutes = new Elysia({ prefix: "/gate" }).get(
       `,
       // A one-sided pair is stored as R and L rows; count it once, as workouts.ts does.
       sql`
-        SELECT w.id, w.client_id, w.start_time, w.end_time, w.kind,
+        SELECT w.id, w.client_id, w.start_time, w.end_time, w.kind, w.gym_location,
           COUNT(s.id) FILTER (WHERE s.side IS NULL OR s.side = 'R')::int AS set_count
         FROM workouts w LEFT JOIN user_sets s ON s.workout_id = w.id
         WHERE w.user_id = ${userId} AND w.start_time >= ${from}::timestamptz
@@ -180,6 +180,7 @@ export const gateFeedRoutes = new Elysia({ prefix: "/gate" }).get(
         end_time: isoOrNull(w.end_time),
         kind: w.kind,
         set_count: w.set_count,
+        gym_location: w.gym_location ?? null,
       })),
     };
   },
