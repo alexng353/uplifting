@@ -21,11 +21,13 @@ mock.module("react-native", () => ({
 }));
 mock.module("@expo/vector-icons", () => ({ Ionicons: "Ionicons" }));
 mock.module("../../hooks/useThemeColors", () => ({ useThemeColors: () => ({}) }));
+let settings: Record<string, unknown> = {};
+let mode = "editing";
 mock.module("../../hooks/useSettings", () => ({
-  useSettings: () => ({ settings: {}, getDisplayUnit: () => "kg" }),
+  useSettings: () => ({ settings, getDisplayUnit: () => "kg" }),
 }));
 mock.module("../../hooks/usePreviousSets", () => ({
-  usePreviousSets: () => ({ getSuggestion: () => ({ reps: 10, weight: 20 }) }),
+  usePreviousSets: () => ({ getSuggestion: () => ({ reps: 6, weight: 220 }) }),
 }));
 mock.module("../../hooks/useExerciseProfiles", () => ({
   useExerciseProfiles: () => ({ data: [] }),
@@ -41,12 +43,17 @@ mock.module("../../hooks/useGymProfileSuggestion", () => ({
 mock.module("./RestTimer", () => ({ default: () => null }));
 
 let exercise: StoredWorkoutExercise;
-let updateExercise: (exercise: StoredWorkoutExercise) => void;
+let setExerciseState: (exercise: StoredWorkoutExercise) => void;
+// Like the real store's synchronous cache: auto-add runs before React rerenders.
+function updateExercise(next: StoredWorkoutExercise) {
+  exercise = next;
+  setExerciseState(next);
+}
 const trimTrailingEmptySets = mock(() => {});
 
 mock.module("../../hooks/useWorkoutActions", () => ({
   useWorkoutActions: () => ({
-    mode: "editing",
+    mode,
     updateSet: (_exerciseId: string, setId: string, updates: Partial<StoredSet>) =>
       updateExercise({
         ...exercise,
@@ -75,13 +82,15 @@ let renderer: ReactTestRenderer;
 
 async function renderSets(sets: StoredSet[], isUnilateral = false) {
   function Harness() {
-    [exercise, updateExercise] = useState<StoredWorkoutExercise>({
+    const [state, setState] = useState<StoredWorkoutExercise>({
       exerciseId: "exercise",
       exerciseName: "Squat",
       sets,
       isUnilateral,
     });
-    return <ExerciseSlide exercise={exercise} />;
+    exercise = state;
+    setExerciseState = setState;
+    return <ExerciseSlide exercise={state} />;
   }
   await act(() => {
     renderer = create(<Harness />);
@@ -99,6 +108,48 @@ async function enter(row: number, field: "reps" | "weight", text: string) {
 afterEach(async () => {
   if (renderer) await act(() => renderer.unmount());
   trimTrailingEmptySets.mockClear();
+  settings = {};
+  mode = "editing";
+});
+
+function acceptButton(row: number) {
+  return renderer.root.findAll(
+    (node) => node.props.testID === "accept-suggestion" && typeof node.type === "string",
+  )[row];
+}
+
+describe("accept suggestion", () => {
+  test("fills the suggested reps and weight into an empty set", async () => {
+    await renderSets([makeSet("1")]);
+    await act(() => acceptButton(0).props.onPress());
+    expect(exercise.sets[0]).toMatchObject({ reps: 6, weight: 220 });
+    expect(input(0, "reps").props.value).toBe("6");
+    expect(input(0, "weight").props.value).toBe("220");
+    expect(acceptButton(0).props.disabled).toBe(true);
+  });
+
+  test("keeps a value typed by hand and fills only the empty field", async () => {
+    await renderSets([makeSet("1", { reps: 8 })]);
+    await act(() => acceptButton(0).props.onPress());
+    expect(exercise.sets[0]).toMatchObject({ reps: 8, weight: 220 });
+  });
+
+  test("accepts each unilateral side on its own", async () => {
+    await renderSets([makeSet("R", { side: "R" }), makeSet("L", { side: "L" })], true);
+    await act(() => acceptButton(1).props.onPress());
+    expect(exercise.sets[0].reps).toBeUndefined();
+    expect(exercise.sets[1]).toMatchObject({ reps: 6, weight: 220 });
+  });
+
+  test("adds the next set during a live workout when auto-add is on", async () => {
+    mode = "live";
+    settings = { autoAddSet: true };
+    await renderSets([makeSet("1")]);
+    await act(() => acceptButton(0).props.onPress());
+    expect(exercise.sets).toHaveLength(2);
+    expect(exercise.sets[0]).toMatchObject({ reps: 6, weight: 220 });
+    expect(acceptButton(1).props.disabled).toBe(false);
+  });
 });
 
 describe("set weight entry", () => {
