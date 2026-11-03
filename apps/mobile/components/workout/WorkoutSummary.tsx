@@ -3,6 +3,8 @@ import { View, Text, TextInput, Pressable, ScrollView, Modal } from "react-nativ
 import { useSettings } from "../../hooks/useSettings";
 import { useThemeColors } from "../../hooks/useThemeColors";
 import { useWorkoutTitleSuggestion } from "../../hooks/useWorkoutTitleSuggestion";
+import { singleLineInput } from "../../lib/input-style";
+import { summarizeWorkout } from "../../lib/workout-summary";
 import { getCurrentGymId, getGyms, type StoredWorkout } from "../../services/storage";
 
 interface WorkoutSummaryProps {
@@ -47,15 +49,10 @@ export default function WorkoutSummary({
     onSave(name || undefined, gymLocation || undefined);
   }, [name, gymLocation, onSave]);
 
-  // Calculate stats
-  const totalSets = workout.exercises.reduce((sum, ex) => sum + ex.sets.length, 0);
-  const totalReps = workout.exercises.reduce(
-    (sum, ex) => sum + ex.sets.reduce((s, set) => s + (set.reps ?? 0), 0),
-    0,
-  );
-  const totalVolume = workout.exercises.reduce(
-    (sum, ex) => sum + ex.sets.reduce((s, set) => s + (set.reps ?? 0) * (set.weight ?? 0), 0),
-    0,
+  // Only sets that will be saved (reps > 0); empty rows and suggestions don't count.
+  const { exercises, totalSets, totalReps, totalVolume } = summarizeWorkout(
+    workout.exercises,
+    (s) => `${s.reps}x${formatWeight(s.weight ?? 0, s.weightUnit)}`,
   );
   const duration = Math.round((Date.now() - new Date(workout.startTime).getTime()) / 60000);
 
@@ -85,7 +82,8 @@ export default function WorkoutSummary({
                 setUserHasEdited(true);
               }}
               placeholder="e.g., Push Day, Leg Day"
-              className="rounded-lg border border-zinc-300 dark:border-zinc-600 px-3 py-2.5 text-base dark:text-zinc-100"
+              className="rounded-lg border border-zinc-300 dark:border-zinc-600 px-3 dark:text-zinc-100"
+              style={singleLineInput}
               placeholderTextColor={colors.placeholder}
             />
           </View>
@@ -99,7 +97,8 @@ export default function WorkoutSummary({
               value={gymLocation}
               onChangeText={setGymLocation}
               placeholder="e.g., Downtown Gym"
-              className="rounded-lg border border-zinc-300 dark:border-zinc-600 px-3 py-2.5 text-base dark:text-zinc-100"
+              className="rounded-lg border border-zinc-300 dark:border-zinc-600 px-3 dark:text-zinc-100"
+              style={singleLineInput}
               placeholderTextColor={colors.placeholder}
             />
           </View>
@@ -111,9 +110,7 @@ export default function WorkoutSummary({
               <Text className="text-xs uppercase text-zinc-400 dark:text-zinc-500">Minutes</Text>
             </View>
             <View className="items-center rounded-lg bg-zinc-100 dark:bg-zinc-800 px-5 py-3">
-              <Text className="text-2xl font-bold dark:text-zinc-100">
-                {workout.exercises.length}
-              </Text>
+              <Text className="text-2xl font-bold dark:text-zinc-100">{exercises.length}</Text>
               <Text className="text-xs uppercase text-zinc-400 dark:text-zinc-500">Exercises</Text>
             </View>
             <View className="items-center rounded-lg bg-zinc-100 dark:bg-zinc-800 px-5 py-3">
@@ -137,7 +134,7 @@ export default function WorkoutSummary({
           {/* Exercises List */}
           <View className="mb-6">
             <Text className="mb-2 text-lg font-semibold dark:text-zinc-100">Exercises</Text>
-            {workout.exercises.map((exercise) => (
+            {exercises.map((exercise) => (
               <View
                 key={exercise.exerciseId}
                 className="border-b border-zinc-100 dark:border-zinc-800 py-2"
@@ -146,11 +143,8 @@ export default function WorkoutSummary({
                   {exercise.exerciseName}
                 </Text>
                 <Text className="text-sm text-zinc-400 dark:text-zinc-500">
-                  {exercise.sets.length} set{exercise.sets.length !== 1 ? "s" : ""}{" "}
-                  {exercise.sets
-                    .filter((s) => s.reps != null)
-                    .map((s) => `${s.reps}x${formatWeight(s.weight ?? 0, s.weightUnit)}`)
-                    .join(", ")}
+                  {exercise.setCount} set{exercise.setCount !== 1 ? "s" : ""}{" "}
+                  {exercise.labels.join(", ")}
                 </Text>
               </View>
             ))}

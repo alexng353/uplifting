@@ -20,6 +20,7 @@ import {
 } from "../../../hooks/useExerciseProfiles";
 import { useExercises } from "../../../hooks/useExercises";
 import { useThemeColors } from "../../../hooks/useThemeColors";
+import { inlineInput, singleLineInput } from "../../../lib/input-style";
 
 interface ProfileItem {
   exerciseId: string;
@@ -164,7 +165,8 @@ export default function ExerciseProfilesScreen() {
         <View className="flex-row items-center rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 py-2">
           <Ionicons name="search" size={18} color={colors.mutedIcon} />
           <TextInput
-            className="ml-2 flex-1 text-base dark:text-zinc-100"
+            className="ml-2 flex-1 dark:text-zinc-100"
+            style={inlineInput}
             placeholder="Filter by exercise or profile name"
             placeholderTextColor={colors.placeholder}
             value={searchText}
@@ -237,7 +239,8 @@ export default function ExerciseProfilesScreen() {
               Profile Name
             </Text>
             <TextInput
-              className="rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 py-3 text-base dark:text-zinc-100"
+              className="rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 dark:text-zinc-100"
+              style={singleLineInput}
               placeholderTextColor={colors.placeholder}
               value={newProfileName}
               onChangeText={setNewProfileName}
