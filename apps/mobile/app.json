@@ -56,6 +56,7 @@
       ],
       "@react-native-community/datetimepicker",
       "expo-notifications",
+      "./plugins/withSceneLifecycle",
       [
         "@kingstinct/react-native-healthkit",
         {
