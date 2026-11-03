@@ -21,6 +21,7 @@ mock.module("react-native", () => ({
   Alert: { alert: () => {} },
 }));
 mock.module("@expo/vector-icons", () => ({ Ionicons: "Ionicons" }));
+mock.module("react-native-keyboard-controller", () => ({ KeyboardAwareScrollView: "ScrollView" }));
 mock.module("../../hooks/useThemeColors", () => ({ useThemeColors: () => ({}) }));
 let settings: Record<string, unknown> = {};
 let mode = "editing";

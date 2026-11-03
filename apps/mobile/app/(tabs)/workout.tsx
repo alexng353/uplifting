@@ -17,6 +17,7 @@ import {
 import { api } from "../../lib/api";
 import ExerciseSlide from "../../components/workout/ExerciseSlide";
 import AddExerciseSlide from "../../components/workout/AddExerciseSlide";
+import SetFieldNavigator from "../../components/workout/SetFieldNavigator";
 import WorkoutSummary from "../../components/workout/WorkoutSummary";
 import ReorderModal from "../../components/workout/ReorderModal";
 
@@ -115,6 +116,8 @@ export default function WorkoutScreen() {
     },
     [workoutId],
   );
+
+  const showExercise = useCallback((index: number) => pagerRef.current?.setPage(index), []);
 
   const handleExerciseAdded = useCallback(() => {
     // Navigate to the newly added exercise (it's at the end, before add slide)
@@ -341,21 +344,23 @@ export default function WorkoutScreen() {
       </View>
 
       {/* PagerView */}
-      <PagerView
-        ref={pagerRef}
-        style={{ flex: 1 }}
-        initialPage={0}
-        onPageSelected={handlePageSelected}
-      >
-        {workout.exercises.map((exercise) => (
-          <View key={exercise.exerciseId + (exercise.profileId || "")} collapsable={false}>
-            <ExerciseSlide exercise={exercise} />
+      <SetFieldNavigator exercises={workout.exercises} showExercise={showExercise}>
+        <PagerView
+          ref={pagerRef}
+          style={{ flex: 1 }}
+          initialPage={0}
+          onPageSelected={handlePageSelected}
+        >
+          {workout.exercises.map((exercise) => (
+            <View key={exercise.exerciseId + (exercise.profileId || "")} collapsable={false}>
+              <ExerciseSlide exercise={exercise} />
+            </View>
+          ))}
+          <View key="add" collapsable={false}>
+            <AddExerciseSlide onExerciseAdded={handleExerciseAdded} />
           </View>
-        ))}
-        <View key="add" collapsable={false}>
-          <AddExerciseSlide onExerciseAdded={handleExerciseAdded} />
-        </View>
-      </PagerView>
+        </PagerView>
+      </SetFieldNavigator>
 
       {/* Modals */}
       {workout && (
