@@ -30,10 +30,12 @@ import {
   removeLastSetMutation,
   removeLastUnilateralPairMutation,
   toggleUnilateralMutation,
+  setSideModeMutation,
   changeExerciseProfileMutation,
   trimTrailingEmptySetsMutation,
 } from "../lib/workout-mutations";
 import { saveWorkoutToAppleHealth } from "../services/apple-health";
+import type { SideMode } from "../lib/side-mode";
 
 interface WorkoutContextValue {
   workout: StoredWorkout | null;
@@ -70,6 +72,7 @@ interface WorkoutContextValue {
   removeLastUnilateralPair: (exerciseId: string) => void;
   trimTrailingEmptySets: (exerciseId: string, keepCount?: number) => void;
   toggleUnilateral: (exerciseId: string) => void;
+  setSideMode: (exerciseId: string, mode: SideMode) => void;
   changeExerciseProfile: (
     exerciseId: string,
     profileId: string | undefined,
@@ -304,8 +307,20 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 
   const updateSet = useCallback(
     (exerciseId: string, setId: string, updates: Partial<StoredSet>) => {
-      if (!workout) return;
-      saveWorkout(updateSetMutation(workout, exerciseId, setId, updates));
+      // A combined L/R row writes both sides in one tap; read the synchronous cache so
+      // the second write keeps the first.
+      const current = getCurrentWorkout() ?? workout;
+      if (!current) return;
+      saveWorkout(updateSetMutation(current, exerciseId, setId, updates));
+    },
+    [workout, saveWorkout],
+  );
+
+  const setSideMode = useCallback(
+    (exerciseId: string, mode: SideMode) => {
+      const current = getCurrentWorkout() ?? workout;
+      if (!current) return;
+      saveWorkout(setSideModeMutation(current, exerciseId, mode));
     },
     [workout, saveWorkout],
   );
@@ -409,6 +424,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
         removeLastUnilateralPair,
         trimTrailingEmptySets,
         toggleUnilateral,
+        setSideMode,
         changeExerciseProfile,
         finishWorkout,
         cancelWorkout,

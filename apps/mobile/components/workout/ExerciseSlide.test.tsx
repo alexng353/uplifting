@@ -67,6 +67,7 @@ function updateExercise(next: StoredWorkoutExercise) {
   setExerciseState(next);
 }
 const trimTrailingEmptySets = mock(() => {});
+const sideModeCalls: string[] = [];
 
 mock.module("../../hooks/useWorkoutActions", () => ({
   useWorkoutActions: () => ({
@@ -94,6 +95,7 @@ mock.module("../../hooks/useWorkoutActions", () => ({
         ],
       }),
     trimTrailingEmptySets,
+    setSideMode: (_exerciseId: string, mode: string) => sideModeCalls.push(mode),
     changeExerciseProfile: (
       _exerciseId: string,
       profileId: string | undefined,
@@ -111,7 +113,12 @@ function makeSet(id: string, values: Partial<StoredSet> = {}): StoredSet {
 
 let renderer: ReactTestRenderer;
 
-async function renderSets(sets: StoredSet[], isUnilateral = false, exerciseType?: string) {
+async function renderSets(
+  sets: StoredSet[],
+  isUnilateral = false,
+  exerciseType?: string,
+  sideLayout?: "split" | "combined",
+) {
   function Harness() {
     const [state, setState] = useState<StoredWorkoutExercise>({
       exerciseId: "exercise",
@@ -119,6 +126,7 @@ async function renderSets(sets: StoredSet[], isUnilateral = false, exerciseType?
       sets,
       isUnilateral,
       exerciseType,
+      sideLayout,
     });
     exercise = state;
     setExerciseState = setState;
@@ -208,6 +216,45 @@ function acceptButton(row: number) {
 }
 
 describe("accept suggestion", () => {
+  test("unilateral shows L then R in one row and one tap fills both sides", async () => {
+    mode = "live";
+    settings = { autoAddSet: true };
+    await renderSets(
+      [makeSet("R", { side: "R" }), makeSet("L", { side: "L" })],
+      true,
+      "Barbell",
+      "combined",
+    );
+    const inputs = renderer.root.findAllByType(TextInput);
+    expect(inputs.map((i) => i.props.placeholder)).toEqual(["5", "100", "6", "220"]);
+    expect(
+      renderer.root.findAll(
+        (n) => n.props.testID === "accept-suggestion" && typeof n.type === "string",
+      ),
+    ).toHaveLength(1);
+    await act(() => acceptButton(0).props.onPress());
+    const left = exercise.sets.find((s) => s.id === "L");
+    const right = exercise.sets.find((s) => s.id === "R");
+    expect(left).toMatchObject({ reps: 5, weight: 100 });
+    expect(right).toMatchObject({ reps: 6, weight: 220 });
+    // Auto-add opens exactly one new pair.
+    expect(exercise.sets).toHaveLength(4);
+  });
+
+  test("the three-way control shows the current mode and asks for a new one", async () => {
+    sideModeCalls.length = 0;
+    await renderSets([makeSet("R", { side: "R" }), makeSet("L", { side: "L" })], true, "Barbell");
+    const option = (m: string) =>
+      renderer.root.findAll(
+        (n) => n.props.testID === `side-mode-${m}` && typeof n.type === "string",
+      )[0];
+    expect(option("split").props.accessibilityState).toEqual({ selected: true });
+    expect(option("unilateral").props.accessibilityState).toEqual({ selected: false });
+    await act(() => option("unilateral").props.onPress());
+    await act(() => option("split").props.onPress());
+    expect(sideModeCalls).toEqual(["unilateral"]);
+  });
+
   test("rings the usual last set, green once it is filled", async () => {
     target = 2;
     await renderSets([makeSet("1"), makeSet("2"), makeSet("3")]);

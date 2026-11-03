@@ -1,4 +1,5 @@
 import type { StoredSet, StoredWorkoutExercise } from "../services/storage";
+import { sideModeOf } from "./side-mode";
 
 export type SetField = "reps" | "weight";
 
@@ -11,15 +12,19 @@ export function setFieldKey(setId: string, field: SetField): string {
   return `${setId}:${field}`;
 }
 
-// Rows in the order ExerciseSlide shows them: unilateral pairs go R then L.
+// Fields in the order ExerciseSlide shows them: split pairs are an R row then an L row;
+// a combined (unilateral) row shows L then R.
 function displayRows(exercise: StoredWorkoutExercise): StoredSet[] {
   if (!exercise.isUnilateral) return exercise.sets;
   const right = exercise.sets.filter((set) => set.side === "R");
   const left = exercise.sets.filter((set) => set.side === "L");
+  // Same rule as ExerciseSlide: a lopsided pair makes the whole exercise show split rows.
+  const combined = sideModeOf(exercise) === "unilateral" && right.length === left.length;
   const rows: StoredSet[] = [];
   for (let i = 0; i < Math.max(right.length, left.length); i++) {
-    if (right[i]) rows.push(right[i]);
-    if (left[i]) rows.push(left[i]);
+    const [first, second] = combined ? [left[i], right[i]] : [right[i], left[i]];
+    if (first) rows.push(first);
+    if (second) rows.push(second);
   }
   return rows;
 }
