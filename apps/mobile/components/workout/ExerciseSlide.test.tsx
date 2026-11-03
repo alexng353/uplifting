@@ -46,6 +46,9 @@ mock.module("../../hooks/useExerciseProfiles", () => ({
   useCreateExerciseProfile: () => ({}),
   useRenameExerciseProfile: () => ({}),
 }));
+mock.module("../../hooks/useSideDefault", () => ({
+  useSideDefault: (_id: string, fallback: string) => [fallback, () => {}],
+}));
 mock.module("../../hooks/useExerciseNotes", () => ({
   useExerciseNotes: () => ({}),
   useSetExerciseNote: () => ({}),
@@ -216,7 +219,7 @@ function acceptButton(row: number) {
 }
 
 describe("accept suggestion", () => {
-  test("unilateral shows L then R in one row and one tap fills both sides", async () => {
+  test("unilateral is one reps/weight row and one tap fills both sides the same", async () => {
     mode = "live";
     settings = { autoAddSet: true };
     await renderSets(
@@ -228,22 +231,14 @@ describe("accept suggestion", () => {
       "Barbell",
     );
     const inputs = renderer.root.findAllByType(TextInput);
-    expect(inputs.map((i) => i.props.placeholder)).toEqual(["5", "100", "6", "220"]);
-    expect(
-      renderer.root.findAll(
-        (n) => n.props.testID === "accept-suggestion" && typeof n.type === "string",
-      ),
-    ).toHaveLength(1);
+    expect(inputs.map((i) => i.props.placeholder)).toEqual(["6", "220"]);
     await act(() => acceptButton(0).props.onPress());
-    const left = exercise.sets.find((s) => s.id === "L");
-    const right = exercise.sets.find((s) => s.id === "R");
-    expect(left).toMatchObject({ reps: 5, weight: 100 });
-    expect(right).toMatchObject({ reps: 6, weight: 220 });
-    // Auto-add opens exactly one new row, in the same (unilateral) mode.
-    expect(exercise.sets).toHaveLength(4);
-    expect(exercise.sets.slice(2).map((s) => [s.side, s.layout])).toEqual([
-      ["R", "combined"],
-      ["L", "combined"],
+    expect(exercise.sets.find((s) => s.id === "R")).toMatchObject({ reps: 6, weight: 220 });
+    expect(exercise.sets.find((s) => s.id === "L")).toMatchObject({ reps: 6, weight: 220 });
+    // Typing also writes both sides.
+    await act(() => renderer.root.findAllByType(TextInput)[1].props.onChangeText("225"));
+    expect(exercise.sets.filter((s) => s.id === "R" || s.id === "L").map((s) => s.weight)).toEqual([
+      225, 225,
     ]);
   });
 
@@ -284,8 +279,8 @@ describe("accept suggestion", () => {
       ],
       true,
     );
-    // 2 inputs for the bilateral row, 4 for the unilateral row; one check each.
-    expect(renderer.root.findAllByType(TextInput)).toHaveLength(6);
+    // 2 inputs per row: unilateral is a single reps/weight row; one check each.
+    expect(renderer.root.findAllByType(TextInput)).toHaveLength(4);
     expect(
       renderer.root.findAll(
         (n) => n.props.testID === "accept-suggestion" && typeof n.type === "string",

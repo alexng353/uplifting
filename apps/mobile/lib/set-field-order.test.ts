@@ -46,7 +46,7 @@ test("the ends have no neighbour, and an unknown field has none", () => {
   expect(neighbourStop(stops, null, 1)).toBeNull();
 });
 
-test("a mixed exercise walks bilateral rows, then a unilateral row L then R", () => {
+test("a mixed exercise walks bilateral rows, then a unilateral row as one reps/weight", () => {
   const mixed: StoredWorkoutExercise = {
     exerciseId: "curl",
     exerciseName: "Curl",
@@ -60,8 +60,6 @@ test("a mixed exercise walks bilateral rows, then a unilateral row L then R", ()
   expect(setFieldOrder([mixed]).map((s) => s.key)).toEqual([
     "b1:reps",
     "b1:weight",
-    "l1:reps",
-    "l1:weight",
     "r1:reps",
     "r1:weight",
   ]);

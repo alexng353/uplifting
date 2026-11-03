@@ -4,7 +4,8 @@ import type { StoredSet } from "../services/storage";
  * A set row is what the user sees as one numbered set. The mode is per row, so one
  * exercise can mix them (e.g. two bilateral sets, then a unilateral one):
  * - bilateral: one set with no side;
- * - unilateral: an L and an R set shown in one row (`layout: "combined"`);
+ * - unilateral: one reps/weight row meaning both sides did the same; stored as equal L
+ *   and R sets (`layout: "combined"`) so volume and per-side history stay right;
  * - split: an L and an R set shown as two rows (no layout; how older data is stored).
  * The stored sets stay a flat list, so sync, volume and the gate feed are unchanged.
  */
@@ -94,7 +95,15 @@ export function convertRow(row: SetRow, mode: SideMode, newId: () => string): Se
     };
   }
   const layout = mode === "unilateral" ? "combined" : "split";
-  if (row.kind === "sided") return { ...row, layout };
+  if (row.kind === "sided") {
+    if (mode !== "unilateral" || !row.right || !row.left) return { ...row, layout };
+    // Unilateral means L = R; keep the R values for both.
+    return {
+      ...row,
+      layout,
+      left: { ...row.left, reps: row.right.reps, weight: row.right.weight },
+    };
+  }
   const { side: _side, layout: _layout, ...set } = row.set;
   return {
     kind: "sided",
