@@ -60,6 +60,7 @@ export function useSettings() {
         autoRemoveEmptySet: prev.autoRemoveEmptySet,
         bodyweight: prev.bodyweight,
         repRanges: prev.repRanges,
+        appleHealth: prev.appleHealth ?? DEFAULT_SETTINGS.appleHealth,
       };
       saveSettings(newSettings);
       return newSettings;

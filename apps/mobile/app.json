@@ -55,7 +55,15 @@
         }
       ],
       "@react-native-community/datetimepicker",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "@kingstinct/react-native-healthkit",
+        {
+          "NSHealthUpdateUsageDescription": "Allow Uplifting to save your finished workouts to Apple Health so they count in Fitness.",
+          "NSHealthShareUsageDescription": "Allow Uplifting to read your workouts from Apple Health.",
+          "background": false
+        }
+      ]
     ],
     "extra": {
       "router": {},

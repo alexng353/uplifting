@@ -114,6 +114,8 @@ export const DEFAULT_REP_RANGES: RepRangeConfig[] = [
 ];
 
 export interface StoredSettings {
+  // Device-only: Health permission belongs to this phone, so it never syncs.
+  appleHealth: boolean;
   displayUnit: "kg" | "lbs" | null;
   maxWorkoutDurationMinutes: number;
   defaultRestTimerSeconds: number;
@@ -186,6 +188,7 @@ export interface TodayRestDay {
 
 // Default settings
 export const DEFAULT_SETTINGS: StoredSettings = {
+  appleHealth: false,
   displayUnit: null,
   maxWorkoutDurationMinutes: 120,
   defaultRestTimerSeconds: 90,
