@@ -7,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSettings } from "../../../hooks/useSettings";
 import { DEFAULT_REP_RANGES, type RepRangeConfig } from "../../../services/storage";
 import { useThemeColors } from "../../../hooks/useThemeColors";
+import { inlineInput } from "../../../lib/input-style";
 
 type RangeWithId = RepRangeConfig & { _id: number };
 
@@ -131,7 +132,8 @@ export default function RepRangesScreen() {
             <View className="flex-row items-center border-b border-zinc-100 dark:border-zinc-800 px-4 py-2.5">
               <Text className="w-20 text-sm text-zinc-400 dark:text-zinc-500">Label</Text>
               <TextInput
-                className="flex-1 text-base dark:text-zinc-100"
+                className="flex-1 dark:text-zinc-100"
+                style={inlineInput}
                 value={range.label}
                 onChangeText={(v) => updateRange(i, "label", v)}
                 placeholder="Label"
@@ -143,7 +145,8 @@ export default function RepRangesScreen() {
             <View className="flex-row items-center border-b border-zinc-100 dark:border-zinc-800 px-4 py-2.5">
               <Text className="w-20 text-sm text-zinc-400 dark:text-zinc-500">Min</Text>
               <TextInput
-                className="flex-1 text-base dark:text-zinc-100"
+                className="flex-1 dark:text-zinc-100"
+                style={inlineInput}
                 value={String(range.min)}
                 onChangeText={(v) => updateRange(i, "min", parseInt(v, 10) || 0)}
                 keyboardType="number-pad"
@@ -154,7 +157,8 @@ export default function RepRangesScreen() {
             <View className="flex-row items-center border-b border-zinc-100 dark:border-zinc-800 px-4 py-2.5">
               <Text className="w-20 text-sm text-zinc-400 dark:text-zinc-500">Max</Text>
               <TextInput
-                className="flex-1 text-base dark:text-zinc-100"
+                className="flex-1 dark:text-zinc-100"
+                style={inlineInput}
                 value={range.max >= 9999 ? "" : String(range.max)}
                 onChangeText={(v) => updateRange(i, "max", v ? parseInt(v, 10) || 0 : 9999)}
                 keyboardType="number-pad"

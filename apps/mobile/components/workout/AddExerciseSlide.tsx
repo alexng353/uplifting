@@ -8,6 +8,7 @@ import { useFavouriteExercises, useToggleFavourite } from "../../hooks/useFavour
 import { useAllExerciseProfiles } from "../../hooks/useExerciseProfiles";
 import { useGymProfileSuggestion } from "../../hooks/useGymProfileSuggestion";
 import { useWorkoutActions } from "../../hooks/useWorkoutActions";
+import { inlineInput } from "../../lib/input-style";
 
 interface AddExerciseSlideProps {
   onExerciseAdded?: () => void;
@@ -204,8 +205,8 @@ export default function AddExerciseSlide({ onExerciseAdded }: AddExerciseSlidePr
           placeholderTextColor={colors.placeholder}
           selectionColor={colors.caret}
           cursorColor={colors.caret}
-          className="ml-2 flex-1 py-2.5 dark:text-zinc-100"
-          style={{ fontSize: 16 }}
+          className="ml-2 flex-1 dark:text-zinc-100"
+          style={inlineInput}
           autoCapitalize="none"
           autoCorrect={false}
         />

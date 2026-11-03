@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../hooks/useAuth";
 import { useThemeColors } from "../hooks/useThemeColors";
 import { api, unwrap } from "../lib/api";
+import { singleLineInput } from "../lib/input-style";
 
 export default function LoginScreen() {
   const { login } = useAuth();
@@ -89,7 +90,8 @@ export default function LoginScreen() {
             {isRegistering && (
               <>
                 <TextInput
-                  className="border border-gray-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 rounded-lg px-4 py-3 text-base"
+                  className="border border-gray-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 rounded-lg px-4"
+                  style={singleLineInput}
                   placeholder="Full Name"
                   placeholderTextColor={colors.placeholder}
                   value={realName}
@@ -97,7 +99,8 @@ export default function LoginScreen() {
                   autoCapitalize="words"
                 />
                 <TextInput
-                  className="border border-gray-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 rounded-lg px-4 py-3 text-base"
+                  className="border border-gray-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 rounded-lg px-4"
+                  style={singleLineInput}
                   placeholder="Email"
                   placeholderTextColor={colors.placeholder}
                   value={email}
@@ -110,7 +113,8 @@ export default function LoginScreen() {
             )}
 
             <TextInput
-              className="border border-gray-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 rounded-lg px-4 py-3 text-base"
+              className="border border-gray-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 rounded-lg px-4"
+              style={singleLineInput}
               placeholder="Username"
               placeholderTextColor={colors.placeholder}
               value={username}
@@ -120,7 +124,8 @@ export default function LoginScreen() {
             />
 
             <TextInput
-              className="border border-gray-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 rounded-lg px-4 py-3 text-base"
+              className="border border-gray-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 rounded-lg px-4"
+              style={singleLineInput}
               placeholder="Password"
               placeholderTextColor={colors.placeholder}
               value={password}

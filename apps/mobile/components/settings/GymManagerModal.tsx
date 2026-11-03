@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import type { StoredGym } from "../../services/storage";
 import { useThemeColors } from "../../hooks/useThemeColors";
 import { requestAndGetPosition } from "../../services/geolocation";
+import { singleLineInput } from "../../lib/input-style";
 
 interface GymManagerModalProps {
   visible: boolean;
@@ -125,7 +126,8 @@ export default function GymManagerModal({
         <View className="border-b border-zinc-100 dark:border-zinc-800 px-4 py-3">
           <View className="flex-row items-center gap-2">
             <TextInput
-              className="flex-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 py-2.5 text-base dark:text-zinc-100"
+              className="flex-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 dark:text-zinc-100"
+              style={singleLineInput}
               placeholder="New gym name..."
               placeholderTextColor={colors.placeholder}
               value={newGymName}
@@ -197,7 +199,8 @@ export default function GymManagerModal({
                 {editingGymId === gym.id ? (
                   <View className="flex-1 flex-row items-center gap-2">
                     <TextInput
-                      className="flex-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 py-2 text-base dark:text-zinc-100"
+                      className="flex-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 dark:text-zinc-100"
+                      style={singleLineInput}
                       placeholderTextColor={colors.placeholder}
                       value={editingGymName}
                       onChangeText={setEditingGymName}

@@ -43,6 +43,7 @@ import {
 import { convertWeight } from "../../lib/units";
 import type { StoredSet, StoredWorkoutExercise } from "../../services/storage";
 import RestTimer from "./RestTimer";
+import { singleLineInput } from "../../lib/input-style";
 
 interface ExerciseSlideProps {
   exercise: StoredWorkoutExercise;
@@ -977,8 +978,8 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
               autoFocus
               returnKeyType="done"
               onSubmitEditing={handleCreateProfile}
-              className="rounded-lg border border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800 px-4 py-3 dark:text-zinc-100"
-              style={{ fontSize: 16 }}
+              className="rounded-lg border border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800 px-4 dark:text-zinc-100"
+              style={singleLineInput}
             />
             <Pressable
               onPress={handleCreateProfile}

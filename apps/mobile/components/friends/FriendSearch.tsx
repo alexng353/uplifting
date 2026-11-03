@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSearchUsers } from "../../hooks/useSearchUsers";
 import { useSendFriendRequest } from "../../hooks/useSendFriendRequest";
 import { useThemeColors } from "../../hooks/useThemeColors";
+import { inlineInput } from "../../lib/input-style";
 
 interface FriendSearchProps {
   visible: boolean;
@@ -65,7 +66,8 @@ export default function FriendSearch({ visible, onClose }: FriendSearchProps) {
               value={searchText}
               onChangeText={setSearchText}
               placeholder="Search by username..."
-              className="ml-2 flex-1 text-base dark:text-zinc-100"
+              className="ml-2 flex-1 dark:text-zinc-100"
+              style={inlineInput}
               placeholderTextColor={colors.placeholder}
               autoCapitalize="none"
               autoCorrect={false}

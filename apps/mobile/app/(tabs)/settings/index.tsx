@@ -28,6 +28,7 @@ import { useThemeColors } from "../../../hooks/useThemeColors";
 import { api } from "../../../lib/api";
 import { clearAllData } from "../../../services/storage";
 import GymManagerModal from "../../../components/settings/GymManagerModal";
+import { inlineInput, singleLineInput, singleLineInputLarge } from "../../../lib/input-style";
 
 // Picker options
 const REST_TIMER_OPTIONS = [30, 60, 90, 120, 180];
@@ -434,7 +435,8 @@ export default function SettingsScreen() {
               Bodyweight ({settings.displayUnit ?? "kg"})
             </Text>
             <TextInput
-              className="w-24 text-right text-base text-zinc-500 dark:text-zinc-400"
+              className="w-24 text-right text-zinc-500 dark:text-zinc-400"
+              style={inlineInput}
               keyboardType="decimal-pad"
               placeholder="Not set"
               placeholderTextColor={colors.placeholder}
@@ -664,7 +666,8 @@ export default function SettingsScreen() {
               New Username
             </Text>
             <TextInput
-              className="rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 py-3 text-base dark:text-zinc-100"
+              className="rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 dark:text-zinc-100"
+              style={singleLineInput}
               value={newUsername}
               onChangeText={setNewUsername}
               autoCapitalize="none"
@@ -740,7 +743,8 @@ export default function SettingsScreen() {
                   Verification Code
                 </Text>
                 <TextInput
-                  className="rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 py-3 text-center text-xl tracking-widest dark:text-zinc-100"
+                  className="rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 text-center tracking-widest dark:text-zinc-100"
+                  style={singleLineInputLarge}
                   value={verificationCode}
                   onChangeText={setVerificationCode}
                   keyboardType="number-pad"
@@ -827,7 +831,8 @@ export default function SettingsScreen() {
                   Verification Code
                 </Text>
                 <TextInput
-                  className="mb-4 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 py-3 text-center text-xl tracking-widest dark:text-zinc-100"
+                  className="mb-4 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 text-center tracking-widest dark:text-zinc-100"
+                  style={singleLineInputLarge}
                   value={passwordCode}
                   onChangeText={setPasswordCode}
                   keyboardType="number-pad"
@@ -838,7 +843,8 @@ export default function SettingsScreen() {
                   New Password
                 </Text>
                 <TextInput
-                  className="mb-4 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 py-3 text-base dark:text-zinc-100"
+                  className="mb-4 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 dark:text-zinc-100"
+                  style={singleLineInput}
                   value={newPassword}
                   onChangeText={setNewPassword}
                   secureTextEntry
@@ -848,7 +854,8 @@ export default function SettingsScreen() {
                   Confirm Password
                 </Text>
                 <TextInput
-                  className="rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 py-3 text-base dark:text-zinc-100"
+                  className="rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 dark:text-zinc-100"
+                  style={singleLineInput}
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
                   secureTextEntry
