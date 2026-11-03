@@ -47,6 +47,7 @@ afterEach(async () => {
   setCurrentWorkout(null);
   setPreviousSets({});
   healthSaves.length = 0;
+  setSettings({ ...getSettings(), appleHealth: false });
 });
 
 test("Finish saves to Apple Health only when it is turned on", async () => {

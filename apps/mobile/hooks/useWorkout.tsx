@@ -112,6 +112,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
         setPendingWorkout(cappedWorkout);
         setCurrentWorkout(null);
         setHasPendingWorkout(true);
+        if (settings.appleHealth) saveWorkoutToAppleHealth(cappedWorkout).catch(() => {});
       } else {
         setWorkout(current);
       }
