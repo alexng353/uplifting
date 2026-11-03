@@ -117,7 +117,11 @@ export default function WorkoutScreen() {
     [workoutId],
   );
 
-  const showExercise = useCallback((index: number) => pagerRef.current?.setPage(index), []);
+  // Jump like Safari's form arrows; an animated page turn drops the focus.
+  const showExercise = useCallback(
+    (index: number) => pagerRef.current?.setPageWithoutAnimation(index),
+    [],
+  );
 
   const handleExerciseAdded = useCallback(() => {
     // Navigate to the newly added exercise (it's at the end, before add slide)
