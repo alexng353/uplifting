@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-const { patchAppDelegate } = require("./withSceneLifecycle");
+const { patchAppDelegate, SCENE_MANIFEST } = require("./withSceneLifecycle");
 
 // The relevant lines of the AppDelegate that Expo SDK 54 prebuild writes.
 const SDK54 = `  var reactNativeDelegate: ExpoReactNativeFactoryDelegate?
@@ -26,4 +26,18 @@ test("moves window creation out of the app delegate, once", () => {
 
 test("fails the prebuild when the template changes", () => {
   expect(() => patchAppDelegate("class AppDelegate {}")).toThrow(/no longer matches/);
+});
+
+test("declares one scene served by the generated SceneDelegate", () => {
+  expect(SCENE_MANIFEST).toEqual({
+    UIApplicationSupportsMultipleScenes: false,
+    UISceneConfigurations: {
+      UIWindowSceneSessionRoleApplication: [
+        {
+          UISceneConfigurationName: "Default Configuration",
+          UISceneDelegateClassName: "$(PRODUCT_MODULE_NAME).SceneDelegate",
+        },
+      ],
+    },
+  });
 });
