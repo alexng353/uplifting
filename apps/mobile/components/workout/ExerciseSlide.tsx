@@ -14,7 +14,10 @@ import {
   type TextInputProps,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useWorkoutActions } from "../../hooks/useWorkoutActions";
+import { KEYBOARD_BAR_HEIGHT, useSetFieldFocus } from "../../hooks/useSetFieldFocus";
+import { setFieldKey } from "../../lib/set-field-order";
 import { useThemeColors } from "../../hooks/useThemeColors";
 import { useSettings } from "../../hooks/useSettings";
 import { usePreviousSets } from "../../hooks/usePreviousSets";
@@ -53,11 +56,22 @@ function SetNumberInput({
   value,
   onChangeValue,
   onBlur,
+  onFocus,
+  fieldKey,
   ...props
 }: Omit<TextInputProps, "value" | "onChangeText" | "keyboardType"> & {
   value?: number;
   onChangeValue: (value: number | undefined) => void;
+  /** Stop in the keyboard bar's Previous/Next order. */
+  fieldKey?: string;
 }) {
+  const navigator = useSetFieldFocus();
+  const register = useCallback(
+    (input: TextInput | null) => {
+      if (navigator && fieldKey) navigator.register(fieldKey, input);
+    },
+    [navigator, fieldKey],
+  );
   // Keep intermediate text such as "20." while saving numeric values on every edit.
   const [draft, setDraft] = useState<string | null>(null);
   // A value changed from outside (e.g. accepting a suggestion) wins over a stale draft.
@@ -66,6 +80,7 @@ function SetNumberInput({
   return (
     <TextInput
       {...props}
+      ref={register}
       keyboardType="decimal-pad"
       value={shownDraft ?? (value != null ? String(value) : "")}
       onChangeText={(text) => {
@@ -75,8 +90,13 @@ function SetNumberInput({
         setDraft(text);
         onChangeValue(next);
       }}
+      onFocus={(event) => {
+        if (navigator && fieldKey) navigator.focused(fieldKey);
+        onFocus?.(event);
+      }}
       onBlur={(event) => {
         setDraft(null);
+        if (navigator && fieldKey) navigator.blurred(fieldKey);
         onBlur?.(event);
       }}
     />
@@ -179,6 +199,7 @@ function SetRow({
       <View className="flex-1">
         <SetNumberInput
           value={set.reps}
+          fieldKey={setFieldKey(set.id, "reps")}
           placeholder={String(suggestedReps)}
           placeholderTextColor={colors.placeholder}
           onBlur={onBlur}
@@ -196,6 +217,7 @@ function SetRow({
       <View className="flex-1">
         <SetNumberInput
           value={set.weight}
+          fieldKey={setFieldKey(set.id, "weight")}
           placeholder={String(suggestedWeight)}
           placeholderTextColor={colors.placeholder}
           onBlur={onBlur}
@@ -552,7 +574,12 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
       </View>
 
       {/* Sets */}
-      <ScrollView ref={scrollRef} className="flex-1" keyboardShouldPersistTaps="handled">
+      <KeyboardAwareScrollView
+        ref={scrollRef}
+        style={{ flex: 1 }}
+        bottomOffset={KEYBOARD_BAR_HEIGHT + 16}
+        keyboardShouldPersistTaps="handled"
+      >
         {exercise.isUnilateral
           ? setGroups.map((group) => {
               const rightSuggestion = getSuggestion(
@@ -618,7 +645,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                 />
               );
             })}
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       {/* Rest Timer */}
       <RestTimer />

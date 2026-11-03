@@ -10,7 +10,11 @@ import { EditWorkoutProvider } from "../../../../../hooks/useEditWorkout";
 import { useWorkoutActions, useEditWorkoutMeta } from "../../../../../hooks/useWorkoutActions";
 import ExerciseSlide from "../../../../../components/workout/ExerciseSlide";
 import AddExerciseSlide from "../../../../../components/workout/AddExerciseSlide";
+import SetFieldNavigator from "../../../../../components/workout/SetFieldNavigator";
+import type { StoredWorkoutExercise } from "../../../../../services/storage";
 import ReorderModal from "../../../../../components/workout/ReorderModal";
+
+const NO_EXERCISES: StoredWorkoutExercise[] = [];
 
 // ─── Page 0: Workout Details Form ───────────────────────────────────────────
 
@@ -370,29 +374,35 @@ function EditWorkoutContent() {
       </View>
 
       {/* PagerView */}
-      <PagerView
-        ref={pagerRef}
-        style={{ flex: 1 }}
-        initialPage={0}
-        onPageSelected={handlePageSelected}
+      <SetFieldNavigator
+        exercises={workout?.exercises ?? NO_EXERCISES}
+        // Page 0 is the details page, so exercise pages start at 1.
+        showExercise={(index) => pagerRef.current?.setPage(index + 1)}
       >
-        {/* Page 0: Details */}
-        <View key="details" collapsable={false}>
-          <WorkoutDetailsPage onDelete={handleDeleteAndNavigate} />
-        </View>
-
-        {/* Pages 1..n: Exercises */}
-        {workout?.exercises.map((exercise) => (
-          <View key={exercise.exerciseId + (exercise.profileId ?? "")} collapsable={false}>
-            <ExerciseSlide exercise={exercise} />
+        <PagerView
+          ref={pagerRef}
+          style={{ flex: 1 }}
+          initialPage={0}
+          onPageSelected={handlePageSelected}
+        >
+          {/* Page 0: Details */}
+          <View key="details" collapsable={false}>
+            <WorkoutDetailsPage onDelete={handleDeleteAndNavigate} />
           </View>
-        ))}
 
-        {/* Page n+1: Add Exercise */}
-        <View key="add" collapsable={false}>
-          <AddExerciseSlide onExerciseAdded={handleExerciseAdded} />
-        </View>
-      </PagerView>
+          {/* Pages 1..n: Exercises */}
+          {workout?.exercises.map((exercise) => (
+            <View key={exercise.exerciseId + (exercise.profileId ?? "")} collapsable={false}>
+              <ExerciseSlide exercise={exercise} />
+            </View>
+          ))}
+
+          {/* Page n+1: Add Exercise */}
+          <View key="add" collapsable={false}>
+            <AddExerciseSlide onExerciseAdded={handleExerciseAdded} />
+          </View>
+        </PagerView>
+      </SetFieldNavigator>
 
       <ReorderModal visible={showReorder} onClose={() => setShowReorder(false)} />
     </SafeAreaView>
