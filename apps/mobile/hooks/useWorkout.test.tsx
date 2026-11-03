@@ -17,6 +17,12 @@ mock.module("../services/gym-checkins", () => ({
   recordGymCheckin: (id: string, kind: string, at: string) => checkins.push({ id, kind, at }),
   flushGymCheckins: () => {},
 }));
+const healthSaves: string[] = [];
+mock.module("../services/apple-health", () => ({
+  saveWorkoutToAppleHealth: async (workout: { id: string }) => {
+    healthSaves.push(workout.id);
+  },
+}));
 
 const { WorkoutProvider, useWorkout } = await import("./useWorkout");
 const {
@@ -25,6 +31,8 @@ const {
   getPreviousSets,
   setPreviousSets,
   updatePreviousSets,
+  getSettings,
+  setSettings,
 } = await import("../services/storage");
 let actions: ReturnType<typeof useWorkout>;
 let renderer: ReactTestRenderer;
@@ -38,6 +46,27 @@ afterEach(async () => {
   if (renderer) await act(() => renderer.unmount());
   setCurrentWorkout(null);
   setPreviousSets({});
+  healthSaves.length = 0;
+});
+
+test("Finish saves to Apple Health only when it is turned on", async () => {
+  await act(() => {
+    renderer = create(
+      <WorkoutProvider>
+        <Probe />
+      </WorkoutProvider>,
+    );
+  });
+  for (const appleHealth of [false, true]) {
+    setSettings({ ...getSettings(), appleHealth });
+    await act(() => actions.startWorkout());
+    let finished!: ReturnType<typeof actions.finishWorkout>;
+    await act(() => {
+      finished = actions.finishWorkout();
+    });
+    expect(healthSaves).toEqual(appleHealth ? [finished.id] : []);
+  }
+  setSettings({ ...getSettings(), appleHealth: false });
 });
 
 test.each([false, true])(

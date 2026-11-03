@@ -18,6 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from "nativewind";
 
 import { useAuth } from "../../../hooks/useAuth";
+import { connectAppleHealth } from "../../../services/apple-health";
 import { useSettings } from "../../../hooks/useSettings";
 import { useMe } from "../../../hooks/useMe";
 import { useGyms } from "../../../hooks/useGyms";
@@ -447,6 +448,34 @@ export default function SettingsScreen() {
         </View>
 
         {/* Privacy / Sharing */}
+        {Platform.OS === "ios" && (
+          <>
+            <SectionHeader>Apple Health</SectionHeader>
+            <View className="overflow-hidden rounded-xl mx-4">
+              <SettingsRow>
+                <Text className="text-base dark:text-zinc-100">Save Workouts to Health</Text>
+                <Switch
+                  testID="apple-health-switch"
+                  value={settings.appleHealth}
+                  onValueChange={async (on) => {
+                    if (!on) return updateSettings({ appleHealth: false });
+                    if (await connectAppleHealth().catch(() => false)) {
+                      return updateSettings({ appleHealth: true });
+                    }
+                    Alert.alert(
+                      "Health access is off",
+                      "Allow Uplifting under Settings > Health > Data Access & Devices to save workouts.",
+                    );
+                  }}
+                />
+              </SettingsRow>
+            </View>
+            <Text className="mx-6 mt-1 text-xs text-zinc-500">
+              Finished workouts appear in Fitness as Traditional Strength Training.
+            </Text>
+          </>
+        )}
+
         <SectionHeader>Sharing</SectionHeader>
         <View className="overflow-hidden rounded-xl mx-4">
           <SettingsRow>

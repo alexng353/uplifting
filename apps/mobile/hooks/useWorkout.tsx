@@ -33,6 +33,7 @@ import {
   changeExerciseProfileMutation,
   trimTrailingEmptySetsMutation,
 } from "../lib/workout-mutations";
+import { saveWorkoutToAppleHealth } from "../services/apple-health";
 
 interface WorkoutContextValue {
   workout: StoredWorkout | null;
@@ -370,6 +371,8 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       setPendingWorkout(finishedWorkout);
       // Where Finish was tapped, for Alex's gym gate (fire-and-forget, queued offline).
       recordGymCheckin(finishedWorkout.id, "finish", finishedWorkout.endTime!);
+      // Shows in Fitness as strength training (fire-and-forget; off unless enabled in Settings).
+      if (getSettings().appleHealth) saveWorkoutToAppleHealth(finishedWorkout).catch(() => {});
       setCurrentWorkout(null);
       setWorkout(null);
       setHasPendingWorkout(true);
