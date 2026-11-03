@@ -5,6 +5,7 @@ import {
   type StoredWorkout,
   type StoredWorkoutExercise,
 } from "../services/storage";
+import type { SideMode } from "./side-mode";
 
 /**
  * Pure workout mutation functions.
@@ -319,6 +320,30 @@ export function toggleUnilateralMutation(
       }
 
       return { ...e, isUnilateral: false, sets: mergedSets };
+    }),
+  };
+}
+
+export function setSideModeMutation(
+  workout: StoredWorkout,
+  exerciseId: string,
+  mode: SideMode,
+): StoredWorkout {
+  const exercise = workout.exercises.find((e) => e.exerciseId === exerciseId);
+  if (!exercise) return workout;
+  const wantsSides = mode !== "bilateral";
+  // Only bilateral <-> sided changes the sets; unilateral <-> split is layout only.
+  const next =
+    (exercise.isUnilateral ?? false) === wantsSides
+      ? workout
+      : toggleUnilateralMutation(workout, exerciseId);
+  return {
+    ...next,
+    exercises: next.exercises.map((e) => {
+      if (e.exerciseId !== exerciseId) return e;
+      const { sideLayout: _old, ...rest } = e;
+      if (mode === "bilateral") return rest;
+      return { ...rest, sideLayout: mode === "unilateral" ? "combined" : "split" };
     }),
   };
 }

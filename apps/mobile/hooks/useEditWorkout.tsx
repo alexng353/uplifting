@@ -24,6 +24,7 @@ import {
   removeSetMutation,
   reorderExercisesMutation,
   toggleUnilateralMutation,
+  setSideModeMutation,
   updateSetMutation,
 } from "../lib/workout-mutations";
 
@@ -195,6 +196,7 @@ export function useEditWorkoutState(workoutId: string) {
         trimTrailingEmptySets: (exerciseId, keepCount) =>
           apply((w) => trimTrailingEmptySetsMutation(w, exerciseId, keepCount)),
         toggleUnilateral: (exerciseId) => apply((w) => toggleUnilateralMutation(w, exerciseId)),
+        setSideMode: (exerciseId, mode) => apply((w) => setSideModeMutation(w, exerciseId, mode)),
         changeExerciseProfile: (exerciseId, profileId, exerciseName) =>
           apply((w) => changeExerciseProfileMutation(w, exerciseId, profileId, exerciseName)),
       }
