@@ -42,6 +42,7 @@ const DEFAULT_WEIGHT = 20;
 const INPUT_HEIGHT = 36;
 const SIDE_BADGE_HEIGHT = 22;
 const ACCEPT_BUTTON_SIZE = 36;
+const TARGET_RING_SIZE = 26;
 
 function parseDraft(text: string): number | undefined {
   const normalized = text.replace(",", ".");
@@ -92,6 +93,7 @@ function SetRow({
   onBlur,
   suggestion,
   isBodyweight,
+  isTarget,
 }: {
   set: StoredSet;
   setNumber: number;
@@ -102,6 +104,8 @@ function SetRow({
   onBlur?: () => void;
   suggestion: SetSuggestion;
   isBodyweight?: boolean;
+  /** The set number this exercise usually finishes on. */
+  isTarget?: boolean;
 }) {
   const colors = useThemeColors();
   // Only values from history can be accepted, in this set's unit; defaults stay hints.
@@ -130,9 +134,32 @@ function SetRow({
 
   return (
     <View className="mb-1 flex-row items-center gap-2 px-2 py-1">
-      <Text className="w-8 text-center text-sm font-medium text-zinc-400 dark:text-zinc-500">
-        {sideLabel === "L" ? "" : String(setNumber)}
-      </Text>
+      {isTarget && sideLabel !== "L" ? (
+        <View className="w-8 items-center">
+          <View
+            testID="target-set"
+            accessibilityLabel={`Set ${setNumber}, your usual last set${isFilled ? ", done" : ""}`}
+            className="items-center justify-center rounded-full"
+            style={{
+              width: TARGET_RING_SIZE,
+              height: TARGET_RING_SIZE,
+              borderWidth: 2,
+              borderColor: isFilled ? colors.successIcon : colors.targetSet,
+            }}
+          >
+            <Text
+              className="text-sm font-bold"
+              style={{ color: isFilled ? colors.successIcon : colors.targetSet }}
+            >
+              {String(setNumber)}
+            </Text>
+          </View>
+        </View>
+      ) : (
+        <Text className="w-8 text-center text-sm font-medium text-zinc-400 dark:text-zinc-500">
+          {sideLabel === "L" ? "" : String(setNumber)}
+        </Text>
+      )}
       {sideLabel != null && (
         <View
           className="w-7 items-center justify-center rounded"
@@ -230,7 +257,8 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   } = useWorkoutActions();
   const colors = useThemeColors();
   const { settings, getDisplayUnit } = useSettings();
-  const { getSuggestion } = usePreviousSets();
+  const { getSuggestion, getTargetSetCount } = usePreviousSets();
+  const targetSetCount = getTargetSetCount(exercise.exerciseId);
   const { data: profiles = [] } = useExerciseProfiles(exercise.exerciseId);
   const createProfileMutation = useCreateExerciseProfile(exercise.exerciseId);
   const { getSuggestedProfile, recordProfileUsage, currentGymId } = useGymProfileSuggestion();
@@ -553,6 +581,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                       onBlur={handleSetBlur}
                       suggestion={rightSuggestion}
                       isBodyweight={isBodyweight}
+                      isTarget={group.setNumber === targetSetCount}
                     />
                   )}
                   {group.leftSet && (
@@ -585,6 +614,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                   onBlur={handleSetBlur}
                   suggestion={suggestion}
                   isBodyweight={isBodyweight}
+                  isTarget={index + 1 === targetSetCount}
                 />
               );
             })}
