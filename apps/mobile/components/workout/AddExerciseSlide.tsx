@@ -206,7 +206,7 @@ export default function AddExerciseSlide({ onExerciseAdded }: AddExerciseSlidePr
           selectionColor={colors.caret}
           cursorColor={colors.caret}
           className="ml-2 flex-1 dark:text-zinc-100"
-          style={inlineInput}
+          style={[inlineInput, { height: 40 }]}
           autoCapitalize="none"
           autoCorrect={false}
         />
