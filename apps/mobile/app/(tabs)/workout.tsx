@@ -344,7 +344,11 @@ export default function WorkoutScreen() {
       </View>
 
       {/* PagerView */}
-      <SetFieldNavigator exercises={workout.exercises} showExercise={showExercise}>
+      <SetFieldNavigator
+        exercises={workout.exercises}
+        activeExerciseIndex={activeSlide}
+        showExercise={showExercise}
+      >
         <PagerView
           ref={pagerRef}
           style={{ flex: 1 }}

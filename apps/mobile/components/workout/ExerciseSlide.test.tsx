@@ -232,6 +232,28 @@ describe("accept suggestion", () => {
     ).toHaveLength(1);
   });
 
+  test("a unilateral target turns green only when both sides are in", async () => {
+    target = 1;
+    await renderSets([makeSet("R", { side: "R" }), makeSet("L", { side: "L" })], true);
+    const ring = () =>
+      renderer.root.findAll(
+        (n) => n.props.testID === "target-set" && typeof n.type === "string",
+      )[0];
+    await act(() => acceptButton(0).props.onPress());
+    expect(ring().props.accessibilityLabel).toBe("Set 1, your usual last set");
+    await act(() => acceptButton(1).props.onPress());
+    expect(ring().props.accessibilityLabel).toBe("Set 1, your usual last set, done");
+  });
+
+  test("a reps-only bodyweight target counts as done", async () => {
+    target = 1;
+    await renderSets([makeSet("1", { reps: 12 })], false, "Bodyweight");
+    expect(
+      renderer.root.findAll((n) => n.props.testID === "target-set" && typeof n.type === "string")[0]
+        .props.accessibilityLabel,
+    ).toBe("Set 1, your usual last set, done");
+  });
+
   test("fills the suggested reps and weight into an empty set", async () => {
     await renderSets([makeSet("1")]);
     await act(() => acceptButton(0).props.onPress());

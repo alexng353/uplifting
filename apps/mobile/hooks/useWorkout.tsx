@@ -359,7 +359,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       // Save previous sets for each exercise
       for (const exercise of finishedWorkout.exercises) {
         updatePreviousSets(exercise.exerciseId, exercise.profileId ?? null, exercise.sets);
-        recordExerciseSetCount(exercise.exerciseId, exercise.sets);
+        recordExerciseSetCount(exercise.exerciseId, exercise.profileId, exercise.sets);
       }
 
       // Save exercise sequence
