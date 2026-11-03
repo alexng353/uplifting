@@ -20,10 +20,10 @@ export const singleLineInputLarge: TextStyle = {
   textAlignVertical: "center",
 };
 
-/** An unboxed input inside a row (search bars, settings rows): no lineHeight to clip. */
+/** An unboxed input in a padded row: as tall as the old 24px line box, with no lineHeight to clip. */
 export const inlineInput: TextStyle = {
   fontSize: 16,
   paddingVertical: 0,
-  minHeight: 36,
+  minHeight: 24,
   textAlignVertical: "center",
 };
