@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Crypto from "expo-crypto";
 import { z } from "zod";
 import type { QueuedCheckin } from "../lib/gym-checkins";
+import { recordSetCount, type SetCountHistory } from "../lib/target-sets";
 
 // In-memory cache for synchronous reads, persisted to AsyncStorage
 const cache = new Map<string, string>();
@@ -55,6 +56,7 @@ export const STORAGE_KEYS = {
   TODAY_REST_DAY: "today_rest_day",
   GYM_CHECKINS: "gym_checkins",
   GYM_CHECKINS_USER: "gym_checkins_user",
+  SET_COUNTS: "set_counts",
 } as const;
 
 // Workout kind type
@@ -293,6 +295,16 @@ export function updatePreviousSets(
 
 export function getProfiles(): StoredProfile[] {
   return getJSON<StoredProfile[]>(STORAGE_KEYS.PROFILES) ?? [];
+}
+
+export function getSetCounts(): SetCountHistory {
+  return getJSON<SetCountHistory>(STORAGE_KEYS.SET_COUNTS) ?? {};
+}
+
+export function recordExerciseSetCount(exerciseId: string, sets: StoredSet[]): void {
+  const current = getSetCounts();
+  const next = recordSetCount(current, exerciseId, sets);
+  if (next !== current) setJSON(STORAGE_KEYS.SET_COUNTS, next);
 }
 
 export function setProfiles(profiles: StoredProfile[]): void {

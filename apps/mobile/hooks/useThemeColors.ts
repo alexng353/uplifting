@@ -21,6 +21,7 @@ export function useThemeColors() {
     chevron: dark ? "#71717a" : "#a1a1aa",
     dangerIcon: "#ef4444",
     successIcon: "#22c55e",
+    targetSet: dark ? "#fbbf24" : "#d97706",
     warningIcon: "#f59e0b",
 
     // Inputs

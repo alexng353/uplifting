@@ -28,6 +28,7 @@ const HISTORY: SetSuggestion = { reps: 6, weight: 220, weightUnit: "kg" };
 const LEFT_HISTORY: SetSuggestion = { reps: 5, weight: 100, weightUnit: "kg" };
 let suggestionFor = (_setNumber: number, side?: "L" | "R"): SetSuggestion =>
   side === "L" ? LEFT_HISTORY : HISTORY;
+let target: number | null = null;
 mock.module("../../hooks/useSettings", () => ({
   useSettings: () => ({ settings, getDisplayUnit: () => "kg" }),
 }));
@@ -35,6 +36,7 @@ mock.module("../../hooks/usePreviousSets", () => ({
   usePreviousSets: () => ({
     getSuggestion: (_exerciseId: string, _profileId: string, setNumber: number, side?: "L" | "R") =>
       suggestionFor(setNumber, side),
+    getTargetSetCount: () => target,
   }),
 }));
 mock.module("../../hooks/useExerciseProfiles", () => ({
@@ -128,6 +130,7 @@ afterEach(async () => {
   trimTrailingEmptySets.mockClear();
   settings = {};
   mode = "editing";
+  target = null;
   suggestionFor = (_setNumber, side) => (side === "L" ? LEFT_HISTORY : HISTORY);
 });
 
@@ -138,6 +141,30 @@ function acceptButton(row: number) {
 }
 
 describe("accept suggestion", () => {
+  test("rings the usual last set, green once it is filled", async () => {
+    target = 2;
+    await renderSets([makeSet("1"), makeSet("2"), makeSet("3")]);
+    const rings = () =>
+      renderer.root.findAll((n) => n.props.testID === "target-set" && typeof n.type === "string");
+    expect(rings()).toHaveLength(1);
+    expect(rings()[0].props.accessibilityLabel).toBe("Set 2, your usual last set");
+    await act(() => acceptButton(1).props.onPress());
+    expect(rings()[0].props.accessibilityLabel).toBe("Set 2, your usual last set, done");
+  });
+
+  test("shows no ring without history", async () => {
+    await renderSets([makeSet("1")]);
+    expect(renderer.root.findAll((n) => n.props.testID === "target-set")).toHaveLength(0);
+  });
+
+  test("rings only the right row of a unilateral target pair", async () => {
+    target = 1;
+    await renderSets([makeSet("R", { side: "R" }), makeSet("L", { side: "L" })], true);
+    expect(
+      renderer.root.findAll((n) => n.props.testID === "target-set" && typeof n.type === "string"),
+    ).toHaveLength(1);
+  });
+
   test("fills the suggested reps and weight into an empty set", async () => {
     await renderSets([makeSet("1")]);
     await act(() => acceptButton(0).props.onPress());
