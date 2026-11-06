@@ -1,4 +1,5 @@
 import { api, unwrap } from "../lib/api";
+import { timedFromServer } from "../lib/timed";
 import {
   type GymProfileMapping,
   type StoredExerciseSequences,
@@ -71,6 +72,7 @@ export async function fetchBootstrapData(): Promise<BootstrapData> {
         weightUnit: set.weight_unit ?? set.weightUnit ?? "kg",
         createdAt: new Date().toISOString(),
         side: (set.side as "L" | "R" | undefined) ?? undefined,
+        ...timedFromServer(set),
       }),
     );
   }

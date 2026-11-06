@@ -43,6 +43,8 @@ import {
 import { convertWeight } from "../../lib/units";
 import type { StoredSet, StoredWorkoutExercise } from "../../services/storage";
 import RestTimer from "./RestTimer";
+import TimedSetRow, { TimedHeader } from "./TimedSetRow";
+import { isTimedSet, speedUnitFor, timedUpdate } from "../../lib/timed";
 import { singleLineInput } from "../../lib/input-style";
 import { lightTap } from "../../lib/haptics";
 import { compareSet, type SetResult } from "../../lib/set-result";
@@ -515,6 +517,9 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   }, [noteMutation, exercise.exerciseId, noteDraft]);
 
   const displayUnit = getDisplayUnit();
+  // Treadmill walks and other timed exercises log time, speed and incline.
+  const timed = exercise.measure === "timed";
+  const speedUnit = speedUnitFor(displayUnit);
 
   // One numbered row per set; each row has its own mode (bilateral, unilateral, split).
   const rows = useMemo(() => toRows(exercise.sets), [exercise.sets]);
@@ -581,6 +586,31 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 
   const handleDuplicateLastSet = useCallback(() => {
     if (!lastRow) return;
+    if (timed) {
+      // Copy the last logged time/speed/incline into a trailing empty row, or a new one.
+      const source = [...exercise.sets].reverse().find(isTimedSet);
+      if (!source) return;
+      const values = timedUpdate(
+        source.durationSeconds,
+        source.speed,
+        source.speedUnit ?? speedUnit,
+        source.incline,
+      );
+      const last = exercise.sets[exercise.sets.length - 1];
+      if (last && !isTimedSet(last)) updateSet(exercise.exerciseId, last.id, values);
+      else
+        addSet(
+          exercise.exerciseId,
+          last?.weightUnit ?? displayUnit,
+          1,
+          0,
+          undefined,
+          undefined,
+          values,
+        );
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+      return;
+    }
     // Copy the last row with real values; empty rows and grey placeholders don't count.
     let sourceIndex = rows.length - 1;
     while (sourceIndex >= 0 && isRowEmpty(rows[sourceIndex])) sourceIndex--;
@@ -617,7 +647,18 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
     const { reps, weight } = valuesOf(set);
     addRow(rowMode(from), set.weightUnit, reps, weight);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
-  }, [rows, lastRow, addRow, updateSet, exercise.exerciseId]);
+  }, [
+    rows,
+    lastRow,
+    addRow,
+    updateSet,
+    exercise.exerciseId,
+    exercise.sets,
+    timed,
+    speedUnit,
+    addSet,
+    displayUnit,
+  ]);
 
   const handleRemoveLastSet = useCallback(() => {
     removeLastSet(exercise.exerciseId);
@@ -641,6 +682,23 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
       const row = rows[rowIndex];
       if (!row || !isRowEmpty(row)) return false;
       const setNumber = rowIndex + 1;
+      if (timed && row.kind === "bilateral") {
+        const s = getSuggestion(exercise.exerciseId, exercise.profileId, setNumber);
+        const above = exercise.sets.slice(0, rowIndex).reverse().find(isTimedSet);
+        const from =
+          s.durationSeconds != null
+            ? { ...s, speedUnit: s.speedUnit ?? speedUnit }
+            : above
+              ? above
+              : null;
+        if (!from) return false;
+        handleUpdateSet(
+          exercise.exerciseId,
+          row.set.id,
+          timedUpdate(from.durationSeconds, from.speed, from.speedUnit ?? speedUnit, from.incline),
+        );
+        return true;
+      }
       let sourceIndex = rowIndex - 1;
       while (sourceIndex >= 0 && isRowEmpty(rows[sourceIndex])) sourceIndex--;
       const source = rows[sourceIndex];
@@ -695,9 +753,12 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
       getSuggestion,
       exercise.exerciseId,
       exercise.profileId,
+      exercise.sets,
       isBodyweight,
       handleUpdateSet,
       updateSet,
+      timed,
+      speedUnit,
     ],
   );
 
@@ -859,36 +920,38 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
           </View>
         )}
 
-        {/* Default mode for new sets on this exercise */}
-        <View
-          accessibilityRole="radiogroup"
-          className="mt-1.5 flex-row self-start rounded-lg bg-zinc-200 p-0.5 dark:bg-zinc-800"
-        >
-          {(["bilateral", "unilateral", "split"] as const).map((option) => {
-            const selected = option === defaultMode;
-            return (
-              <Pressable
-                key={option}
-                testID={`side-default-${option}`}
-                accessibilityRole="radio"
-                accessibilityLabel={`New sets: ${MODE_LABEL[option]}`}
-                accessibilityState={{ selected }}
-                onPress={() => !selected && handleDefaultMode(option)}
-                hitSlop={4}
-                className={`rounded-md px-3 py-1 ${selected ? "bg-ember-500" : ""}`}
-              >
-                <Text
-                  maxFontSizeMultiplier={1.4}
-                  className={`text-xs font-semibold ${
-                    selected ? "text-ember-ink" : "text-zinc-500 dark:text-zinc-400"
-                  }`}
+        {/* Default mode for new sets on this exercise (not for timed exercises) */}
+        {!timed && (
+          <View
+            accessibilityRole="radiogroup"
+            className="mt-1.5 flex-row self-start rounded-lg bg-zinc-200 p-0.5 dark:bg-zinc-800"
+          >
+            {(["bilateral", "unilateral", "split"] as const).map((option) => {
+              const selected = option === defaultMode;
+              return (
+                <Pressable
+                  key={option}
+                  testID={`side-default-${option}`}
+                  accessibilityRole="radio"
+                  accessibilityLabel={`New sets: ${MODE_LABEL[option]}`}
+                  accessibilityState={{ selected }}
+                  onPress={() => !selected && handleDefaultMode(option)}
+                  hitSlop={4}
+                  className={`rounded-md px-3 py-1 ${selected ? "bg-ember-500" : ""}`}
                 >
-                  {option === "bilateral" ? "Bi" : option === "unilateral" ? "Uni" : "Split"}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+                  <Text
+                    maxFontSizeMultiplier={1.4}
+                    className={`text-xs font-semibold ${
+                      selected ? "text-ember-ink" : "text-zinc-500 dark:text-zinc-400"
+                    }`}
+                  >
+                    {option === "bilateral" ? "Bi" : option === "unilateral" ? "Uni" : "Split"}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
 
         {/* Persistent note (cue) */}
         <Pressable onPress={openNoteEditor} className="mt-1.5 flex-row items-start gap-1.5">
@@ -907,7 +970,9 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
       </View>
 
       {/* Set Table Header */}
-      {
+      {timed ? (
+        <TimedHeader speedUnit={speedUnit} />
+      ) : (
         <View className="mb-1 flex-row items-center gap-2 px-2">
           <Text className="w-8 text-center text-xs font-bold uppercase text-zinc-400 dark:text-zinc-500">
             Set
@@ -932,7 +997,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
           <Text className="w-8 text-xs text-transparent">kg</Text>
           <View style={{ width: ACCEPT_BUTTON_SIZE }} />
         </View>
-      }
+      )}
 
       {/* Sets */}
       <KeyboardAwareScrollView
@@ -961,6 +1026,21 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
             showSideColumn,
             ghost,
           };
+          if (timed && row.kind === "bilateral") {
+            return (
+              <TimedSetRow
+                key={row.set.id}
+                set={row.set}
+                setNumber={setNumber}
+                ghost={ghost}
+                suggestion={suggestionFor()}
+                speedUnit={speedUnit}
+                onChange={(updates) => handleUpdateSet(exercise.exerciseId, row.set.id, updates)}
+                onMakeReal={makeReal}
+                onBlur={handleSetBlur}
+              />
+            );
+          }
           if (row.kind === "bilateral") {
             return (
               <SetRow

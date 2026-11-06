@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { formatTimedSet, timedFromServer } from "../../../../lib/timed";
 import { View, Text, ScrollView, Pressable, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -105,6 +106,8 @@ export default function WorkoutDetailScreen() {
     const isBw = ex?.exercise_type === "Bodyweight";
 
     const formatSingleSet = (s: any): string => {
+      if (s.durationSeconds != null || s.duration_seconds != null)
+        return formatTimedSet(timedFromServer(s));
       const w = Number.parseFloat(s.weight);
       const weightConverted = convertWeight(w, s.weight_unit ?? s.weightUnit ?? "kg", unit);
       if (!isBw) return `${s.reps}x${weightConverted}${unit}`;

@@ -67,6 +67,7 @@ interface WorkoutContextValue {
     weight?: number,
     side?: "L" | "R",
     autoAdded?: boolean,
+    extra?: Partial<StoredSet>,
   ) => void;
   addUnilateralPair: (
     exerciseId: string,
@@ -292,11 +293,14 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       weight?: number,
       side?: "L" | "R",
       autoAdded?: boolean,
+      extra?: Partial<StoredSet>,
     ) => {
       // Auto-add follows updateSet in the same event, before React rerenders.
       const current = getCurrentWorkout();
       if (!current) return;
-      saveWorkout(addSetMutation(current, exerciseId, weightUnit, reps, weight, side, autoAdded));
+      saveWorkout(
+        addSetMutation(current, exerciseId, weightUnit, reps, weight, side, autoAdded, extra),
+      );
     },
     [saveWorkout],
   );

@@ -16,6 +16,8 @@ export interface Exercise {
   id: string;
   name: string;
   exercise_type: string;
+  /** "timed" for treadmill walks and other timed exercises. Older servers omit it. */
+  measure?: string;
   official: boolean;
   author_id: string | null;
   description: string | null;
@@ -46,6 +48,7 @@ export function useExercises(search?: string) {
         id: e.id,
         name: e.name,
         exercise_type: e.exerciseType,
+        measure: e.measure,
         official: e.official,
         author_id: null,
         description: null,
@@ -72,6 +75,7 @@ export function useExercises(search?: string) {
         id: e.id,
         name: e.name,
         exerciseType: e.exercise_type,
+        measure: e.measure,
         official: e.official,
         primaryMuscles: e.primary_muscles ?? [],
         secondaryMuscles: e.secondary_muscles ?? [],

@@ -5,6 +5,11 @@ export interface SetSuggestion {
   reps: number | null;
   weight: number | null;
   weightUnit: string | null;
+  /** Timed exercises: last time's values for this set. */
+  durationSeconds?: number;
+  speed?: number;
+  speedUnit?: string;
+  incline?: number;
 }
 
 export function getPreviousSetSuggestion(
@@ -41,5 +46,13 @@ export function getPreviousSetSuggestion(
     reps: targetSet.reps ?? null,
     weight: targetSet.weight ?? null,
     weightUnit: targetSet.weightUnit,
+    ...(targetSet.durationSeconds != null
+      ? {
+          durationSeconds: targetSet.durationSeconds,
+          speed: targetSet.speed,
+          speedUnit: targetSet.speedUnit,
+          incline: targetSet.incline,
+        }
+      : null),
   };
 }

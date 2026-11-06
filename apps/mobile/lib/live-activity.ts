@@ -2,6 +2,7 @@ import type { StoredSet, StoredWorkout, StoredWorkoutExercise } from "../service
 import type { SetSuggestion } from "./previous-sets";
 import { rowSets, toRows } from "./set-rows";
 import { convertWeight } from "./units";
+import { formatTimedSet, isTimedSet, liftLabel } from "./timed";
 
 /** What the Live Activity shows. Mirrors UpliftingWorkoutAttributes.ContentState. */
 export interface LiveWorkoutState {
@@ -34,13 +35,17 @@ export function isSetDone(set: StoredSet): boolean {
   return set.reps != null && set.weight != null;
 }
 
-const lift = (reps: number, weight: number, unit: string) =>
-  `${reps}×${Math.round(weight * 10) / 10} ${unit}`;
+// "25 reps" for bodyweight-only sets, never "25×0 lbs".
+const lift = liftLabel;
 
 function rowLift(sets: StoredSet[], unit: string): string | null {
   const done = sets.filter(isSetDone);
   if (done.length === 0) return null;
-  const labels = done.map((s) => lift(s.reps!, convertWeight(s.weight!, s.weightUnit, unit), unit));
+  const labels = done.map((s) =>
+    isTimedSet(s)
+      ? formatTimedSet(s)
+      : lift(s.reps!, convertWeight(s.weight!, s.weightUnit, unit), unit),
+  );
   // An L/R pair with equal sides reads as one lift.
   return labels.every((l) => l === labels[0]) ? labels[0] : labels.join(" / ");
 }
@@ -88,7 +93,9 @@ export function liveStateFor(
   if (last) parts.push(`Last ${last}`);
   if (!allDone) {
     const s = deps.suggestion(exercise.exerciseId, exercise.profileId, setNumber);
-    if (s.reps != null) {
+    if (s.durationSeconds != null) {
+      parts.push(`Target ${formatTimedSet(s)}`);
+    } else if (s.reps != null) {
       const w = convertWeight(s.weight ?? 0, s.weightUnit ?? deps.unit, deps.unit);
       parts.push(`Target ${lift(s.reps, w, deps.unit)}`);
     }

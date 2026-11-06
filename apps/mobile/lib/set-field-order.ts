@@ -1,7 +1,8 @@
 import type { StoredSet, StoredWorkoutExercise } from "../services/storage";
 import { toRows } from "./set-rows";
 
-export type SetField = "reps" | "weight";
+/** Timed rows reuse reps for time and weight for speed, plus incline. */
+export type SetField = "reps" | "weight" | "incline";
 
 export interface FieldStop {
   key: string;
@@ -26,7 +27,10 @@ function displaySets(exercise: StoredWorkoutExercise): StoredSet[] {
 export function setFieldOrder(exercises: StoredWorkoutExercise[]): FieldStop[] {
   return exercises.flatMap((exercise, exerciseIndex) =>
     displaySets(exercise).flatMap((set) =>
-      (["reps", "weight"] as const).map((field) => ({
+      (exercise.measure === "timed"
+        ? (["reps", "weight", "incline"] as const)
+        : (["reps", "weight"] as const)
+      ).map((field) => ({
         key: setFieldKey(set.id, field),
         exerciseIndex,
       })),

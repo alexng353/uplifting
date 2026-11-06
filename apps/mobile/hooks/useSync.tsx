@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { timedFromServer, timedToServer } from "../lib/timed";
 import { useCallback, useMemo } from "react";
 import {
   getLastSyncTime,
@@ -54,6 +55,7 @@ export function useSync() {
             created_at: s.createdAt,
             side: s.side,
             bodyweight: s.bodyweight,
+            ...timedToServer(s),
           })),
       })),
     }),
@@ -106,6 +108,7 @@ export function useSync() {
               reps: s.reps,
               weight: Number(s.weight),
               weightUnit: s.weight_unit ?? s.weightUnit ?? "kg",
+              ...timedFromServer(s),
               createdAt: new Date().toISOString(),
               side: s.side as "L" | "R" | undefined,
             })),

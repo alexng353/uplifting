@@ -88,6 +88,8 @@ export interface StoredWorkoutExercise {
   profileId?: string;
   exerciseName: string;
   exerciseType?: string;
+  /** "timed" logs duration, speed and incline instead of reps x weight. */
+  measure?: "weights" | "timed";
   sets: StoredSet[];
   isUnilateral?: boolean;
 }
@@ -105,6 +107,13 @@ export interface StoredSet {
   bodyweight?: number;
   /** Added by auto-add-set, not by him: only these empty rows may be trimmed on blur. */
   autoAdded?: boolean;
+  // Timed sets only (lib/timed): reps is 1 and weight 0 once a duration is in.
+  durationSeconds?: number;
+  speed?: number;
+  speedUnit?: string;
+  incline?: number;
+  distance?: number;
+  distanceUnit?: string;
 }
 
 export interface RepRangeConfig {
@@ -162,6 +171,7 @@ export interface StoredExercise {
   id: string;
   name: string;
   exerciseType: string;
+  measure?: string;
   official: boolean;
   primaryMuscles: string[];
   secondaryMuscles: string[];
