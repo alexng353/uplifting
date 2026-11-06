@@ -408,9 +408,14 @@ function ExercisesTab({ refreshing, onRefresh }: { refreshing: boolean; onRefres
     hasNextPage,
     isLoading,
     isFetchingNextPage,
+    isFetchNextPageError,
     refetch,
   } = useUsedExercises();
-  const allExercises = usedExercisesData?.pages.flat() ?? [];
+  // Rank by overall use, kept when the list is filtered.
+  const allExercises = (usedExercisesData?.pages.flat() ?? []).map((e, i) => ({
+    ...e,
+    rank: i + 1,
+  }));
   const [query, setQuery] = useState("");
   const searching = query.trim().length > 0;
   const usedExercises = searching
@@ -419,8 +424,9 @@ function ExercisesTab({ refreshing, onRefresh }: { refreshing: boolean; onRefres
 
   // The list pages 20 at a time; a search has to see every exercise, so keep fetching.
   useEffect(() => {
-    if (searching && hasNextPage && !isFetchingNextPage) fetchNextPage();
-  }, [searching, hasNextPage, isFetchingNextPage, fetchNextPage]);
+    // Stop on a failed page, or this effect would retry it in a loop.
+    if (searching && hasNextPage && !isFetchingNextPage && !isFetchNextPageError) fetchNextPage();
+  }, [searching, hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage]);
 
   const handleEndReached = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -481,7 +487,7 @@ function ExercisesTab({ refreshing, onRefresh }: { refreshing: boolean; onRefres
         onEndReachedThreshold={0.5}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
         contentContainerClassName="pt-2 pb-24"
-        renderItem={({ item, index }) => (
+        renderItem={({ item }) => (
           <Pressable
             onPress={() => router.push(`/(tabs)/stats/exercise/${item.id}` as any)}
             className="mx-4 mb-2 flex-row items-center rounded-xl bg-white dark:bg-zinc-900 px-4 py-3 active:bg-zinc-50 dark:active:bg-zinc-800"
@@ -494,7 +500,7 @@ function ExercisesTab({ refreshing, onRefresh }: { refreshing: boolean; onRefres
             }}
           >
             <Text className="w-8 text-base font-bold text-zinc-300 dark:text-zinc-500">
-              {index + 1}
+              {item.rank}
             </Text>
             <View className="flex-1">
               <Text className="text-base font-medium text-zinc-900 dark:text-zinc-50">
@@ -524,11 +530,15 @@ function ExercisesTab({ refreshing, onRefresh }: { refreshing: boolean; onRefres
 
 export default function StatsScreen() {
   // Other screens can open a tab directly, e.g. Me's muscle map opens /stats?tab=alltime.
+  // The param is cleared once used, so the same link works again after switching tabs.
   const { tab } = useLocalSearchParams<{ tab?: string }>();
+  const tabRouter = useRouter();
   const [activeTab, setActiveTab] = useState<StatsTab>("week");
   useEffect(() => {
-    if (tab && TABS.some((t) => t.key === tab)) setActiveTab(tab as StatsTab);
-  }, [tab]);
+    if (!tab) return;
+    if (TABS.some((t) => t.key === tab)) setActiveTab(tab as StatsTab);
+    tabRouter.setParams({ tab: undefined });
+  }, [tab, tabRouter]);
   const [refreshing, setRefreshing] = useState(false);
   const { data: workouts, isLoading, refetch: refetchWorkouts } = useWorkouts(1, 20);
   const streak = useStreak();

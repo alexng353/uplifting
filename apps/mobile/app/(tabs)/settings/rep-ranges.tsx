@@ -66,9 +66,14 @@ export default function RepRangesScreen() {
 
   const addRange = () => {
     const last = ranges[ranges.length - 1];
-    const newMin = last ? last.max + 1 : 1;
+    // An open-ended last range (no max) gets capped one below the new range, so the pair is
+    // valid and autosaves instead of starting above 9999.
+    const openEnded = !!last && last.max >= 9999;
+    const newMin = !last ? 1 : openEnded ? last.min + 1 : last.max + 1;
     setRanges((prev) => [
-      ...prev,
+      ...(openEnded
+        ? prev.map((r, i) => (i === prev.length - 1 ? { ...r, max: newMin - 1 } : r))
+        : prev),
       withId({
         label: `${newMin}+ reps`,
         min: newMin,
