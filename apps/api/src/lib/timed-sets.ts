@@ -11,12 +11,15 @@ export interface TimedInput {
   incline?: number;
   distance?: number;
   distance_unit?: string;
+  is_warmup?: boolean;
 }
 
 /** Insert values for the timed columns; nothing at all for a weight set. */
 export function timedValues(s: TimedInput) {
-  if (s.duration_seconds == null) return {};
+  const warmup = s.is_warmup ? { isWarmup: true } : {};
+  if (s.duration_seconds == null) return warmup;
   return {
+    ...warmup,
     durationSeconds: Math.round(s.duration_seconds),
     speed: s.speed != null ? String(s.speed) : null,
     speedUnit: s.speed != null ? (s.speed_unit ?? null) : null,
@@ -37,10 +40,14 @@ export function timedColumns(row: Record<string, unknown>): {
   incline?: number | null;
   distance?: number | null;
   distance_unit?: string | null;
+  is_warmup?: boolean;
 } {
-  if (row.duration_seconds == null) return {};
+  // Only set keys are sent, so working weight sets keep their old JSON shape.
+  const warmup = row.is_warmup === true ? { is_warmup: true } : {};
+  if (row.duration_seconds == null) return warmup;
   const num = (v: unknown) => (v == null ? null : Number(v));
   return {
+    ...warmup,
     duration_seconds: Number(row.duration_seconds),
     speed: num(row.speed),
     speed_unit: (row.speed_unit as string | null) ?? null,

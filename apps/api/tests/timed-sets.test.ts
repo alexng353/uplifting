@@ -176,4 +176,35 @@ describe.skipIf(!socket)("timed sets", () => {
       distanceUnit: "mi",
     });
   });
+
+  test("warmup sets are kept and counted by the gate, but not in volume or PRs", async () => {
+    const synced = await call("/sync/workout", "POST", {
+      client_id: "warm",
+      start_time: ago(0.4),
+      end_time: ago(0.2),
+      exercises: [
+        {
+          exercise_id: curlId,
+          sets: [
+            { reps: 10, weight: 200, weight_unit: "lbs", is_warmup: true },
+            { reps: 10, weight: 50, weight_unit: "lbs" },
+          ],
+        },
+      ],
+    });
+    const summary = await call(`/workouts/${synced.workout_id}/summary`);
+    expect(summary.total_sets).toBe(2);
+    expect(summary.total_volume).toBeCloseTo(50 * 10 * 0.453592, 1);
+    expect((await call(`/exercises/${curlId}`)).personal_record.weight).toBe(50);
+    const prev = synced.previous_sets[`${curlId}_default`];
+    expect(prev[0].is_warmup).toBe(true);
+    expect(Object.keys(prev[1])).not.toContain("is_warmup");
+    const feed = await call(
+      `/gate/feed?from=${encodeURIComponent(ago(1))}`,
+      "GET",
+      undefined,
+      TOKEN,
+    );
+    expect(feed.workouts.find((w: any) => w.client_id === "warm").set_count).toBe(2);
+  });
 });
