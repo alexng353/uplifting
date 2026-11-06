@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useWorkouts } from "../../../hooks/useWorkouts";
@@ -20,6 +20,8 @@ import { useSettings } from "../../../hooks/useSettings";
 import { useThemeColors } from "../../../hooks/useThemeColors";
 import { convertWeight } from "../../../services/storage";
 import MusclesWorked from "../../../components/stats/MusclesWorked";
+import SearchField from "../../../components/SearchField";
+import { matchesSearch } from "../../../lib/text-search";
 
 type StatsTab = "week" | "alltime" | "exercises";
 
@@ -314,7 +316,12 @@ function AllTimeTab({ refreshing, onRefresh }: { refreshing: boolean; onRefresh:
       )}
 
       {allTimeStats.top_exercises?.length > 0 && (
-        <MusclesWorked topExercises={allTimeStats.top_exercises} />
+        <MusclesWorked
+          exercises={allTimeStats.top_exercises.map((t: { id: string; total_sets: number }) => ({
+            id: t.id,
+            sets: Number(t.total_sets),
+          }))}
+        />
       )}
 
       {/* Muscle group volume */}
@@ -403,7 +410,17 @@ function ExercisesTab({ refreshing, onRefresh }: { refreshing: boolean; onRefres
     isFetchingNextPage,
     refetch,
   } = useUsedExercises();
-  const usedExercises = usedExercisesData?.pages.flat() ?? [];
+  const allExercises = usedExercisesData?.pages.flat() ?? [];
+  const [query, setQuery] = useState("");
+  const searching = query.trim().length > 0;
+  const usedExercises = searching
+    ? allExercises.filter((e) => matchesSearch(e.name, query))
+    : allExercises;
+
+  // The list pages 20 at a time; a search has to see every exercise, so keep fetching.
+  useEffect(() => {
+    if (searching && hasNextPage && !isFetchingNextPage) fetchNextPage();
+  }, [searching, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleEndReached = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -425,7 +442,7 @@ function ExercisesTab({ refreshing, onRefresh }: { refreshing: boolean; onRefres
     );
   }
 
-  if (usedExercises.length === 0) {
+  if (allExercises.length === 0) {
     return (
       <View className="flex-1 items-center justify-center px-8">
         <Ionicons name="fitness-outline" size={48} color={colors.chevron} />
@@ -440,55 +457,78 @@ function ExercisesTab({ refreshing, onRefresh }: { refreshing: boolean; onRefres
   }
 
   return (
-    <FlatList
-      data={usedExercises}
-      keyExtractor={(item) => item.id}
-      onEndReached={handleEndReached}
-      onEndReachedThreshold={0.5}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
-      contentContainerClassName="pt-2 pb-24"
-      renderItem={({ item, index }) => (
-        <Pressable
-          onPress={() => router.push(`/(tabs)/stats/exercise/${item.id}` as any)}
-          className="mx-4 mb-2 flex-row items-center rounded-xl bg-white dark:bg-zinc-900 px-4 py-3 active:bg-zinc-50 dark:active:bg-zinc-800"
-          style={{
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 2,
-            elevation: 1,
-          }}
-        >
-          <Text className="w-8 text-base font-bold text-zinc-300 dark:text-zinc-500">
-            {index + 1}
-          </Text>
-          <View className="flex-1">
-            <Text className="text-base font-medium text-zinc-900 dark:text-zinc-50">
-              {item.name}
+    <View className="flex-1">
+      <SearchField
+        testID="stats-exercise-search"
+        className="mx-4 mt-2 mb-1"
+        value={query}
+        onChangeText={setQuery}
+        placeholder="Search exercises"
+      />
+      <FlatList
+        data={usedExercises}
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
+        ListEmptyComponent={
+          searching && !hasNextPage ? (
+            <Text className="mt-8 text-center text-sm text-zinc-400 dark:text-zinc-500">
+              No exercises match “{query.trim()}”
             </Text>
-            <Text className="text-sm text-zinc-400 dark:text-zinc-500">
-              {item.workout_count} workouts · {item.total_sets} sets ·{" "}
-              {formatVolume(item.total_volume)} {unit}
+          ) : null
+        }
+        keyExtractor={(item) => item.id}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.5}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+        contentContainerClassName="pt-2 pb-24"
+        renderItem={({ item, index }) => (
+          <Pressable
+            onPress={() => router.push(`/(tabs)/stats/exercise/${item.id}` as any)}
+            className="mx-4 mb-2 flex-row items-center rounded-xl bg-white dark:bg-zinc-900 px-4 py-3 active:bg-zinc-50 dark:active:bg-zinc-800"
+            style={{
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.05,
+              shadowRadius: 2,
+              elevation: 1,
+            }}
+          >
+            <Text className="w-8 text-base font-bold text-zinc-300 dark:text-zinc-500">
+              {index + 1}
             </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={16} color={colors.chevron} />
-        </Pressable>
-      )}
-      ListFooterComponent={
-        isFetchingNextPage ? (
-          <View className="items-center py-4">
-            <ActivityIndicator size="small" />
-          </View>
-        ) : null
-      }
-    />
+            <View className="flex-1">
+              <Text className="text-base font-medium text-zinc-900 dark:text-zinc-50">
+                {item.name}
+              </Text>
+              <Text className="text-sm text-zinc-400 dark:text-zinc-500">
+                {item.workout_count} workouts · {item.total_sets} sets ·{" "}
+                {formatVolume(item.total_volume)} {unit}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.chevron} />
+          </Pressable>
+        )}
+        ListFooterComponent={
+          isFetchingNextPage ? (
+            <View className="items-center py-4">
+              <ActivityIndicator size="small" />
+            </View>
+          ) : null
+        }
+      />
+    </View>
   );
 }
 
 // --- Main Screen ---
 
 export default function StatsScreen() {
+  // Other screens can open a tab directly, e.g. Me's muscle map opens /stats?tab=alltime.
+  const { tab } = useLocalSearchParams<{ tab?: string }>();
   const [activeTab, setActiveTab] = useState<StatsTab>("week");
+  useEffect(() => {
+    if (tab && TABS.some((t) => t.key === tab)) setActiveTab(tab as StatsTab);
+  }, [tab]);
   const [refreshing, setRefreshing] = useState(false);
   const { data: workouts, isLoading, refetch: refetchWorkouts } = useWorkouts(1, 20);
   const streak = useStreak();

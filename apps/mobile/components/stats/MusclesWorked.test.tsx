@@ -33,9 +33,9 @@ test("draws front and back maps heated by the top exercises' muscles", async () 
   await act(() => {
     renderer = create(
       <MusclesWorked
-        topExercises={[
-          { id: "curl", total_sets: 24 },
-          { id: "dl", total_sets: 12 },
+        exercises={[
+          { id: "curl", sets: 24 },
+          { id: "dl", sets: 12 },
         ]}
       />,
     );
@@ -52,7 +52,7 @@ test("draws front and back maps heated by the top exercises' muscles", async () 
 test("renders nothing without muscle data", async () => {
   exercises = [];
   await act(() => {
-    renderer = create(<MusclesWorked topExercises={[{ id: "x", total_sets: 3 }]} />);
+    renderer = create(<MusclesWorked exercises={[{ id: "x", sets: 3 }]} />);
   });
   expect(renderer.toJSON()).toBeNull();
 });
