@@ -34,14 +34,21 @@ import {
   changeExerciseProfileMutation,
   trimTrailingEmptySetsMutation,
 } from "../lib/workout-mutations";
-import { saveWorkoutToAppleHealth } from "../services/apple-health";
+import {
+  beginHealthForWorkout,
+  discardHealthForWorkout,
+  finishHealthForWorkout,
+  resumeHealthForWorkout,
+} from "../services/live-workout";
+import { clearRest, startRest } from "../services/rest-timer";
+import { isSetDone } from "../lib/live-activity";
 import type { SideMode } from "../lib/set-rows";
 
 interface WorkoutContextValue {
   workout: StoredWorkout | null;
   isActive: boolean;
   todayRestDay: TodayRestDay | null;
-  startWorkout: () => void;
+  startWorkout: () => StoredWorkout | null;
   logRestDay: () => StoredWorkout | null;
   cancelRestDay: () => string | undefined;
   reconcileRestDay: (serverWorkouts: any[]) => void;
@@ -116,9 +123,11 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
         setPendingWorkout(cappedWorkout);
         setCurrentWorkout(null);
         setHasPendingWorkout(true);
-        if (settings.appleHealth) saveWorkoutToAppleHealth(cappedWorkout).catch(() => {});
+        finishHealthForWorkout(cappedWorkout).catch(() => {});
       } else {
         setWorkout(current);
+        // A killed app left the Health session running (or it needs starting again).
+        resumeHealthForWorkout(current).catch(() => {});
       }
     }
 
@@ -137,7 +146,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const startWorkout = useCallback(() => {
-    if (todayRestDayState) return; // Can't start workout on a rest day
+    if (todayRestDayState) return null; // Can't start workout on a rest day
 
     const settings = getSettings();
     const newWorkout: StoredWorkout = {
@@ -153,6 +162,9 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     detectAndSetNearbyGym().catch(() => {});
     // Where Start was tapped, for Alex's gym gate (fire-and-forget, queued offline).
     recordGymCheckin(newWorkout.id, "start", newWorkout.startTime);
+    // Live Fitness session; the first Start asks for Health access once.
+    beginHealthForWorkout(newWorkout).catch(() => {});
+    return newWorkout;
   }, [saveWorkout, todayRestDayState]);
 
   const logRestDay = useCallback((): StoredWorkout | null => {
@@ -318,7 +330,16 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       // the second write keeps the first.
       const current = getCurrentWorkout() ?? workout;
       if (!current) return;
-      saveWorkout(updateSetMutation(current, exerciseId, setId, updates));
+      const next = updateSetMutation(current, exerciseId, setId, updates);
+      saveWorkout(next);
+      // The automatic rest timer starts when a set becomes done (accept, or both fields).
+      const find = (w: StoredWorkout) =>
+        w.exercises.find((e) => e.exerciseId === exerciseId)?.sets.find((s) => s.id === setId);
+      const before = find(current);
+      const after = find(next);
+      if (before && after && !isSetDone(before) && isSetDone(after)) {
+        startRest(getSettings().defaultRestTimerSeconds);
+      }
     },
     [workout, saveWorkout],
   );
@@ -394,8 +415,9 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       setPendingWorkout(finishedWorkout);
       // Where Finish was tapped, for Alex's gym gate (fire-and-forget, queued offline).
       recordGymCheckin(finishedWorkout.id, "finish", finishedWorkout.endTime!);
-      // Shows in Fitness as strength training (fire-and-forget; off unless enabled in Settings).
-      if (getSettings().appleHealth) saveWorkoutToAppleHealth(finishedWorkout).catch(() => {});
+      // Ends the live Fitness session and saves it to Health (fire-and-forget).
+      finishHealthForWorkout(finishedWorkout).catch(() => {});
+      clearRest();
       setCurrentWorkout(null);
       setWorkout(null);
       setHasPendingWorkout(true);
@@ -406,6 +428,8 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   );
 
   const cancelWorkout = useCallback(() => {
+    discardHealthForWorkout();
+    clearRest();
     setCurrentWorkout(null);
     setWorkout(null);
   }, []);

@@ -59,6 +59,8 @@ export const STORAGE_KEYS = {
   GYM_CHECKINS_USER: "gym_checkins_user",
   SET_COUNTS: "set_counts",
   SIDE_DEFAULTS: "side_defaults",
+  HEALTH_PROMPTED: "apple_health_prompted",
+  HEALTH_STATS: "apple_health_stats",
 } as const;
 
 // Workout kind type
@@ -326,6 +328,35 @@ export function getSideDefault(exerciseId: string): SideMode | undefined {
 export function setSideDefault(exerciseId: string, mode: SideMode): void {
   const all = getJSON<Record<string, SideMode>>(STORAGE_KEYS.SIDE_DEFAULTS) ?? {};
   setJSON(STORAGE_KEYS.SIDE_DEFAULTS, { ...all, [exerciseId]: mode });
+}
+
+/** Whether Uplifting already asked for Health access (first Start, or the Settings switch). */
+export function getHealthPrompted(): boolean {
+  return storage.getString(STORAGE_KEYS.HEALTH_PROMPTED) === "1";
+}
+
+export function setHealthPrompted(prompted = true): void {
+  if (prompted) storage.set(STORAGE_KEYS.HEALTH_PROMPTED, "1");
+  else storage.delete(STORAGE_KEYS.HEALTH_PROMPTED);
+}
+
+/** What Health measured during a workout. Device-only; the server never sees it. */
+export interface HealthWorkoutStats {
+  activeKcal?: number;
+  avgHeartRate?: number;
+  maxHeartRate?: number;
+  healthWorkoutId?: string;
+}
+
+export function getHealthStats(workoutId: string): HealthWorkoutStats | undefined {
+  return getJSON<Record<string, HealthWorkoutStats>>(STORAGE_KEYS.HEALTH_STATS)?.[workoutId];
+}
+
+export function setHealthStats(workoutId: string, stats: HealthWorkoutStats): void {
+  const all = getJSON<Record<string, HealthWorkoutStats>>(STORAGE_KEYS.HEALTH_STATS) ?? {};
+  // Keep the newest 200 workouts; older stats stay in Health itself.
+  const kept = Object.entries({ ...all, [workoutId]: stats }).slice(-200);
+  setJSON(STORAGE_KEYS.HEALTH_STATS, Object.fromEntries(kept));
 }
 
 export function setProfiles(profiles: StoredProfile[]): void {

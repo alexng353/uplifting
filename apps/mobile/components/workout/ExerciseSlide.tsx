@@ -44,6 +44,15 @@ import { convertWeight } from "../../lib/units";
 import type { StoredSet, StoredWorkoutExercise } from "../../services/storage";
 import RestTimer from "./RestTimer";
 import { singleLineInput } from "../../lib/input-style";
+import * as Haptics from "expo-haptics";
+import { compareSet, type SetResult } from "../../lib/set-result";
+
+// Stoplight for a done set against its suggestion. The yellow stays clear of Ember.
+const RESULT_STYLE: Record<SetResult, { color: string; bg: string; label: string }> = {
+  above: { color: "#22C55E", bg: "rgba(34,197,94,0.15)", label: "above last time" },
+  same: { color: "#FACC15", bg: "rgba(250,204,21,0.15)", label: "same as last time" },
+  below: { color: "#EF4444", bg: "rgba(239,68,68,0.15)", label: "below last time" },
+};
 
 interface ExerciseSlideProps {
   exercise: StoredWorkoutExercise;
@@ -159,39 +168,67 @@ function AcceptButton({
   canAccept,
   label,
   onPress,
+  result,
 }: {
   setNumber: number;
   isFilled: boolean;
   canAccept: boolean;
   label: string;
   onPress: () => void;
+  /** How the done set compares with its suggestion; null keeps the plain check. */
+  result?: SetResult | null;
 }) {
   const colors = useThemeColors();
+  const style = isFilled && result ? RESULT_STYLE[result] : null;
+  // A light tap when a set lands above or below the suggestion.
+  const lastResult = useRef(result);
+  useEffect(() => {
+    if (isFilled && result && result !== lastResult.current && result !== "same") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    }
+    lastResult.current = isFilled ? result : null;
+  }, [isFilled, result]);
   return (
     <Pressable
       testID="accept-suggestion"
       accessibilityRole="button"
       accessibilityLabel={
-        isFilled ? `Set ${setNumber} filled` : canAccept ? label : `No previous set to copy`
+        isFilled
+          ? `Set ${setNumber} filled${style ? `, ${style.label}` : ""}`
+          : canAccept
+            ? label
+            : `No previous set to copy`
       }
       accessibilityState={{ disabled: !canAccept }}
       disabled={!canAccept}
       onPress={onPress}
       hitSlop={6}
       className={`items-center justify-center rounded-full ${
-        isFilled
-          ? "bg-green-500/15"
-          : canAccept
-            ? "border border-zinc-300 dark:border-zinc-600 active:bg-zinc-200 dark:active:bg-zinc-700"
-            : "opacity-30"
+        style
+          ? ""
+          : isFilled
+            ? "bg-green-500/15"
+            : canAccept
+              ? "border border-zinc-300 dark:border-zinc-600 active:bg-zinc-200 dark:active:bg-zinc-700"
+              : "opacity-30"
       }`}
-      style={{ width: ACCEPT_BUTTON_SIZE, height: ACCEPT_BUTTON_SIZE }}
+      style={{
+        width: ACCEPT_BUTTON_SIZE,
+        height: ACCEPT_BUTTON_SIZE,
+        ...(style ? { backgroundColor: style.bg } : null),
+      }}
     >
-      <Ionicons
-        name="checkmark"
-        size={20}
-        color={isFilled ? colors.successIcon : colors.placeholder}
-      />
+      {result === "same" && style ? (
+        <Text style={{ color: style.color, fontSize: 22, fontWeight: "800", lineHeight: 24 }}>
+          =
+        </Text>
+      ) : (
+        <Ionicons
+          name={style ? (result === "above" ? "arrow-up" : "arrow-down") : "checkmark"}
+          size={20}
+          color={style ? style.color : isFilled ? colors.successIcon : colors.placeholder}
+        />
+      )}
     </Pressable>
   );
 }
@@ -367,6 +404,7 @@ function SetRow({
         canAccept={canAccept}
         label={`Use last time's ${suggestedReps} reps at ${suggestedWeight} ${displayUnit}`}
         onPress={() => canAccept && updateSet(exerciseId, set.id, updates)}
+        result={isFilled ? compareSet(set, suggestion, set.weightUnit) : null}
       />
     </View>
   );

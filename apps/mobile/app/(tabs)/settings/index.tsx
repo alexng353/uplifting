@@ -19,6 +19,7 @@ import { useColorScheme } from "nativewind";
 
 import { useAuth } from "../../../hooks/useAuth";
 import { connectAppleHealth } from "../../../services/apple-health";
+import { setHealthPrompted } from "../../../services/storage";
 import { useSettings } from "../../../hooks/useSettings";
 import { useMe } from "../../../hooks/useMe";
 import { useGyms } from "../../../hooks/useGyms";
@@ -461,6 +462,7 @@ export default function SettingsScreen() {
                   value={settings.appleHealth}
                   onValueChange={async (on) => {
                     if (!on) return updateSettings({ appleHealth: false });
+                    setHealthPrompted();
                     const result = await connectAppleHealth().catch(() => "error" as const);
                     if (result === "granted") return updateSettings({ appleHealth: true });
                     if (result === "denied") {
@@ -478,7 +480,8 @@ export default function SettingsScreen() {
               </SettingsRow>
             </View>
             <Text className="mx-6 mt-1 text-xs text-zinc-500">
-              Finished workouts appear in Fitness as Traditional Strength Training.
+              Workouts show in Fitness as Traditional Strength Training while they run (iOS 26 and
+              later), with active energy and any heart rate Health records.
             </Text>
           </>
         )}

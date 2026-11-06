@@ -17,7 +17,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "dev.alexng.uplifting",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSSupportsLiveActivities": true,
+        "UIBackgroundModes": ["workout-processing"]
       },
       "splash": {
         "image": "./assets/splash-icon.png",
@@ -60,11 +62,13 @@
       [
         "@kingstinct/react-native-healthkit",
         {
-          "NSHealthUpdateUsageDescription": "Allow Uplifting to save your finished workouts to Apple Health so they count in Fitness.",
-          "NSHealthShareUsageDescription": "Allow Uplifting to read your workouts from Apple Health.",
+          "NSHealthUpdateUsageDescription": "Allow Uplifting to save your workouts and their active energy to Apple Health so they count in Fitness.",
+          "NSHealthShareUsageDescription": "Allow Uplifting to read your workouts, heart rate and active energy from Apple Health.",
           "background": false
         }
-      ]
+      ],
+      "./plugins/withWorkoutIntents",
+      "@bacons/apple-targets"
     ],
     "extra": {
       "router": {},

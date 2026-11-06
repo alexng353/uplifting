@@ -1,9 +1,11 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeColors } from "../../hooks/useThemeColors";
+import { useWorkoutIntents } from "../../hooks/useWorkoutIntents";
 
 export default function TabLayout() {
   const colors = useThemeColors();
+  useWorkoutIntents();
 
   return (
     <Tabs
