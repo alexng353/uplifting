@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { View, Text, TextInput, Pressable, SectionList, ActivityIndicator } from "react-native";
+import { View, Text, Pressable, SectionList, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeColors } from "../../hooks/useThemeColors";
 import { useExercises, type Exercise } from "../../hooks/useExercises";
@@ -8,7 +8,7 @@ import { useFavouriteExercises, useToggleFavourite } from "../../hooks/useFavour
 import { useAllExerciseProfiles } from "../../hooks/useExerciseProfiles";
 import { useGymProfileSuggestion } from "../../hooks/useGymProfileSuggestion";
 import { useWorkoutActions } from "../../hooks/useWorkoutActions";
-import { inlineInput } from "../../lib/input-style";
+import SearchField from "../SearchField";
 
 interface AddExerciseSlideProps {
   onExerciseAdded?: () => void;
@@ -18,7 +18,6 @@ export default function AddExerciseSlide({ onExerciseAdded }: AddExerciseSlidePr
   const { addExercise } = useWorkoutActions();
   const colors = useThemeColors();
   const [searchText, setSearchText] = useState("");
-  const [searchFocused, setSearchFocused] = useState(false);
 
   const { data: exercises, isLoading } = useExercises(searchText);
   const { data: allProfiles } = useAllExerciseProfiles();
@@ -186,36 +185,13 @@ export default function AddExerciseSlide({ onExerciseAdded }: AddExerciseSlidePr
       <Text className="mb-2 px-4 text-xl font-bold dark:text-zinc-100">Add Exercise</Text>
 
       {/* Search bar */}
-      <View
-        testID="exercise-search-box"
-        className={`mx-4 mb-2 flex-row items-center rounded-lg border bg-zinc-50 dark:bg-zinc-800 px-3 ${
-          searchFocused
-            ? "border-ember-500 dark:border-ember-400"
-            : "border-zinc-300 dark:border-zinc-600"
-        }`}
-      >
-        <Ionicons name="search" size={18} color={searchFocused ? colors.caret : colors.mutedIcon} />
-        <TextInput
-          testID="exercise-search"
-          value={searchText}
-          onChangeText={setSearchText}
-          onFocus={() => setSearchFocused(true)}
-          onBlur={() => setSearchFocused(false)}
-          placeholder="Search exercises..."
-          placeholderTextColor={colors.placeholder}
-          selectionColor={colors.caret}
-          cursorColor={colors.caret}
-          className="ml-2 flex-1 dark:text-zinc-100"
-          style={[inlineInput, { height: 40 }]}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        {searchText.length > 0 && (
-          <Pressable onPress={() => setSearchText("")} hitSlop={8}>
-            <Ionicons name="close-circle" size={18} color={colors.mutedIcon} />
-          </Pressable>
-        )}
-      </View>
+      <SearchField
+        boxTestID="exercise-search-box"
+        testID="exercise-search"
+        value={searchText}
+        onChangeText={setSearchText}
+        placeholder="Search exercises..."
+      />
 
       {/* Exercise list */}
       {isLoading ? (
