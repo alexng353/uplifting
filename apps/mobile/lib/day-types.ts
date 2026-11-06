@@ -60,14 +60,41 @@ export function listFromSessions(sessions: readonly ExerciseSequenceEntry[]): st
 }
 
 /** Upper and Lower, filled from his last few sessions of each. */
-export function seedDayTypes(sequences: readonly ExerciseSequenceEntry[], recent = 4): DayType[] {
+const COMPOUND = /squat|deadlift|press|lunge|hack|pendulum|rdl/i;
+const EARLY_ACCESSORY = /adduct|leg extension|back extension|hyperextension/i;
+
+/**
+ * Lower-day order: compounds first, then the accessories he tends to run out of time for
+ * (adductors, leg extensions, 45° back extensions), then the rest. Alex, 2026-11-06:
+ * "I'm too tired for accessories I need to do them before". Without names, unchanged.
+ */
+export function orderLowerDay(
+  ids: readonly string[],
+  nameOf?: (id: string) => string | undefined,
+): string[] {
+  if (!nameOf) return [...ids];
+  const tier = (id: string) => {
+    const n = nameOf(id) ?? "";
+    return COMPOUND.test(n) ? 0 : EARLY_ACCESSORY.test(n) ? 1 : 2;
+  };
+  return ids
+    .map((id, i) => ({ id, i, t: tier(id) }))
+    .sort((a, b) => a.t - b.t || a.i - b.i)
+    .map((x) => x.id);
+}
+
+export function seedDayTypes(
+  sequences: readonly ExerciseSequenceEntry[],
+  recent = 4,
+  nameOf?: (id: string) => string | undefined,
+): DayType[] {
   return [
     { id: "upper", name: "Upper" },
     { id: "lower", name: "Lower" },
-  ].map((d) => ({
-    ...d,
-    exerciseIds: listFromSessions(sessionsForDay(d, sequences).slice(0, recent)),
-  }));
+  ].map((d) => {
+    const ids = listFromSessions(sessionsForDay(d, sequences).slice(0, recent));
+    return { ...d, exerciseIds: d.id === "lower" ? orderLowerDay(ids, nameOf) : ids };
+  });
 }
 
 /** The next day in rotation: the one after his most recent session's day. */

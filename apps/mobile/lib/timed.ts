@@ -69,13 +69,20 @@ export function timedUpdate(
   speedUnit: string,
   incline: number | undefined,
 ): Partial<StoredSet> {
+  // Clamp to what a treadmill can do (and what the columns hold): a typo like 1000 must
+  // not fail the whole workout's sync.
+  const clamp = (v: number | undefined, lo: number, hi: number) =>
+    v == null ? v : Math.min(hi, Math.max(lo, v));
+  durationSeconds = clamp(durationSeconds, 0, 86400);
+  speed = clamp(speed, 0, 99.9);
+  incline = clamp(incline, -30, 99.9);
   const logged = durationSeconds != null && durationSeconds > 0;
   return {
     durationSeconds,
     speed,
     speedUnit: speed != null ? speedUnit : undefined,
     incline,
-    distance: logged && speed != null ? distanceFor(speed, durationSeconds) : undefined,
+    distance: logged && speed != null ? distanceFor(speed, durationSeconds ?? 0) : undefined,
     distanceUnit: logged && speed != null ? (speedUnit === "mph" ? "mi" : "km") : undefined,
     reps: logged ? 1 : undefined,
     weight: logged ? 0 : undefined,
@@ -110,7 +117,7 @@ export function timedFromServer(s: Record<string, any>): Partial<StoredSet> {
 /** Timed fields for a sync or edit request; nothing for a weight set. */
 export function timedToServer(s: StoredSet) {
   // Warmup sets are sent flagged; the server leaves them out of volume and PRs.
-  const warm = s.warmup === true ? { is_warmup: true } : {};
+  const warm = { is_warmup: s.warmup === true };
   if (!isTimedSet(s)) return warm;
   return {
     ...warm,

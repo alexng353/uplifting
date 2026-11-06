@@ -63,3 +63,19 @@ test("a day label is inferred after two logged exercises", async () => {
   expect(inferDayTitle(["pendulum", "legcurl"], m)).toBe("Leg day");
   expect(inferDayTitle(["chest", "pendulum"], m)).toBe("Upper");
 });
+
+test("lower day: skipped accessories come right after the compounds", async () => {
+  const { orderLowerDay } = await import("./day-types");
+  const names: Record<string, string> = {
+    pend: "Pendulum Squat",
+    curl: "Seated Leg Curl",
+    calf: "Calf Raise",
+    add: "Hip Adductor",
+    ext: "Leg Extension",
+    back: "45° Back Extension",
+    rdl: "Romanian Deadlift",
+  };
+  expect(
+    orderLowerDay(["pend", "curl", "rdl", "calf", "add", "ext", "back"], (id) => names[id]),
+  ).toEqual(["pend", "rdl", "add", "ext", "back", "curl", "calf"]);
+});

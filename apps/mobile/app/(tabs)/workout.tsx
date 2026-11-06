@@ -53,7 +53,9 @@ export default function WorkoutScreen() {
   } = useWorkout();
   const { days } = useDayTypes();
   // The day to start: his pick, else the next in rotation ("" = Any).
-  const rotationDay = useMemo(() => nextDayType(days, getExerciseSequences()), [days]);
+  // Re-read when a workout starts or ends: the tab stays mounted across workouts.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const rotationDay = useMemo(() => nextDayType(days, getExerciseSequences()), [days, isActive]);
   const [pickedDayId, setPickedDayId] = useState<string | null>(null);
   const pickedDay =
     pickedDayId === "" ? null : (days.find((d) => d.id === pickedDayId) ?? rotationDay);

@@ -8,7 +8,7 @@ ALTER TABLE "user_sets" ADD COLUMN "distance_unit" varchar(3);
 --> statement-breakpoint
 -- The first timed exercise. It may already exist (made by the exercise agent), so mark it
 -- timed by name, then add it only if missing. Idempotent.
-UPDATE "exercises" SET "measure" = 'timed' WHERE lower("name") = 'reverse incline treadmill walk';--> statement-breakpoint
+UPDATE "exercises" SET "measure" = 'timed' WHERE lower("name") = 'reverse incline treadmill walk' AND "official";--> statement-breakpoint
 INSERT INTO "exercises" ("name", "exercise_type", "official", "description", "measure")
 SELECT 'Reverse Incline Treadmill Walk', 'machine', true, 'Walk backwards on an inclined treadmill. Logged by time, with optional speed, incline and distance.', 'timed'
 WHERE NOT EXISTS (SELECT 1 FROM "exercises" WHERE lower("name") = 'reverse incline treadmill walk');--> statement-breakpoint

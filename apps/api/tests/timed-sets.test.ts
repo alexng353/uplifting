@@ -207,4 +207,65 @@ describe.skipIf(!socket)("timed sets", () => {
     );
     expect(feed.workouts.find((w: any) => w.client_id === "warm").set_count).toBe(2);
   });
+
+  test("an older app build editing a workout keeps timed and warmup values", async () => {
+    const synced = await call("/sync/workout", "POST", {
+      start_time: ago(8),
+      end_time: ago(7),
+      exercises: [
+        { exercise_id: walkId, sets: [walk(10)] },
+        {
+          exercise_id: curlId,
+          sets: [
+            { reps: 10, weight: 20, weight_unit: "lbs", is_warmup: true },
+            { reps: 8, weight: 40, weight_unit: "lbs", is_warmup: false },
+          ],
+        },
+      ],
+    });
+    // What a pre-timed build sends: reps and weight only, the walk as 1 x 0.
+    await call(`/workouts/${synced.workout_id}`, "PUT", {
+      name: "renamed",
+      exercises: [
+        { exercise_id: walkId, sets: [{ reps: 1, weight: 0, weight_unit: "lbs" }] },
+        {
+          exercise_id: curlId,
+          sets: [
+            { reps: 10, weight: 20, weight_unit: "lbs" },
+            { reps: 9, weight: 40, weight_unit: "lbs" },
+          ],
+        },
+      ],
+    });
+    const after = await call(`/workouts/${synced.workout_id}`);
+    expect(after.exercises[0].sets[0]).toMatchObject({ durationSeconds: 600, incline: "12.00" });
+    expect(after.exercises[1].sets.map((s: any) => s.isWarmup)).toEqual([true, false]);
+    // A newer build un-marking the warmup is respected.
+    await call(`/workouts/${synced.workout_id}`, "PUT", {
+      exercises: [
+        {
+          exercise_id: curlId,
+          sets: [{ reps: 10, weight: 20, weight_unit: "lbs", is_warmup: false }],
+        },
+      ],
+    });
+    expect((await call(`/workouts/${synced.workout_id}`)).exercises[0].sets[0].isWarmup).toBe(
+      false,
+    );
+  });
+
+  test("out-of-range treadmill values are refused, not a database error", async () => {
+    const response = await app.handle(
+      new Request("http://localhost/sync/workout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          start_time: ago(9),
+          end_time: ago(8.5),
+          exercises: [{ exercise_id: walkId, sets: [{ ...walk(5), incline: 1000 }] }],
+        }),
+      }),
+    );
+    expect(response.status).toBe(422);
+  });
 });

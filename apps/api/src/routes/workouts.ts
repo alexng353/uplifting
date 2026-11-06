@@ -322,6 +322,20 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
               .limit(1);
           }
 
+          // An app build older than timed/warmup sets sends neither field. Keep what those
+          // columns held for the same set (same exercise, profile, place, reps and weight),
+          // or one edit on an old build would erase them. Newer builds always send is_warmup.
+          const before = await tx
+            .select()
+            .from(userSets)
+            .where(eq(userSets.workoutId, params.workoutId))
+            .orderBy(asc(userSets.position), asc(userSets.createdAt));
+          const oldGroups = new Map<string, (typeof before)[number][]>();
+          for (const s of before) {
+            const key = `${s.exerciseId}|${s.profileId ?? ""}`;
+            oldGroups.set(key, [...(oldGroups.get(key) ?? []), s]);
+          }
+
           // 2. Delete all existing sets
           await tx.delete(userSets).where(eq(userSets.workoutId, params.workoutId));
 
@@ -329,7 +343,26 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
           // submitted order, so reordering exercises in the editor persists
           // (display order is by position, then createdAt within an exercise).
           for (const [position, exercise] of body.exercises!.entries()) {
-            for (const s of exercise.sets) {
+            const old = oldGroups.get(`${exercise.exercise_id}|${exercise.profile_id ?? ""}`) ?? [];
+            for (const [i, s] of exercise.sets.entries()) {
+              const prev = old[i];
+              const kept =
+                s.is_warmup === undefined &&
+                s.duration_seconds === undefined &&
+                prev &&
+                Number(prev.reps) === s.reps &&
+                Number(prev.weight) === s.weight &&
+                (prev.side ?? undefined) === (s.side ?? undefined)
+                  ? {
+                      durationSeconds: prev.durationSeconds,
+                      speed: prev.speed,
+                      speedUnit: prev.speedUnit,
+                      incline: prev.incline,
+                      distance: prev.distance,
+                      distanceUnit: prev.distanceUnit,
+                      isWarmup: prev.isWarmup,
+                    }
+                  : {};
               await tx.insert(userSets).values({
                 userId,
                 workoutId: params.workoutId,
@@ -341,6 +374,7 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
                 side: s.side,
                 bodyweight: s.bodyweight ? String(s.bodyweight) : undefined,
                 ...timedValues(s),
+                ...kept,
                 position,
                 createdAt: s.created_at ? new Date(s.created_at) : new Date(),
               });
@@ -420,11 +454,11 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
                   created_at: t.Optional(t.String()),
                   side: t.Optional(t.String()),
                   bodyweight: t.Optional(t.Number()),
-                  duration_seconds: t.Optional(t.Integer({ minimum: 1 })),
-                  speed: t.Optional(t.Number({ minimum: 0 })),
+                  duration_seconds: t.Optional(t.Integer({ minimum: 1, maximum: 86400 })),
+                  speed: t.Optional(t.Number({ minimum: 0, maximum: 9999.99 })),
                   speed_unit: t.Optional(t.String({ maxLength: 4 })),
-                  incline: t.Optional(t.Number()),
-                  distance: t.Optional(t.Number({ minimum: 0 })),
+                  incline: t.Optional(t.Number({ minimum: -999.99, maximum: 999.99 })),
+                  distance: t.Optional(t.Number({ minimum: 0, maximum: 99999.999 })),
                   distance_unit: t.Optional(t.String({ maxLength: 3 })),
                   is_warmup: t.Optional(t.Boolean()),
                 }),
