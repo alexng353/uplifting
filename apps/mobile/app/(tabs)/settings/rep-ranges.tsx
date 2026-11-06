@@ -21,7 +21,7 @@ const PRESET_COLORS = [
   "#f97316",
   "#f59e0b",
   "#22c55e",
-  "#3b82f6",
+  "#F2894B",
   "#8b5cf6",
   "#ec4899",
   "#6b7280",
@@ -177,7 +177,7 @@ export default function RepRangesScreen() {
                     onPress={() => updateRange(i, "color", color)}
                     className={`h-8 w-8 rounded-full border-2 ${
                       range.color === color
-                        ? "border-blue-500"
+                        ? "border-ember-500"
                         : "border-zinc-200 dark:border-zinc-700"
                     }`}
                     style={{ backgroundColor: color }}
@@ -195,7 +195,9 @@ export default function RepRangesScreen() {
             className="flex-row items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 py-3 active:bg-zinc-50 dark:active:bg-zinc-800"
           >
             <Ionicons name="add-circle-outline" size={20} color={colors.accentIcon} />
-            <Text className="text-base font-medium text-blue-500">Add Range</Text>
+            <Text className="text-base font-medium text-ember-700 dark:text-ember-500">
+              Add Range
+            </Text>
           </Pressable>
         </View>
 
@@ -204,9 +206,9 @@ export default function RepRangesScreen() {
           <View className="mt-4 px-4">
             <Pressable
               onPress={save}
-              className="items-center rounded-xl bg-blue-500 py-3 active:bg-blue-600"
+              className="items-center rounded-xl bg-ember-500 py-3 active:bg-ember-600"
             >
-              <Text className="text-base font-semibold text-white">Save Changes</Text>
+              <Text className="text-base font-semibold text-ember-ink">Save Changes</Text>
             </Pressable>
           </View>
         )}

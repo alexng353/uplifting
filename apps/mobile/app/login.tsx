@@ -138,14 +138,14 @@ export default function LoginScreen() {
             )}
 
             <TouchableOpacity
-              className="bg-blue-500 rounded-lg py-3 items-center"
+              className="bg-ember-500 rounded-lg py-3 items-center"
               onPress={handleSubmit}
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <ActivityIndicator color="white" />
+                <ActivityIndicator color="#1F0E04" />
               ) : (
-                <Text className="text-white font-semibold text-base">
+                <Text className="text-ember-ink font-semibold text-base">
                   {isRegistering ? "Register" : "Login"}
                 </Text>
               )}
@@ -161,7 +161,7 @@ export default function LoginScreen() {
                   setErrorMessage("");
                 }}
               >
-                <Text className="text-blue-500 font-semibold ml-1">
+                <Text className="text-ember-700 dark:text-ember-500 font-semibold ml-1">
                   {isRegistering ? "Login" : "Register"}
                 </Text>
               </TouchableOpacity>

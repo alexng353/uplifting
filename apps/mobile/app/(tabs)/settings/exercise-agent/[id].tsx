@@ -29,7 +29,7 @@ export default function ExerciseAgentDetail() {
         keyboardShouldPersistTaps="handled"
       >
         <Pressable onPress={() => router.replace("/(tabs)/settings/exercise-agent")}>
-          <Text className="text-blue-500">All drafts</Text>
+          <Text className="text-ember-700 dark:text-ember-500">All drafts</Text>
         </Pressable>
         <Text className="text-2xl font-bold dark:text-zinc-100">Review exercise</Text>
         {!enabled ? (
@@ -98,9 +98,11 @@ export default function ExerciseAgentDetail() {
                     <Pressable
                       disabled={action.isPending || !message.trim()}
                       onPress={followUp}
-                      className="rounded-xl bg-blue-600 p-4 disabled:opacity-50"
+                      className="rounded-xl bg-ember-600 p-4 disabled:opacity-50"
                     >
-                      <Text className="text-center font-semibold text-white">Send follow-up</Text>
+                      <Text className="text-center font-semibold text-ember-ink">
+                        Send follow-up
+                      </Text>
                     </Pressable>
                   </>
                 )}

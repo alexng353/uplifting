@@ -320,8 +320,8 @@ export default function SettingsScreen() {
         {/* Profile Header */}
         {me && (
           <View className="items-center pb-4 pt-2">
-            <View className="mb-2 h-16 w-16 items-center justify-center rounded-full bg-blue-500">
-              <Text className="text-xl font-bold text-white">
+            <View className="mb-2 h-16 w-16 items-center justify-center rounded-full bg-ember-500">
+              <Text className="text-xl font-bold text-ember-ink">
                 {(me.real_name || me.username || "?")
                   .split(" ")
                   .map((n: string) => n[0])
@@ -620,7 +620,7 @@ export default function SettingsScreen() {
           <SettingsRow onPress={handleLogout}>
             <View className="flex-row items-center gap-3">
               <Ionicons name="log-out" size={20} color={colors.accentIcon} />
-              <Text className="text-base text-blue-500">Log Out</Text>
+              <Text className="text-base text-ember-700 dark:text-ember-500">Log Out</Text>
             </View>
           </SettingsRow>
           <SettingsRow onPress={handleDeleteAccount} last>
@@ -684,14 +684,14 @@ export default function SettingsScreen() {
               className={`mt-4 items-center rounded-lg py-3 ${
                 isSaving || !newUsername.trim()
                   ? "bg-zinc-200 dark:bg-zinc-700"
-                  : "bg-blue-500 active:bg-blue-600"
+                  : "bg-ember-500 active:bg-ember-600"
               }`}
             >
               <Text
                 className={`text-base font-semibold ${
                   isSaving || !newUsername.trim()
                     ? "text-zinc-400 dark:text-zinc-500"
-                    : "text-white"
+                    : "text-ember-ink"
                 }`}
               >
                 {isSaving ? "Saving..." : "Save"}
@@ -728,12 +728,14 @@ export default function SettingsScreen() {
                   onPress={handleRequestVerification}
                   disabled={isVerifying}
                   className={`items-center rounded-lg py-3 ${
-                    isVerifying ? "bg-zinc-200 dark:bg-zinc-700" : "bg-blue-500 active:bg-blue-600"
+                    isVerifying
+                      ? "bg-zinc-200 dark:bg-zinc-700"
+                      : "bg-ember-500 active:bg-ember-600"
                   }`}
                 >
                   <Text
                     className={`text-base font-semibold ${
-                      isVerifying ? "text-zinc-400 dark:text-zinc-500" : "text-white"
+                      isVerifying ? "text-zinc-400 dark:text-zinc-500" : "text-ember-ink"
                     }`}
                   >
                     {isVerifying ? "Sending..." : "Send Verification Code"}
@@ -761,14 +763,14 @@ export default function SettingsScreen() {
                   className={`mt-4 items-center rounded-lg py-3 ${
                     isVerifying || !verificationCode.trim()
                       ? "bg-zinc-200 dark:bg-zinc-700"
-                      : "bg-blue-500 active:bg-blue-600"
+                      : "bg-ember-500 active:bg-ember-600"
                   }`}
                 >
                   <Text
                     className={`text-base font-semibold ${
                       isVerifying || !verificationCode.trim()
                         ? "text-zinc-400 dark:text-zinc-500"
-                        : "text-white"
+                        : "text-ember-ink"
                     }`}
                   >
                     {isVerifying ? "Verifying..." : "Verify Email"}
@@ -779,7 +781,7 @@ export default function SettingsScreen() {
                   disabled={isVerifying}
                   className="mt-3 items-center py-2"
                 >
-                  <Text className="text-sm text-blue-500">Resend Code</Text>
+                  <Text className="text-sm text-ember-700 dark:text-ember-500">Resend Code</Text>
                 </Pressable>
               </>
             )}
@@ -816,12 +818,12 @@ export default function SettingsScreen() {
                   className={`items-center rounded-lg py-3 ${
                     isChangingPassword
                       ? "bg-zinc-200 dark:bg-zinc-700"
-                      : "bg-blue-500 active:bg-blue-600"
+                      : "bg-ember-500 active:bg-ember-600"
                   }`}
                 >
                   <Text
                     className={`text-base font-semibold ${
-                      isChangingPassword ? "text-zinc-400 dark:text-zinc-500" : "text-white"
+                      isChangingPassword ? "text-zinc-400 dark:text-zinc-500" : "text-ember-ink"
                     }`}
                   >
                     {isChangingPassword ? "Sending..." : "Send Verification Code"}
@@ -881,7 +883,7 @@ export default function SettingsScreen() {
                     !newPassword ||
                     newPassword !== confirmPassword
                       ? "bg-zinc-200 dark:bg-zinc-700"
-                      : "bg-blue-500 active:bg-blue-600"
+                      : "bg-ember-500 active:bg-ember-600"
                   }`}
                 >
                   <Text
@@ -891,7 +893,7 @@ export default function SettingsScreen() {
                       !newPassword ||
                       newPassword !== confirmPassword
                         ? "text-zinc-400 dark:text-zinc-500"
-                        : "text-white"
+                        : "text-ember-ink"
                     }`}
                   >
                     {isChangingPassword ? "Changing..." : "Change Password"}
@@ -902,7 +904,7 @@ export default function SettingsScreen() {
                   disabled={isChangingPassword}
                   className="mt-3 items-center py-2"
                 >
-                  <Text className="text-sm text-blue-500">Resend Code</Text>
+                  <Text className="text-sm text-ember-700 dark:text-ember-500">Resend Code</Text>
                 </Pressable>
               </>
             )}

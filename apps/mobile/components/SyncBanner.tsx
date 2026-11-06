@@ -53,7 +53,7 @@ export default function SyncBanner({
         ) : (
           <Ionicons name="refresh" size={16} color={colors.accentIcon} />
         )}
-        <Text className="text-sm font-medium text-blue-500">
+        <Text className="text-sm font-medium text-ember-700 dark:text-ember-500">
           {isSyncing ? "Syncing..." : "Sync"}
         </Text>
       </Pressable>

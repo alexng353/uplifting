@@ -77,15 +77,17 @@ export default function FriendProfile({ friend, visible, onClose }: FriendProfil
         <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-4 pb-3 pt-4">
           <Text className="text-xl font-bold dark:text-zinc-100">{friend.real_name}</Text>
           <Pressable onPress={onClose}>
-            <Text className="text-base font-medium text-blue-500">Done</Text>
+            <Text className="text-base font-medium text-ember-700 dark:text-ember-500">Done</Text>
           </Pressable>
         </View>
 
         <ScrollView className="flex-1" contentContainerClassName="pb-8">
           {/* Profile Header */}
           <View className="items-center px-4 py-6">
-            <View className="mb-3 h-20 w-20 items-center justify-center rounded-full bg-blue-500">
-              <Text className="text-2xl font-bold text-white">{getInitials(friend.real_name)}</Text>
+            <View className="mb-3 h-20 w-20 items-center justify-center rounded-full bg-ember-500">
+              <Text className="text-2xl font-bold text-ember-ink">
+                {getInitials(friend.real_name)}
+              </Text>
             </View>
             <Text className="text-xl font-bold dark:text-zinc-100">{friend.real_name}</Text>
             <Text className="text-sm text-zinc-400 dark:text-zinc-500">@{friend.username}</Text>
@@ -101,9 +103,9 @@ export default function FriendProfile({ friend, visible, onClose }: FriendProfil
                 </View>
               )}
               {friend.is_in_workout === true && (
-                <View className="flex-row items-center gap-1 rounded-full border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950 px-3 py-1">
+                <View className="flex-row items-center gap-1 rounded-full border border-ember-200 dark:border-ember-800 bg-ember-50 dark:bg-ember-950 px-3 py-1">
                   <Ionicons name="barbell" size={12} color={colors.accentIcon} />
-                  <Text className="text-xs font-medium text-blue-700 dark:text-blue-400">
+                  <Text className="text-xs font-medium text-ember-700 dark:text-ember-400">
                     {friend.current_workout_name || "Working out"}
                   </Text>
                 </View>

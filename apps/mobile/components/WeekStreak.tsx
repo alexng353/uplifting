@@ -85,7 +85,7 @@ const LABEL_SIZES = {
 const STATUS_COLORS = {
   none: "bg-zinc-700 dark:bg-zinc-600",
   rest: "bg-zinc-400 dark:bg-zinc-500",
-  workout: "bg-blue-500",
+  workout: "bg-ember-500",
 } as const;
 
 export default function WeekStreak({
@@ -129,7 +129,7 @@ export default function WeekStreak({
                 isToday
                   ? {
                       borderWidth: 2,
-                      borderColor: "#3b82f6",
+                      borderColor: "#F2894B",
                       // Create ring effect by adding padding
                     }
                   : undefined

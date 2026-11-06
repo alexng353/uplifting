@@ -62,8 +62,8 @@ export default function FeedCard({ item, unit }: FeedCardProps) {
     <View className="mx-4 mb-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4">
       {/* Header: avatar + name */}
       <View className="mb-3 flex-row items-center gap-3">
-        <View className="h-10 w-10 items-center justify-center rounded-full bg-blue-500">
-          <Text className="text-sm font-bold text-white">{getInitials(item.real_name)}</Text>
+        <View className="h-10 w-10 items-center justify-center rounded-full bg-ember-500">
+          <Text className="text-sm font-bold text-ember-ink">{getInitials(item.real_name)}</Text>
         </View>
         <View>
           <Text className="text-base font-semibold dark:text-zinc-100">{item.real_name}</Text>

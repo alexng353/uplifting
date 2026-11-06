@@ -331,10 +331,10 @@ function EditWorkoutContent() {
         <Pressable
           onPress={handleSave}
           disabled={meta.isSaving}
-          className="h-9 px-4 items-center justify-center rounded-md bg-blue-500 active:bg-blue-600"
+          className="h-9 px-4 items-center justify-center rounded-md bg-ember-500 active:bg-ember-600"
           style={{ opacity: meta.isSaving ? 0.5 : 1 }}
         >
-          <Text className="text-sm font-semibold text-white">
+          <Text className="text-sm font-semibold text-ember-ink">
             {meta.isSaving ? "Saving…" : "Save"}
           </Text>
         </Pressable>

@@ -101,7 +101,7 @@ export default function FriendsScreen() {
               />
               <Text
                 className={`text-sm font-medium ${
-                  isActive ? "text-blue-500" : "text-zinc-500 dark:text-zinc-400"
+                  isActive ? "text-ember-500" : "text-zinc-500 dark:text-zinc-400"
                 }`}
               >
                 {tab.label}
@@ -139,10 +139,10 @@ export default function FriendsScreen() {
               </Text>
               <Pressable
                 onPress={() => setShowSearch(true)}
-                className="mt-4 flex-row items-center gap-2 rounded-lg bg-blue-500 px-5 py-2.5 active:bg-blue-600"
+                className="mt-4 flex-row items-center gap-2 rounded-lg bg-ember-500 px-5 py-2.5 active:bg-ember-600"
               >
-                <Ionicons name="person-add" size={16} color="white" />
-                <Text className="text-base font-semibold text-white">Find Friends</Text>
+                <Ionicons name="person-add" size={16} color="#1F0E04" />
+                <Text className="text-base font-semibold text-ember-ink">Find Friends</Text>
               </Pressable>
             </View>
           ) : (
@@ -181,16 +181,16 @@ export default function FriendsScreen() {
       {/* FAB - Find Friends */}
       <Pressable
         onPress={() => setShowSearch(true)}
-        className="absolute bottom-6 right-6 h-14 w-14 items-center justify-center rounded-full bg-blue-500 active:bg-blue-600"
+        className="absolute bottom-6 right-6 h-14 w-14 items-center justify-center rounded-full bg-ember-500 active:bg-ember-600"
         style={{
-          shadowColor: "#3b82f6",
+          shadowColor: "#F2894B",
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.3,
           shadowRadius: 8,
           elevation: 8,
         }}
       >
-        <Ionicons name="person-add" size={24} color="white" />
+        <Ionicons name="person-add" size={24} color="#1F0E04" />
       </Pressable>
 
       {/* Friend Search Modal */}

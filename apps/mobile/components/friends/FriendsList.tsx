@@ -84,8 +84,8 @@ export default function FriendsList() {
           >
             {/* Avatar with online indicator */}
             <View className="relative">
-              <View className="h-12 w-12 items-center justify-center rounded-full bg-blue-500">
-                <Text className="text-base font-bold text-white">
+              <View className="h-12 w-12 items-center justify-center rounded-full bg-ember-500">
+                <Text className="text-base font-bold text-ember-ink">
                   {getInitials(friend.real_name)}
                 </Text>
               </View>
@@ -101,7 +101,7 @@ export default function FriendsList() {
               {friend.is_in_workout === true && (
                 <View className="mt-0.5 flex-row items-center gap-1">
                   <Ionicons name="barbell-outline" size={12} color={colors.accentIcon} />
-                  <Text className="text-xs text-blue-500">
+                  <Text className="text-xs text-ember-700 dark:text-ember-500">
                     {friend.current_workout_name || "Working out"}
                   </Text>
                 </View>

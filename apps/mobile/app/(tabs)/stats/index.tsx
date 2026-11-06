@@ -116,7 +116,9 @@ function ThisWeekTab({
         <Text className="mb-3 text-lg font-bold text-zinc-900 dark:text-zinc-50">This Week</Text>
         <View className="flex-row">
           <View className="flex-1 items-center">
-            <Text className="text-2xl font-bold text-blue-500">{weekStats.workouts}</Text>
+            <Text className="text-2xl font-bold text-ember-700 dark:text-ember-500">
+              {weekStats.workouts}
+            </Text>
             <Text className="text-xs text-zinc-500 dark:text-zinc-400">Workouts</Text>
           </View>
           <View className="flex-1 items-center">
@@ -241,7 +243,7 @@ function AllTimeTab({ refreshing, onRefresh }: { refreshing: boolean; onRefresh:
           label="Workouts"
           value={String(allTimeStats.total_workouts)}
           icon="barbell-outline"
-          color="#3b82f6"
+          color="#F2894B"
         />
         <StatCard
           label={`Volume (${unit})`}
@@ -338,7 +340,7 @@ function AllTimeTab({ refreshing, onRefresh }: { refreshing: boolean; onRefresh:
               </View>
               <View className="h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
                 <View
-                  className="h-full rounded-full bg-blue-500"
+                  className="h-full rounded-full bg-ember-500"
                   style={{ width: `${mg.percentage}%` }}
                 />
               </View>
@@ -524,7 +526,7 @@ export default function StatsScreen() {
             >
               <Text
                 className={`text-sm font-medium ${
-                  isActive ? "text-blue-500" : "text-zinc-500 dark:text-zinc-400"
+                  isActive ? "text-ember-500" : "text-zinc-500 dark:text-zinc-400"
                 }`}
               >
                 {tab.label}

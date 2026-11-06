@@ -65,8 +65,8 @@ export default function PendingRequests() {
       renderItem={({ item: request }) => (
         <View className="flex-row items-center border-b border-zinc-100 dark:border-zinc-800 py-3">
           {/* Avatar */}
-          <View className="h-12 w-12 items-center justify-center rounded-full bg-blue-500">
-            <Text className="text-base font-bold text-white">
+          <View className="h-12 w-12 items-center justify-center rounded-full bg-ember-500">
+            <Text className="text-base font-bold text-ember-ink">
               {getInitials(request.real_name || request.username)}
             </Text>
           </View>
