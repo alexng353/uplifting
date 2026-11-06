@@ -183,10 +183,12 @@ export function useEditWorkoutState(workoutId: string) {
           apply((w) => addExerciseMutation(w, exerciseId, exerciseName, profileId, exerciseType)),
         removeExercise: (exerciseId) => apply((w) => removeExerciseMutation(w, exerciseId)),
         reorderExercises: (newOrder) => apply((w) => reorderExercisesMutation(w, newOrder)),
-        addSet: (exerciseId, weightUnit, reps?, weight?, side?) =>
-          apply((w) => addSetMutation(w, exerciseId, weightUnit, reps, weight, side)),
-        addUnilateralPair: (exerciseId, weightUnit, reps?, weight?, layout?) =>
-          apply((w) => addUnilateralPairMutation(w, exerciseId, weightUnit, reps, weight, layout)),
+        addSet: (exerciseId, weightUnit, reps?, weight?, side?, autoAdded?) =>
+          apply((w) => addSetMutation(w, exerciseId, weightUnit, reps, weight, side, autoAdded)),
+        addUnilateralPair: (exerciseId, weightUnit, reps?, weight?, layout?, autoAdded?) =>
+          apply((w) =>
+            addUnilateralPairMutation(w, exerciseId, weightUnit, reps, weight, layout, autoAdded),
+          ),
         updateSet: (exerciseId, setId, updates) =>
           apply((w) => updateSetMutation(w, exerciseId, setId, updates)),
         removeSet: (exerciseId, setId) => apply((w) => removeSetMutation(w, exerciseId, setId)),

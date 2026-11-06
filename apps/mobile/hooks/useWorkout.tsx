@@ -66,6 +66,7 @@ interface WorkoutContextValue {
     reps?: number,
     weight?: number,
     side?: "L" | "R",
+    autoAdded?: boolean,
   ) => void;
   addUnilateralPair: (
     exerciseId: string,
@@ -73,6 +74,7 @@ interface WorkoutContextValue {
     reps?: number,
     weight?: number,
     layout?: "combined",
+    autoAdded?: boolean,
   ) => void;
   updateSet: (exerciseId: string, setId: string, updates: Partial<StoredSet>) => void;
   removeSet: (exerciseId: string, setId: string) => void;
@@ -283,11 +285,18 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   );
 
   const addSet = useCallback(
-    (exerciseId: string, weightUnit: string, reps?: number, weight?: number, side?: "L" | "R") => {
+    (
+      exerciseId: string,
+      weightUnit: string,
+      reps?: number,
+      weight?: number,
+      side?: "L" | "R",
+      autoAdded?: boolean,
+    ) => {
       // Auto-add follows updateSet in the same event, before React rerenders.
       const current = getCurrentWorkout();
       if (!current) return;
-      saveWorkout(addSetMutation(current, exerciseId, weightUnit, reps, weight, side));
+      saveWorkout(addSetMutation(current, exerciseId, weightUnit, reps, weight, side, autoAdded));
     },
     [saveWorkout],
   );
@@ -299,11 +308,14 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       reps?: number,
       weight?: number,
       layout?: "combined",
+      autoAdded?: boolean,
     ) => {
       // Use the synchronous cache so auto-add includes the just-saved edit.
       const current = getCurrentWorkout();
       if (!current) return;
-      saveWorkout(addUnilateralPairMutation(current, exerciseId, weightUnit, reps, weight, layout));
+      saveWorkout(
+        addUnilateralPairMutation(current, exerciseId, weightUnit, reps, weight, layout, autoAdded),
+      );
     },
     [saveWorkout],
   );

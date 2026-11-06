@@ -21,6 +21,7 @@ export interface WorkoutActions {
     reps?: number,
     weight?: number,
     side?: "L" | "R",
+    autoAdded?: boolean,
   ) => void;
   addUnilateralPair: (
     exerciseId: string,
@@ -28,6 +29,7 @@ export interface WorkoutActions {
     reps?: number,
     weight?: number,
     layout?: "combined",
+    autoAdded?: boolean,
   ) => void;
   updateSet: (exerciseId: string, setId: string, updates: Partial<StoredSet>) => void;
   removeSet: (exerciseId: string, setId: string) => void;
