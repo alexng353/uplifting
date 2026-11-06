@@ -68,5 +68,9 @@ describe("warmup classification", () => {
         [true, true, true],
       ),
     ).toBeNull();
+    // Typing 120 goes 1 -> 12 -> 120: the row is "done" from the first digit, as a warmup.
+    expect(
+      newWorkingStart(["warmup", "warmup"], ["warmup", "working"], [true, true], [true, true]),
+    ).toBe(1);
   });
 });
