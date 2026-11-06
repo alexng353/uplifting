@@ -36,7 +36,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
       const rows = await sql`
         SELECT e.id, e.name, COUNT(DISTINCT s.workout_id) as workout_count,
           COUNT(s.id) FILTER (WHERE s.side IS NULL OR s.side = 'R') as total_sets,
-          COALESCE(SUM(s.weight * s.reps), 0) as total_volume
+          COALESCE(SUM(s.weight * s.reps) FILTER (WHERE NOT s.is_warmup), 0) as total_volume
         FROM user_sets s JOIN exercises e ON e.id = s.exercise_id
         WHERE s.user_id = ${userId}
         GROUP BY e.id, e.name ORDER BY COUNT(DISTINCT s.workout_id) DESC
@@ -296,7 +296,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
       sql`
           SELECT weight, weight_unit, reps, created_at FROM user_sets
           WHERE user_id = ${userId} AND exercise_id = ${params.exerciseId} AND reps > 0
-            AND duration_seconds IS NULL
+            AND duration_seconds IS NULL AND NOT is_warmup
           ORDER BY weight DESC, reps DESC LIMIT 1
         `,
     ]);
@@ -342,7 +342,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
 
       const rows = await sql`
         SELECT s.reps, s.weight, s.weight_unit, s.side, s.workout_id, w.start_time,
-          s.duration_seconds, s.speed, s.speed_unit, s.incline, s.distance, s.distance_unit
+          s.duration_seconds, s.speed, s.speed_unit, s.incline, s.distance, s.distance_unit, s.is_warmup
         FROM user_sets s JOIN workouts w ON w.id = s.workout_id
         WHERE s.user_id = ${userId} AND s.exercise_id = ${params.exerciseId}
           AND (${profileId}::uuid IS NULL OR s.profile_id = ${profileId}::uuid)

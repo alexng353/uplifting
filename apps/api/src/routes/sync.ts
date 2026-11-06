@@ -18,7 +18,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
       sql`
           WITH ranked_sets AS (
               SELECT s.exercise_id, s.profile_id, s.reps, s.weight, s.weight_unit, s.side, s.created_at,
-                s.duration_seconds, s.speed, s.speed_unit, s.incline, s.distance, s.distance_unit,
+                s.duration_seconds, s.speed, s.speed_unit, s.incline, s.distance, s.distance_unit, s.is_warmup,
                   DENSE_RANK() OVER (
                       PARTITION BY s.exercise_id, s.profile_id, (s.side IS NOT NULL)
                       ORDER BY w.end_time DESC
@@ -27,7 +27,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
               WHERE s.user_id = ${userId} AND w.end_time IS NOT NULL
           )
           SELECT exercise_id, profile_id, reps, weight, weight_unit, side,
-          duration_seconds, speed, speed_unit, incline, distance, distance_unit
+          duration_seconds, speed, speed_unit, incline, distance, distance_unit, is_warmup
           FROM ranked_sets WHERE workout_rank = 1
           ORDER BY exercise_id, profile_id, created_at ASC
         `,
@@ -188,7 +188,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
           : await sql`
         WITH ranked_sets AS (
             SELECT s.exercise_id, s.profile_id, s.reps, s.weight, s.weight_unit, s.side, s.created_at,
-                s.duration_seconds, s.speed, s.speed_unit, s.incline, s.distance, s.distance_unit,
+                s.duration_seconds, s.speed, s.speed_unit, s.incline, s.distance, s.distance_unit, s.is_warmup,
                 DENSE_RANK() OVER (
                     PARTITION BY s.exercise_id, s.profile_id, (s.side IS NOT NULL)
                     ORDER BY w.end_time DESC
@@ -198,7 +198,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
               AND s.exercise_id = ANY(${exerciseIds}::uuid[])
         )
         SELECT exercise_id, profile_id, reps, weight, weight_unit, side,
-          duration_seconds, speed, speed_unit, incline, distance, distance_unit
+          duration_seconds, speed, speed_unit, incline, distance, distance_unit, is_warmup
         FROM ranked_sets WHERE workout_rank = 1
         ORDER BY exercise_id, profile_id, created_at ASC
       `;
@@ -252,6 +252,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
                 incline: t.Optional(t.Number()),
                 distance: t.Optional(t.Number({ minimum: 0 })),
                 distance_unit: t.Optional(t.String({ maxLength: 3 })),
+                is_warmup: t.Optional(t.Boolean()),
               }),
             ),
           }),

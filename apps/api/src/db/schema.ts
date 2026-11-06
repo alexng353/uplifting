@@ -184,6 +184,8 @@ export const userSets = pgTable("user_sets", {
   incline: decimal({ precision: 5, scale: 2 }),
   distance: decimal({ precision: 8, scale: 3 }),
   distanceUnit: varchar("distance_unit", { length: 3 }),
+  // A warmup set: kept, and counted by the gate feed, but left out of volume and PRs.
+  isWarmup: boolean("is_warmup").notNull().default(false),
   // Order index of this set's exercise within its workout (all sets of the
   // same exercise+profile in a workout share it). Authoritative for exercise
   // display order, so reordering persists independently of createdAt. Sets

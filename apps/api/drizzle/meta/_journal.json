@@ -57,6 +57,13 @@
       "when": 1794002149598,
       "tag": "0007_timed_sets",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794004521531,
+      "tag": "0008_warmup_sets",
+      "breakpoints": true
     }
   ]
 }
