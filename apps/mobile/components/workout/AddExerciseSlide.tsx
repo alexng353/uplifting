@@ -9,6 +9,8 @@ import { useAllExerciseProfiles } from "../../hooks/useExerciseProfiles";
 import { useGymProfileSuggestion } from "../../hooks/useGymProfileSuggestion";
 import { useWorkoutActions } from "../../hooks/useWorkoutActions";
 import SearchField from "../SearchField";
+import { useOptionalWorkout } from "../../hooks/useWorkout";
+import { getDayTypes } from "../../services/storage";
 
 interface AddExerciseSlideProps {
   onExerciseAdded?: () => void;
@@ -25,6 +27,15 @@ export default function AddExerciseSlide({ onExerciseAdded }: AddExerciseSlidePr
   const toggleFavourite = useToggleFavourite();
   const { getSuggestedProfile, recordProfileUsage } = useGymProfileSuggestion();
   const suggestedExerciseIds = useExerciseSuggestions();
+  const live = useOptionalWorkout();
+  const day = useMemo(() => {
+    const id = live?.workout?.dayTypeId;
+    return id ? getDayTypes()?.find((d) => d.id === id) : undefined;
+  }, [live?.workout?.dayTypeId]);
+  const inWorkout = useMemo(
+    () => new Set(live?.workout?.exercises.map((e) => e.exerciseId) ?? []),
+    [live?.workout?.exercises],
+  );
 
   const handleToggleFavourite = useCallback(
     (exerciseId: string) => {
@@ -119,7 +130,10 @@ export default function AddExerciseSlide({ onExerciseAdded }: AddExerciseSlidePr
 
     // Suggested section
     if (suggestedExercises.length > 0 && !searchText) {
-      result.push({ title: "Suggested", data: suggestedExercises });
+      result.push({
+        title: day ? `Suggested for ${day.name}` : "Suggested",
+        data: suggestedExercises,
+      });
     }
 
     // Favourites section
@@ -134,7 +148,17 @@ export default function AddExerciseSlide({ onExerciseAdded }: AddExerciseSlidePr
     }
 
     return result;
-  }, [exercises, favourites, suggestedExercises, searchText]);
+  }, [exercises, favourites, suggestedExercises, searchText, day]);
+
+  // One tap adds the rest of the day's list, in order.
+  const remaining = useMemo(() => {
+    if (!day || !exercises) return [];
+    const byId = new Map(exercises.map((e) => [e.id, e]));
+    return day.exerciseIds
+      .filter((id) => !inWorkout.has(id))
+      .map((id) => byId.get(id))
+      .filter((e): e is Exercise => !!e);
+  }, [day, exercises, inWorkout]);
 
   const renderExerciseRow = useCallback(
     ({ item: exercise }: { item: Exercise }) => {
@@ -192,6 +216,19 @@ export default function AddExerciseSlide({ onExerciseAdded }: AddExerciseSlidePr
         onChangeText={setSearchText}
         placeholder="Search exercises..."
       />
+
+      {day && remaining.length > 0 && !searchText && (
+        <Pressable
+          testID="add-day-list"
+          onPress={() => remaining.forEach((e) => handleQuickAdd(e))}
+          className="mx-4 mb-2 flex-row items-center justify-center gap-2 rounded-lg border border-ember-500 py-2.5 active:bg-ember-500/10"
+        >
+          <Ionicons name="list" size={18} color={colors.accentIcon} />
+          <Text className="text-sm font-semibold text-ember-700 dark:text-ember-400">
+            Add the rest of {day.name} ({remaining.length})
+          </Text>
+        </Pressable>
+      )}
 
       {/* Exercise list */}
       {isLoading ? (

@@ -19,8 +19,9 @@ export function getPreviousSetSuggestion(
   setNumber: number,
   side?: "L" | "R",
 ): SetSuggestion {
+  // Suggestions follow last session's working sets; its warmups have their own rows.
   const matchingMode = (sets: StoredSet[] = []) =>
-    sets.filter((set) => (set.side != null) === (side != null));
+    sets.filter((set) => (set.side != null) === (side != null) && !set.warmup);
 
   // Prefer this profile, then another profile with history in the same mode.
   const primaryKey = `${exerciseId}_${profileId ?? "default"}`;

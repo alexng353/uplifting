@@ -17,6 +17,10 @@ struct UpliftingWorkoutAttributes: ActivityAttributes {
     /// The automatic rest timer, counting down from restStartedAt to restEndsAt.
     var restStartedAt: Date?
     var restEndsAt: Date?
+    /// The day, e.g. "Lower" or "Leg day" (picked at Start or inferred); nil shows WORKOUT.
+    var title: String? = nil
+    /// In a superset, each exercise's progress, e.g. "Tibialis Raise 2/3 · Reverse Lunge 1/3".
+    var superset: String? = nil
   }
 
   var workoutId: String

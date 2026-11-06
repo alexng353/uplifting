@@ -93,9 +93,11 @@ const num = (v: unknown): number | undefined =>
 
 /** Timed fields from a server set (sync/bootstrap snake_case or drizzle camelCase). */
 export function timedFromServer(s: Record<string, any>): Partial<StoredSet> {
+  const warm = (s.is_warmup ?? s.isWarmup) === true ? { warmup: true } : {};
   const durationSeconds = num(s.duration_seconds ?? s.durationSeconds);
-  if (durationSeconds == null) return {};
+  if (durationSeconds == null) return warm;
   return {
+    ...warm,
     durationSeconds,
     speed: num(s.speed),
     speedUnit: (s.speed_unit ?? s.speedUnit) || undefined,
@@ -107,8 +109,11 @@ export function timedFromServer(s: Record<string, any>): Partial<StoredSet> {
 
 /** Timed fields for a sync or edit request; nothing for a weight set. */
 export function timedToServer(s: StoredSet) {
-  if (!isTimedSet(s)) return {};
+  // Warmup sets are sent flagged; the server leaves them out of volume and PRs.
+  const warm = s.warmup === true ? { is_warmup: true } : {};
+  if (!isTimedSet(s)) return warm;
   return {
+    ...warm,
     duration_seconds: s.durationSeconds,
     speed: s.speed,
     speed_unit: s.speedUnit,

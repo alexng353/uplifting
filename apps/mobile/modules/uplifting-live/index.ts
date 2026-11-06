@@ -5,6 +5,10 @@ export interface LiveActivityState {
   /** Epoch ms; both set while the automatic rest timer runs. */
   restStartedAt?: number;
   restEndsAt?: number;
+  /** Day label shown top right instead of WORKOUT, e.g. "Lower". */
+  title?: string;
+  /** Superset progress line, e.g. "Tibialis Raise 2/3 · Reverse Lunge 1/3". */
+  superset?: string;
 }
 
 export interface WorkoutSessionResult {

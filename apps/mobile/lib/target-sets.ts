@@ -13,7 +13,7 @@ export function setCountKey(exerciseId: string, profileId?: string | null): stri
 
 // One numbered set per row: a bilateral set, or an L/R pair in either layout.
 export function countSetGroups(sets: StoredSet[]): number {
-  return toRows(sets).length;
+  return toRows(sets.filter((s) => !s.warmup)).length;
 }
 
 export function recordSetCount(
