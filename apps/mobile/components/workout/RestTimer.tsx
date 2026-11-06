@@ -37,7 +37,7 @@ export default function RestTimer() {
           className="h-10 w-10 items-center justify-center rounded-full active:opacity-70"
           style={{ backgroundColor: REST_COLOR }}
         >
-          <Ionicons name="play-skip-forward" size={18} color="white" />
+          <Ionicons name="play-skip-forward" size={18} color="#1F0E04" />
         </Pressable>
       </View>
     );
@@ -92,9 +92,9 @@ function Stopwatch() {
         onPress={handlePress}
         onLongPress={handleLongPress}
         className="h-10 w-10 items-center justify-center rounded-full active:opacity-70"
-        style={{ backgroundColor: isRunning ? "#f59e0b" : "#3b82f6" }}
+        style={{ backgroundColor: isRunning ? "#f59e0b" : "#F2894B" }}
       >
-        <Ionicons name={isRunning ? "pause" : "play"} size={18} color="white" />
+        <Ionicons name={isRunning ? "pause" : "play"} size={18} color="#1F0E04" />
       </Pressable>
     </View>
   );

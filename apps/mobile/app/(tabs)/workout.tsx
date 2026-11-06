@@ -266,9 +266,9 @@ export default function WorkoutScreen() {
           </Text>
           <Pressable
             onPress={() => startWorkout()}
-            className="mb-3 w-full items-center rounded-lg bg-blue-500 py-3.5 active:bg-blue-600"
+            className="mb-3 w-full items-center rounded-lg bg-ember-500 py-3.5 active:bg-ember-600"
           >
-            <Text className="text-base font-semibold text-white">Start Workout</Text>
+            <Text className="text-base font-semibold text-ember-ink">Start Workout</Text>
           </Pressable>
           {!todayHasWorkouts && (
             <Pressable

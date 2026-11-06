@@ -118,7 +118,7 @@ export default function GymManagerModal({
         <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-4 pb-3 pt-4">
           <Text className="text-xl font-bold dark:text-zinc-100">Manage Gyms</Text>
           <Pressable onPress={onDismiss} className="active:opacity-60">
-            <Text className="text-base font-semibold text-blue-500">Done</Text>
+            <Text className="text-base font-semibold text-ember-700 dark:text-ember-500">Done</Text>
           </Pressable>
         </View>
 
@@ -140,13 +140,15 @@ export default function GymManagerModal({
               disabled={!newGymName.trim() || isAdding}
               className={`rounded-lg px-4 py-2.5 ${
                 newGymName.trim() && !isAdding
-                  ? "bg-blue-500 active:bg-blue-600"
+                  ? "bg-ember-500 active:bg-ember-600"
                   : "bg-zinc-200 dark:bg-zinc-700"
               }`}
             >
               <Text
                 className={`text-base font-semibold ${
-                  newGymName.trim() && !isAdding ? "text-white" : "text-zinc-400 dark:text-zinc-500"
+                  newGymName.trim() && !isAdding
+                    ? "text-ember-ink"
+                    : "text-zinc-400 dark:text-zinc-500"
                 }`}
               >
                 Add
@@ -175,7 +177,9 @@ export default function GymManagerModal({
                 ) : (
                   <Ionicons name="location-outline" size={16} color={colors.accentIcon} />
                 )}
-                <Text className="text-sm text-blue-500">Use Current Location</Text>
+                <Text className="text-sm text-ember-700 dark:text-ember-500">
+                  Use Current Location
+                </Text>
               </Pressable>
             )}
           </View>

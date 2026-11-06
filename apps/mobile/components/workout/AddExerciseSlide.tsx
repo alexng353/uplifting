@@ -190,7 +190,7 @@ export default function AddExerciseSlide({ onExerciseAdded }: AddExerciseSlidePr
         testID="exercise-search-box"
         className={`mx-4 mb-2 flex-row items-center rounded-lg border bg-zinc-50 dark:bg-zinc-800 px-3 ${
           searchFocused
-            ? "border-blue-500 dark:border-blue-400"
+            ? "border-ember-500 dark:border-ember-400"
             : "border-zinc-300 dark:border-zinc-600"
         }`}
       >

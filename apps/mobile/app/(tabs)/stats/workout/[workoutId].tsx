@@ -152,7 +152,7 @@ export default function WorkoutDetailScreen() {
       <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900">
         <View className="flex-row items-center px-4 pt-4 pb-2">
           <Pressable onPress={() => router.back()} className="mr-3 p-1">
-            <Ionicons name="chevron-back" size={24} color="#3b82f6" />
+            <Ionicons name="chevron-back" size={24} color="#F2894B" />
           </Pressable>
           <Text className="text-xl font-bold dark:text-zinc-100">Workout</Text>
         </View>
@@ -171,7 +171,7 @@ export default function WorkoutDetailScreen() {
       {/* Header */}
       <View className="flex-row items-center px-4 pt-4 pb-2">
         <Pressable onPress={() => router.back()} className="mr-3 p-1">
-          <Ionicons name="chevron-back" size={24} color="#3b82f6" />
+          <Ionicons name="chevron-back" size={24} color="#F2894B" />
         </Pressable>
         <Text className="flex-1 text-xl font-bold dark:text-zinc-100" numberOfLines={1}>
           {workout.name || "Workout"}
@@ -180,7 +180,7 @@ export default function WorkoutDetailScreen() {
           onPress={() => router.push(`/stats/workout/edit/${workoutId}`)}
           className="ml-2 p-1"
         >
-          <Ionicons name="pencil" size={20} color="#3b82f6" />
+          <Ionicons name="pencil" size={20} color="#F2894B" />
         </Pressable>
       </View>
 

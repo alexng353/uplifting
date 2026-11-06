@@ -92,7 +92,7 @@ export default function ExerciseHistoryScreen() {
       {/* Header */}
       <View className="flex-row items-center px-4 pt-4 pb-2">
         <Pressable onPress={() => router.back()} className="mr-3 p-1">
-          <Ionicons name="chevron-back" size={24} color="#3b82f6" />
+          <Ionicons name="chevron-back" size={24} color="#F2894B" />
         </Pressable>
         <Text className="flex-1 text-xl font-bold dark:text-zinc-100" numberOfLines={1}>
           {exerciseName}
@@ -124,7 +124,7 @@ export default function ExerciseHistoryScreen() {
             >
               <Text
                 className={`text-sm font-medium ${
-                  isActive ? "text-blue-500" : "text-zinc-500 dark:text-zinc-400"
+                  isActive ? "text-ember-500" : "text-zinc-500 dark:text-zinc-400"
                 }`}
               >
                 {tr.label}

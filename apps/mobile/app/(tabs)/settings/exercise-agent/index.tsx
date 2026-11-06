@@ -39,7 +39,7 @@ export default function ExerciseAgentList() {
         keyboardShouldPersistTaps="handled"
       >
         <Pressable onPress={() => router.back()}>
-          <Text className="text-blue-500">Back</Text>
+          <Text className="text-ember-700 dark:text-ember-500">Back</Text>
         </Pressable>
         <Text className="text-2xl font-bold dark:text-zinc-100">Exercise drafts</Text>
         {!enabled ? (
@@ -64,9 +64,9 @@ export default function ExerciseAgentList() {
               accessibilityRole="button"
               disabled={!message.trim() || action.isPending}
               onPress={start}
-              className="rounded-xl bg-blue-600 p-4 disabled:opacity-50"
+              className="rounded-xl bg-ember-600 p-4 disabled:opacity-50"
             >
-              <Text className="text-center font-semibold text-white">
+              <Text className="text-center font-semibold text-ember-ink">
                 {action.isPending ? "Starting…" : "Generate draft"}
               </Text>
             </Pressable>

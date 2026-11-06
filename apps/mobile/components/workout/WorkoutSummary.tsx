@@ -155,9 +155,9 @@ export default function WorkoutSummary({
         <View className="border-t border-zinc-200 dark:border-zinc-700 px-4 pb-8 pt-3">
           <Pressable
             onPress={handleSave}
-            className="mb-2 items-center rounded-lg bg-blue-500 py-3.5 active:bg-blue-600"
+            className="mb-2 items-center rounded-lg bg-ember-500 py-3.5 active:bg-ember-600"
           >
-            <Text className="text-base font-semibold text-white">Save Workout</Text>
+            <Text className="text-base font-semibold text-ember-ink">Save Workout</Text>
           </Pressable>
           <Pressable
             onPress={onCancel}

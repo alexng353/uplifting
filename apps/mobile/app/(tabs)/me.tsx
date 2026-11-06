@@ -139,8 +139,8 @@ export default function MeScreen() {
         <View className="px-4 pt-4">
           {/* Profile Section */}
           <View className="mb-4 flex-row items-center gap-3">
-            <View className="h-14 w-14 items-center justify-center rounded-full bg-blue-500">
-              <Text className="text-lg font-bold text-white">{initials}</Text>
+            <View className="h-14 w-14 items-center justify-center rounded-full bg-ember-500">
+              <Text className="text-lg font-bold text-ember-ink">{initials}</Text>
             </View>
             <View>
               <Text className="text-xl font-semibold dark:text-zinc-100">{displayName}</Text>

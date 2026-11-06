@@ -888,7 +888,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
       <View className="flex-row justify-center gap-3 pb-2 pt-1">
         <Pressable
           onPress={handleAddSet}
-          className="h-10 w-10 items-center justify-center rounded-full border border-blue-500 active:bg-blue-50"
+          className="h-10 w-10 items-center justify-center rounded-full border border-ember-500 active:bg-ember-50"
         >
           <Ionicons name="add" size={22} color={colors.accentIcon} />
         </Pressable>
@@ -924,7 +924,9 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
               onPress={() => setShowProfileModal(false)}
               className="rounded-lg px-3 py-1.5 active:bg-zinc-100 dark:active:bg-zinc-800"
             >
-              <Text className="text-base font-medium text-blue-500">Cancel</Text>
+              <Text className="text-base font-medium text-ember-700 dark:text-ember-500">
+                Cancel
+              </Text>
             </Pressable>
           </View>
           <FlatList
@@ -976,7 +978,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                 className="flex-row items-center gap-2 border-b border-zinc-100 dark:border-zinc-800 px-4 py-3.5 active:bg-zinc-50 dark:active:bg-zinc-800"
               >
                 <Ionicons name="add" size={20} color={colors.accentIcon} />
-                <Text className="text-base text-blue-500">New profile</Text>
+                <Text className="text-base text-ember-700 dark:text-ember-500">New profile</Text>
               </Pressable>
             }
           />
@@ -1002,7 +1004,9 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
               onPress={() => setShowCreateProfileModal(false)}
               className="rounded-lg px-3 py-1.5 active:bg-zinc-100 dark:active:bg-zinc-800"
             >
-              <Text className="text-base font-medium text-blue-500">Cancel</Text>
+              <Text className="text-base font-medium text-ember-700 dark:text-ember-500">
+                Cancel
+              </Text>
             </Pressable>
           </View>
           <View className="p-4">
@@ -1027,14 +1031,14 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
               className={`mt-4 items-center rounded-lg py-3 ${
                 profileBusy || !newProfileName.trim()
                   ? "bg-zinc-200 dark:bg-zinc-700"
-                  : "bg-blue-500 active:bg-blue-600"
+                  : "bg-ember-500 active:bg-ember-600"
               }`}
             >
               <Text
                 className={`text-base font-semibold ${
                   profileBusy || !newProfileName.trim()
                     ? "text-zinc-400 dark:text-zinc-500"
-                    : "text-white"
+                    : "text-ember-ink"
                 }`}
               >
                 {renamingProfileId
@@ -1072,7 +1076,9 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
               className="rounded-lg px-3 py-1.5 active:bg-zinc-100 dark:active:bg-zinc-800"
               style={{ opacity: noteMutation.isPending ? 0.5 : 1 }}
             >
-              <Text className="text-base font-semibold text-blue-500">Save</Text>
+              <Text className="text-base font-semibold text-ember-700 dark:text-ember-500">
+                Save
+              </Text>
             </Pressable>
           </View>
           <View className="p-4">

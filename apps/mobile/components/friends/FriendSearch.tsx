@@ -54,7 +54,7 @@ export default function FriendSearch({ visible, onClose }: FriendSearchProps) {
         <View className="flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-4 pb-3 pt-4">
           <Text className="text-xl font-bold dark:text-zinc-100">Find Friends</Text>
           <Pressable onPress={handleClose}>
-            <Text className="text-base font-medium text-blue-500">Done</Text>
+            <Text className="text-base font-medium text-ember-700 dark:text-ember-500">Done</Text>
           </Pressable>
         </View>
 
@@ -99,8 +99,8 @@ export default function FriendSearch({ visible, onClose }: FriendSearchProps) {
             contentContainerClassName="px-4"
             renderItem={({ item }) => (
               <View className="flex-row items-center border-b border-zinc-100 dark:border-zinc-800 py-3">
-                <View className="h-10 w-10 items-center justify-center rounded-full bg-blue-500">
-                  <Text className="text-sm font-bold text-white">
+                <View className="h-10 w-10 items-center justify-center rounded-full bg-ember-500">
+                  <Text className="text-sm font-bold text-ember-ink">
                     {getInitials(item.real_name || item.username)}
                   </Text>
                 </View>
@@ -112,7 +112,7 @@ export default function FriendSearch({ visible, onClose }: FriendSearchProps) {
                   onPress={() => handleSendRequest(item.id)}
                   disabled={sentRequests.has(item.id)}
                   className={`rounded-lg px-3 py-1.5 ${
-                    sentRequests.has(item.id) ? "bg-zinc-100 dark:bg-zinc-800" : "bg-blue-500"
+                    sentRequests.has(item.id) ? "bg-zinc-100 dark:bg-zinc-800" : "bg-ember-500"
                   }`}
                 >
                   {sentRequests.has(item.id) ? (
@@ -121,8 +121,8 @@ export default function FriendSearch({ visible, onClose }: FriendSearchProps) {
                     </Text>
                   ) : (
                     <View className="flex-row items-center gap-1">
-                      <Ionicons name="person-add" size={14} color="white" />
-                      <Text className="text-sm font-medium text-white">Add</Text>
+                      <Ionicons name="person-add" size={14} color="#1F0E04" />
+                      <Text className="text-sm font-medium text-ember-ink">Add</Text>
                     </View>
                   )}
                 </Pressable>

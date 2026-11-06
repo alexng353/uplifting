@@ -252,14 +252,14 @@ export default function ExerciseProfilesScreen() {
               className={`mt-4 items-center rounded-lg py-3 ${
                 renameProfileMutation.isPending || !newProfileName.trim()
                   ? "bg-zinc-200 dark:bg-zinc-700"
-                  : "bg-blue-500 active:bg-blue-600"
+                  : "bg-ember-500 active:bg-ember-600"
               }`}
             >
               <Text
                 className={`text-base font-semibold ${
                   renameProfileMutation.isPending || !newProfileName.trim()
                     ? "text-zinc-400 dark:text-zinc-500"
-                    : "text-white"
+                    : "text-ember-ink"
                 }`}
               >
                 {renameProfileMutation.isPending ? "Saving..." : "Save"}

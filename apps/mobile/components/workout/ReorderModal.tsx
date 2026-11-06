@@ -48,9 +48,9 @@ export default function ReorderModal({ visible, onClose }: ReorderModalProps) {
           <Text className="text-lg font-bold dark:text-zinc-100">Reorder Exercises</Text>
           <Pressable
             onPress={onClose}
-            className="rounded-lg bg-blue-500 px-4 py-2 active:bg-blue-600"
+            className="rounded-lg bg-ember-500 px-4 py-2 active:bg-ember-600"
           >
-            <Text className="font-semibold text-white">Done</Text>
+            <Text className="font-semibold text-ember-ink">Done</Text>
           </Pressable>
         </View>
 

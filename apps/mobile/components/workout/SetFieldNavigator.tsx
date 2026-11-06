@@ -157,7 +157,9 @@ export default function SetFieldNavigator({
                 hitSlop={4}
                 className="h-11 justify-center px-3"
               >
-                <Text className="text-base font-semibold text-blue-500">Done</Text>
+                <Text className="text-base font-semibold text-ember-700 dark:text-ember-500">
+                  Done
+                </Text>
               </Pressable>
             </View>
           </KeyboardStickyView>
