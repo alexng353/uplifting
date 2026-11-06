@@ -28,7 +28,9 @@ private struct ClockText: View {
       Text(timerInterval: rest, countsDown: true)
         .foregroundStyle(Ember.accent)
     } else {
-      Text(workoutStart, style: .timer)
+      // Ticks every second without updates: 58:12, then 1:02:03 past an hour.
+      Text(timerInterval: workoutStart...Date.distantFuture, countsDown: false)
+        .monospacedDigit()
         .foregroundStyle(Ember.text)
     }
   }
@@ -66,7 +68,8 @@ private struct LockScreenView: View {
           .multilineTextAlignment(.trailing)
           .frame(maxWidth: 120, alignment: .trailing)
         if state.rest != nil {
-          Text(context.attributes.workoutStart, style: .timer)
+          Text(timerInterval: context.attributes.workoutStart...Date.distantFuture, countsDown: false)
+            .monospacedDigit()
             .font(.caption.monospacedDigit()).foregroundStyle(Ember.muted)
             .multilineTextAlignment(.trailing)
             .frame(maxWidth: 120, alignment: .trailing)

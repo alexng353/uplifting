@@ -500,7 +500,10 @@ function SetRow({
         canAccept={canAccept}
         label={`Use last time's ${suggestedReps} reps at ${suggestedWeight} ${displayUnit}`}
         onPress={() => canAccept && updateSet(exerciseId, set.id, updates)}
-        result={isFilled ? compareSet(set, suggestion, set.weightUnit) : null}
+        // Warmups aren't measured against last time's working sets.
+        result={
+          isFilled && warmupLabel == null ? compareSet(set, suggestion, set.weightUnit) : null
+        }
       />
     </View>
   );

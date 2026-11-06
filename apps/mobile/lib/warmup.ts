@@ -57,8 +57,9 @@ export function lastWorkingWeight(
 }
 
 /**
- * The row where working sets begin, if this edit just crossed the line automatically:
- * the index whose kind went from warmup (or nothing logged) to working. For the
+ * The row where working sets begin, if this edit just moved it there automatically: the
+ * first logged working row, after logged warmups, that wasn't a logged working row
+ * before (typing 120 passes through 1 and 12, which are still warmups). For the
  * "Working sets from here" toast.
  */
 export function newWorkingStart(
@@ -67,14 +68,9 @@ export function newWorkingStart(
   rowsDoneBefore: readonly boolean[],
   rowsDoneAfter: readonly boolean[],
 ): number | null {
-  const hadWarmup = after.some((k, i) => k === "warmup" && rowsDoneAfter[i]);
-  if (!hadWarmup) return null;
-  for (let i = 0; i < after.length; i++) {
-    if (after[i] === "working" && rowsDoneAfter[i] && !rowsDoneBefore[i]) {
-      const earlierWorking = after.slice(0, i).some((k, j) => k === "working" && rowsDoneAfter[j]);
-      if (!earlierWorking) return i;
-    }
-  }
-  void before;
-  return null;
+  const first = after.findIndex((k, i) => k === "working" && rowsDoneAfter[i]);
+  if (first <= 0) return null;
+  if (!after.slice(0, first).some((k, i) => k === "warmup" && rowsDoneAfter[i])) return null;
+  const wasWorking = before[first] === "working" && rowsDoneBefore[first];
+  return wasWorking ? null : first;
 }
