@@ -4,6 +4,7 @@ import { db, sql } from "../db";
 import { workouts, userSets } from "../db/schema";
 import { authPlugin } from "../lib/auth";
 import { gateUserId } from "./gate";
+import { timedColumns, timedValues } from "../lib/timed-sets";
 
 export const syncRoutes = new Elysia({ prefix: "/sync" })
   .use(authPlugin)
@@ -17,6 +18,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
       sql`
           WITH ranked_sets AS (
               SELECT s.exercise_id, s.profile_id, s.reps, s.weight, s.weight_unit, s.side, s.created_at,
+                s.duration_seconds, s.speed, s.speed_unit, s.incline, s.distance, s.distance_unit, s.is_warmup,
                   DENSE_RANK() OVER (
                       PARTITION BY s.exercise_id, s.profile_id, (s.side IS NOT NULL)
                       ORDER BY w.end_time DESC
@@ -24,7 +26,8 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
               FROM user_sets s JOIN workouts w ON s.workout_id = w.id
               WHERE s.user_id = ${userId} AND w.end_time IS NOT NULL
           )
-          SELECT exercise_id, profile_id, reps, weight, weight_unit, side
+          SELECT exercise_id, profile_id, reps, weight, weight_unit, side,
+          duration_seconds, speed, speed_unit, incline, distance, distance_unit, is_warmup
           FROM ranked_sets WHERE workout_rank = 1
           ORDER BY exercise_id, profile_id, created_at ASC
         `,
@@ -63,6 +66,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
         weight: row.weight,
         weight_unit: row.weight_unit,
         side: row.side,
+        ...timedColumns(row),
       });
     }
 
@@ -152,6 +156,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
               weightUnit: s.weight_unit,
               side: s.side,
               bodyweight: s.bodyweight ? String(s.bodyweight) : undefined,
+              ...timedValues(s),
               position,
               createdAt: s.created_at ? new Date(s.created_at) : new Date(),
             });
@@ -183,6 +188,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
           : await sql`
         WITH ranked_sets AS (
             SELECT s.exercise_id, s.profile_id, s.reps, s.weight, s.weight_unit, s.side, s.created_at,
+                s.duration_seconds, s.speed, s.speed_unit, s.incline, s.distance, s.distance_unit, s.is_warmup,
                 DENSE_RANK() OVER (
                     PARTITION BY s.exercise_id, s.profile_id, (s.side IS NOT NULL)
                     ORDER BY w.end_time DESC
@@ -191,7 +197,8 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
             WHERE s.user_id = ${userId} AND w.end_time IS NOT NULL
               AND s.exercise_id = ANY(${exerciseIds}::uuid[])
         )
-        SELECT exercise_id, profile_id, reps, weight, weight_unit, side
+        SELECT exercise_id, profile_id, reps, weight, weight_unit, side,
+          duration_seconds, speed, speed_unit, incline, distance, distance_unit, is_warmup
         FROM ranked_sets WHERE workout_rank = 1
         ORDER BY exercise_id, profile_id, created_at ASC
       `;
@@ -209,6 +216,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
           weight: row.weight,
           weight_unit: row.weight_unit,
           side: row.side,
+          ...timedColumns(row),
         });
       }
 
@@ -238,6 +246,13 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
                 created_at: t.Optional(t.String()),
                 side: t.Optional(t.String()),
                 bodyweight: t.Optional(t.Number()),
+                duration_seconds: t.Optional(t.Integer({ minimum: 1, maximum: 86400 })),
+                speed: t.Optional(t.Number({ minimum: 0, maximum: 9999.99 })),
+                speed_unit: t.Optional(t.String({ maxLength: 4 })),
+                incline: t.Optional(t.Number({ minimum: -999.99, maximum: 999.99 })),
+                distance: t.Optional(t.Number({ minimum: 0, maximum: 99999.999 })),
+                distance_unit: t.Optional(t.String({ maxLength: 3 })),
+                is_warmup: t.Optional(t.Boolean()),
               }),
             ),
           }),

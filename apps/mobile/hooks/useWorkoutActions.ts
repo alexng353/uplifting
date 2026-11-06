@@ -22,6 +22,7 @@ export interface WorkoutActions {
     weight?: number,
     side?: "L" | "R",
     autoAdded?: boolean,
+    extra?: Partial<StoredSet>,
   ) => void;
   addUnilateralPair: (
     exerciseId: string,

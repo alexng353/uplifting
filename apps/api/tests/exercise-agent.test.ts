@@ -51,7 +51,9 @@ test.skipIf(!socket)(
         service.approve(user.id, created.id, 2),
       ]);
       expect(approvals[0].exercise_id).toBe(approvals[1].exercise_id);
-      expect(Number((await sql`SELECT count(*) FROM exercises`)[0].count)).toBe(1);
+      expect(
+        Number((await sql`SELECT count(*) FROM exercises WHERE measure = 'weights'`)[0].count),
+      ).toBe(1);
       const cancelled = await service.create(user.id, "new exercise");
       const job3 = await service.claim();
       await service.cancel(user.id, cancelled.id);
@@ -81,7 +83,9 @@ test.skipIf(!socket)(
       const duplicateJob = await service.claim();
       await service.finish(duplicateJob!, { kind: "draft", message: "Ready", draft });
       await expect(service.approve(user.id, duplicate.id, 1)).rejects.toThrow("already exists");
-      expect(Number((await sql`SELECT count(*) FROM exercises`)[0].count)).toBe(1);
+      expect(
+        Number((await sql`SELECT count(*) FROM exercises WHERE measure = 'weights'`)[0].count),
+      ).toBe(1);
       const failure = await service.create(user.id, "failure");
       for (let attempt = 0; attempt < 3; attempt++) {
         const failedJob = await service.claim();

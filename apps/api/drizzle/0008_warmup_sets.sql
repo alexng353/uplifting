@@ -1,0 +1,1 @@
+ALTER TABLE "user_sets" ADD COLUMN "is_warmup" boolean DEFAULT false NOT NULL;

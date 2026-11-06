@@ -2,6 +2,7 @@ import { Elysia, t } from "elysia";
 import { eq, and, desc, sql as dsql, asc } from "drizzle-orm";
 import { db, sql } from "../db";
 import { workouts, userSets } from "../db/schema";
+import { timedValues } from "../lib/timed-sets";
 import { authPlugin } from "../lib/auth";
 
 export const workoutRoutes = new Elysia({ prefix: "/workouts" })
@@ -70,9 +71,9 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
           SELECT
             COUNT(DISTINCT w.id) as total_workouts,
             -- Normalize to kg: lbs * 0.453592
-            COALESCE(SUM((CASE WHEN s.weight_unit = 'lbs' THEN s.weight * 0.453592 ELSE s.weight END) * s.reps), 0) as total_volume,
+            COALESCE(SUM((CASE WHEN s.weight_unit = 'lbs' THEN s.weight * 0.453592 ELSE s.weight END) * s.reps) FILTER (WHERE NOT s.is_warmup), 0) as total_volume,
             COUNT(s.id) FILTER (WHERE s.side IS NULL OR s.side = 'R') as total_sets,
-            COALESCE(SUM(s.reps), 0) as total_reps
+            COALESCE(SUM(s.reps) FILTER (WHERE s.duration_seconds IS NULL), 0) as total_reps
           FROM workouts w
           LEFT JOIN user_sets s ON s.workout_id = w.id
           WHERE w.user_id = ${userId} AND w.kind = 'workout'
@@ -102,7 +103,7 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
             e.id, e.name,
             COUNT(DISTINCT s.workout_id) as workout_count,
             COUNT(s.id) FILTER (WHERE s.side IS NULL OR s.side = 'R') as total_sets,
-            COALESCE(SUM((CASE WHEN s.weight_unit = 'lbs' THEN s.weight * 0.453592 ELSE s.weight END) * s.reps), 0) as total_volume
+            COALESCE(SUM((CASE WHEN s.weight_unit = 'lbs' THEN s.weight * 0.453592 ELSE s.weight END) * s.reps) FILTER (WHERE NOT s.is_warmup), 0) as total_volume
           FROM user_sets s
           JOIN exercises e ON e.id = s.exercise_id
           WHERE s.user_id = ${userId}
@@ -114,7 +115,7 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
       sql`
           SELECT
             COALESCE(m.major_group, 'Other') as "group",
-            COALESCE(SUM((CASE WHEN s.weight_unit = 'lbs' THEN s.weight * 0.453592 ELSE s.weight END) * s.reps), 0) as volume
+            COALESCE(SUM((CASE WHEN s.weight_unit = 'lbs' THEN s.weight * 0.453592 ELSE s.weight END) * s.reps) FILTER (WHERE NOT s.is_warmup), 0) as volume
           FROM user_sets s
           JOIN exercise_muscle_relations emr ON emr.exercise_id = s.exercise_id AND emr.is_primary = true
           JOIN muscles m ON m.id = emr.muscle_id
@@ -256,9 +257,9 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
       SELECT
         w.id, w.name, w.start_time, w.end_time,
         COALESCE(EXTRACT(EPOCH FROM (COALESCE(w.end_time, NOW()) - w.start_time)) / 60, 0)::bigint as duration_minutes,
-        COALESCE(SUM((CASE WHEN s.weight_unit = 'lbs' THEN s.weight * 0.453592 ELSE s.weight END) * s.reps), 0) as total_volume,
+        COALESCE(SUM((CASE WHEN s.weight_unit = 'lbs' THEN s.weight * 0.453592 ELSE s.weight END) * s.reps) FILTER (WHERE NOT s.is_warmup), 0) as total_volume,
         COUNT(s.id) FILTER (WHERE s.side IS NULL OR s.side = 'R') as total_sets,
-        COALESCE(SUM(s.reps), 0) as total_reps,
+        COALESCE(SUM(s.reps) FILTER (WHERE s.duration_seconds IS NULL), 0) as total_reps,
         COUNT(DISTINCT s.exercise_id) as exercises_count
       FROM workouts w
       LEFT JOIN user_sets s ON s.workout_id = w.id
@@ -321,6 +322,20 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
               .limit(1);
           }
 
+          // An app build older than timed/warmup sets sends neither field. Keep what those
+          // columns held for the same set (same exercise, profile, place, reps and weight),
+          // or one edit on an old build would erase them. Newer builds always send is_warmup.
+          const before = await tx
+            .select()
+            .from(userSets)
+            .where(eq(userSets.workoutId, params.workoutId))
+            .orderBy(asc(userSets.position), asc(userSets.createdAt));
+          const oldGroups = new Map<string, (typeof before)[number][]>();
+          for (const s of before) {
+            const key = `${s.exerciseId}|${s.profileId ?? ""}`;
+            oldGroups.set(key, [...(oldGroups.get(key) ?? []), s]);
+          }
+
           // 2. Delete all existing sets
           await tx.delete(userSets).where(eq(userSets.workoutId, params.workoutId));
 
@@ -328,7 +343,26 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
           // submitted order, so reordering exercises in the editor persists
           // (display order is by position, then createdAt within an exercise).
           for (const [position, exercise] of body.exercises!.entries()) {
-            for (const s of exercise.sets) {
+            const old = oldGroups.get(`${exercise.exercise_id}|${exercise.profile_id ?? ""}`) ?? [];
+            for (const [i, s] of exercise.sets.entries()) {
+              const prev = old[i];
+              const kept =
+                s.is_warmup === undefined &&
+                s.duration_seconds === undefined &&
+                prev &&
+                Number(prev.reps) === s.reps &&
+                Number(prev.weight) === s.weight &&
+                (prev.side ?? undefined) === (s.side ?? undefined)
+                  ? {
+                      durationSeconds: prev.durationSeconds,
+                      speed: prev.speed,
+                      speedUnit: prev.speedUnit,
+                      incline: prev.incline,
+                      distance: prev.distance,
+                      distanceUnit: prev.distanceUnit,
+                      isWarmup: prev.isWarmup,
+                    }
+                  : {};
               await tx.insert(userSets).values({
                 userId,
                 workoutId: params.workoutId,
@@ -339,6 +373,8 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
                 weightUnit: s.weight_unit,
                 side: s.side,
                 bodyweight: s.bodyweight ? String(s.bodyweight) : undefined,
+                ...timedValues(s),
+                ...kept,
                 position,
                 createdAt: s.created_at ? new Date(s.created_at) : new Date(),
               });
@@ -418,6 +454,13 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
                   created_at: t.Optional(t.String()),
                   side: t.Optional(t.String()),
                   bodyweight: t.Optional(t.Number()),
+                  duration_seconds: t.Optional(t.Integer({ minimum: 1, maximum: 86400 })),
+                  speed: t.Optional(t.Number({ minimum: 0, maximum: 9999.99 })),
+                  speed_unit: t.Optional(t.String({ maxLength: 4 })),
+                  incline: t.Optional(t.Number({ minimum: -999.99, maximum: 999.99 })),
+                  distance: t.Optional(t.Number({ minimum: 0, maximum: 99999.999 })),
+                  distance_unit: t.Optional(t.String({ maxLength: 3 })),
+                  is_warmup: t.Optional(t.Boolean()),
                 }),
               ),
             }),

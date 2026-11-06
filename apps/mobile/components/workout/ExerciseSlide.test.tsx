@@ -30,6 +30,7 @@ const LEFT_HISTORY: SetSuggestion = { reps: 5, weight: 100, weightUnit: "kg" };
 let suggestionFor = (_setNumber: number, side?: "L" | "R"): SetSuggestion =>
   side === "L" ? LEFT_HISTORY : HISTORY;
 let target: number | null = null;
+let previous: StoredSet[] = [];
 mock.module("../../hooks/useSettings", () => ({
   useSettings: () => ({ settings, getDisplayUnit: () => "kg" }),
 }));
@@ -38,6 +39,7 @@ mock.module("../../hooks/usePreviousSets", () => ({
     getSuggestion: (_exerciseId: string, _profileId: string, setNumber: number, side?: "L" | "R") =>
       suggestionFor(setNumber, side),
     getTargetSetCount: () => target,
+    getPrevious: () => previous,
   }),
 }));
 let profiles: Array<{ id: string; name: string }> = [];
@@ -61,6 +63,10 @@ mock.module("../../hooks/useGymProfileSuggestion", () => ({
   }),
 }));
 mock.module("./RestTimer", () => ({ default: () => null }));
+mock.module("../../hooks/useWorkout", () => ({
+  useOptionalWorkout: () => null,
+  supersetGroups: () => [],
+}));
 
 let exercise: StoredWorkoutExercise;
 let setExerciseState: (exercise: StoredWorkoutExercise) => void;
@@ -154,6 +160,7 @@ afterEach(async () => {
   settings = {};
   mode = "editing";
   target = null;
+  previous = [];
   suggestionFor = (_setNumber, side) => (side === "L" ? LEFT_HISTORY : HISTORY);
   profiles = [];
 });
@@ -569,6 +576,44 @@ describe("accept suggestion", () => {
     expect(exercise.sets).toHaveLength(2);
     expect(exercise.sets[0]).toMatchObject({ reps: 6, weight: 220 });
     expect(acceptButton(1).props.disabled).toBe(false);
+  });
+});
+
+describe("warmup sets", () => {
+  const labels = () =>
+    renderer.root
+      .findAll((n) => n.props.testID === "warmup-set" && typeof n.type === "string")
+      .map((n) => n.props.accessibilityLabel.split(",")[0]);
+  const host = (id: string) =>
+    renderer.root.findAll((n) => n.props.testID === id && typeof n.type === "string");
+
+  test("sets below ~80% of last session are w1, w2; working sets number from 1 with the ring", async () => {
+    previous = [makeSet("p", { reps: 6, weight: 145, weightUnit: "kg" })];
+    target = 1;
+    await renderSets([
+      makeSet("a", { reps: 10, weight: 45 }),
+      makeSet("b", { reps: 6, weight: 90 }),
+      makeSet("c", { reps: 6, weight: 135 }),
+      makeSet("d"),
+    ]);
+    expect(labels()).toEqual(["w1", "w2"]);
+    expect(host("warmup-header")).toHaveLength(1);
+    expect(host("working-header")).toHaveLength(1);
+    // The usual-last-set ring sits on working set 1 (135), not on the first row.
+    expect(host("target-set")).toHaveLength(1);
+  });
+
+  test("long-press flips a warmup to working; first-ever sessions are never auto-warmup", async () => {
+    previous = [makeSet("p", { reps: 6, weight: 145 })];
+    await renderSets([makeSet("a", { reps: 10, weight: 45 }), makeSet("b")]);
+    const [w1] = host("warmup-set");
+    await act(() => w1.props.onLongPress());
+    expect(exercise.sets[0].warmup).toBe(false);
+    expect(labels()).toEqual([]);
+    await act(() => renderer.unmount());
+    previous = [];
+    await renderSets([makeSet("a", { reps: 10, weight: 45 })]);
+    expect(labels()).toEqual([]);
   });
 });
 

@@ -88,3 +88,25 @@ export function xTickLabel(ms: number, spanMs: number): string {
   if (spanMs > 120 * DAY) return MONTHS[d.getMonth()];
   return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
 }
+
+/** Timed exercises (treadmill walks): total minutes per session, oldest first. */
+export function minutesSeries(
+  history: readonly HistoryEntry<HistorySet & { duration_seconds?: number | null }>[],
+): { dateMs: number; weight: number }[] {
+  return history
+    .map((e) => ({
+      dateMs: Date.parse(e.date),
+      weight:
+        Math.round(
+          (e.sets.reduce((sum, s) => sum + (Number(s.duration_seconds) || 0), 0) / 60) * 10,
+        ) / 10,
+    }))
+    .filter((p) => Number.isFinite(p.dateMs) && p.weight > 0)
+    .sort((a, b) => a.dateMs - b.dateMs);
+}
+
+export function isTimedHistory(
+  history: readonly HistoryEntry<HistorySet & { duration_seconds?: number | null }>[],
+): boolean {
+  return history.some((e) => e.sets.some((s) => s.duration_seconds != null));
+}

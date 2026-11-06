@@ -50,3 +50,17 @@ describe("exercise chart", () => {
     expect(xTickLabel(t, 900 * DAY)).toBe("Aug ’26");
   });
 });
+
+test("timed history charts total minutes per session", async () => {
+  const { minutesSeries, isTimedHistory } = await import("./exercise-chart");
+  const walk = (s: number) => ({ reps: 1, weight: 0, duration_seconds: s });
+  const h = [
+    { workout_id: "b", date: "2026-11-06T22:00:00Z", sets: [walk(600)] },
+    { workout_id: "a", date: "2026-11-03T22:00:00Z", sets: [walk(300), walk(330)] },
+  ];
+  expect(isTimedHistory(h)).toBe(true);
+  expect(isTimedHistory([{ workout_id: "c", date: "x", sets: [{ reps: 5, weight: 9 }] }])).toBe(
+    false,
+  );
+  expect(minutesSeries(h).map((p) => p.weight)).toEqual([10.5, 10]);
+});

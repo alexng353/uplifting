@@ -36,13 +36,19 @@ import {
   NEXT_MODE,
   rowIndexOf,
   rowMode,
+  rowSets,
   toRows,
   type SideMode,
   type SetRow as RowModel,
 } from "../../lib/set-rows";
 import { convertWeight } from "../../lib/units";
+import { useOptionalWorkout, supersetGroups } from "../../hooks/useWorkout";
+import { warmupKinds } from "../../lib/warmup-apply";
+import { newWorkingStart } from "../../lib/warmup";
 import type { StoredSet, StoredWorkoutExercise } from "../../services/storage";
 import RestTimer from "./RestTimer";
+import TimedSetRow, { TimedHeader } from "./TimedSetRow";
+import { isTimedSet, speedUnitFor, timedUpdate } from "../../lib/timed";
 import { singleLineInput } from "../../lib/input-style";
 import { lightTap } from "../../lib/haptics";
 import { compareSet, type SetResult } from "../../lib/set-result";
@@ -101,9 +107,15 @@ function SetNumberCell({
   onCycleMode,
   ghost,
   onMakeReal,
+  onLongPress,
+  warmup,
 }: {
   setNumber: number;
   label: string;
+  /** Long-press flips the row between warmup and working. */
+  onLongPress?: () => void;
+  /** A warmup row: grey "w1" instead of a number. */
+  warmup?: boolean;
   isTarget?: boolean;
   ringDone: boolean;
   /** The row's mode; shown small under the number when the number can be tapped. */
@@ -171,6 +183,20 @@ function SetNumberCell({
     );
   }
   if (!onCycleMode || !mode) return <View className="w-8 items-center">{number}</View>;
+  if (warmup) {
+    return (
+      <Pressable
+        testID="warmup-set"
+        accessibilityLabel={`${label}, warmup set. Long-press for a working set`}
+        onLongPress={onLongPress}
+        delayLongPress={350}
+        hitSlop={6}
+        className="w-8 items-center"
+      >
+        <Text className="text-center text-sm font-medium italic text-zinc-500">{label}</Text>
+      </Pressable>
+    );
+  }
   // Tapping the set number cycles this row: Bilateral -> Unilateral -> Split.
   return (
     <Pressable
@@ -178,6 +204,8 @@ function SetNumberCell({
       accessibilityRole="button"
       accessibilityLabel={`Set ${setNumber}, ${MODE_LABEL[mode]}. Tap for ${MODE_LABEL[NEXT_MODE[mode]]}`}
       onPress={onCycleMode}
+      onLongPress={onLongPress}
+      delayLongPress={350}
       hitSlop={6}
       className="w-8 items-center active:opacity-50"
     >
@@ -337,7 +365,13 @@ function SetRow({
   showSideColumn,
   ghost,
   onMakeReal,
+  onLongPressNumber,
+  warmupLabel,
 }: {
+  /** Long-press on the set number (warmup/working). */
+  onLongPressNumber?: () => void;
+  /** "w1", "w2" on warmup rows. */
+  warmupLabel?: string;
   set: StoredSet;
   setNumber: number;
   sideLabel?: "R" | "L";
@@ -392,7 +426,9 @@ function SetRow({
     >
       <SetNumberCell
         setNumber={setNumber}
-        label={sideLabel === "L" ? "" : String(setNumber)}
+        label={sideLabel === "L" ? "" : (warmupLabel ?? String(setNumber))}
+        warmup={warmupLabel != null && sideLabel !== "L"}
+        onLongPress={onLongPressNumber}
         isTarget={isTarget}
         ringDone={ringDone}
         mode={mode}
@@ -464,7 +500,10 @@ function SetRow({
         canAccept={canAccept}
         label={`Use last time's ${suggestedReps} reps at ${suggestedWeight} ${displayUnit}`}
         onPress={() => canAccept && updateSet(exerciseId, set.id, updates)}
-        result={isFilled ? compareSet(set, suggestion, set.weightUnit) : null}
+        // Warmups aren't measured against last time's working sets.
+        result={
+          isFilled && warmupLabel == null ? compareSet(set, suggestion, set.weightUnit) : null
+        }
       />
     </View>
   );
@@ -483,7 +522,9 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   } = useWorkoutActions();
   const colors = useThemeColors();
   const { settings, getDisplayUnit } = useSettings();
-  const { getSuggestion, getTargetSetCount } = usePreviousSets();
+  const { getSuggestion, getTargetSetCount, getPrevious } = usePreviousSets();
+  const live = useOptionalWorkout();
+  const liveWorkout = live?.workout ?? null;
   const targetSetCount = getTargetSetCount(exercise.exerciseId, exercise.profileId);
   const { data: profiles = [] } = useExerciseProfiles(exercise.exerciseId);
   const createProfileMutation = useCreateExerciseProfile(exercise.exerciseId);
@@ -515,12 +556,81 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   }, [noteMutation, exercise.exerciseId, noteDraft]);
 
   const displayUnit = getDisplayUnit();
+  // Treadmill walks and other timed exercises log time, speed and incline.
+  const timed = exercise.measure === "timed";
+  const speedUnit = speedUnitFor(displayUnit);
 
   // One numbered row per set; each row has its own mode (bilateral, unilateral, split).
   const rows = useMemo(() => toRows(exercise.sets), [exercise.sets]);
   const lastRow = rows[rows.length - 1];
   const lastMode: SideMode = lastRow ? rowMode(lastRow) : "bilateral";
   const showSideColumn = rows.some((row) => rowMode(row) === "split");
+
+  // Warmup rows (lib/warmup): grey w1, w2 above the working sets, which number from 1.
+  const previousSets = useMemo(
+    () => getPrevious(exercise.exerciseId, exercise.profileId),
+    [getPrevious, exercise.exerciseId, exercise.profileId],
+  );
+  const kinds = useMemo(() => warmupKinds(exercise, previousSets), [exercise, previousSets]);
+  const rowNumbers = useMemo(() => {
+    let w = 0;
+    let n = 0;
+    return kinds.map((k) => (k === "warmup" ? { warm: ++w } : { work: ++n }));
+  }, [kinds]);
+  const workingNumber = (i: number) => rowNumbers[i]?.work ?? i + 1;
+
+  // "Working sets from here" when a logged set first crosses the 80% line, with Undo.
+  const [workingToast, setWorkingToast] = useState<number | null>(null);
+  const lastKinds = useRef<{ kinds: typeof kinds; done: boolean[] } | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => void (toastTimer.current && clearTimeout(toastTimer.current)), []);
+  useEffect(() => {
+    const doneNow = rows.map(
+      (r) => !isRowEmpty(r) && rowSets(r).every((s) => s.reps != null && s.weight != null),
+    );
+    const prev = lastKinds.current;
+    lastKinds.current = { kinds, done: doneNow };
+    if (!prev || mode !== "live") return;
+    const start = newWorkingStart(prev.kinds, kinds, prev.done, doneNow);
+    if (start == null) return;
+    setWorkingToast(start);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setWorkingToast(null), 5000);
+  }, [kinds, rows, mode]);
+  const flipWarmup = useCallback(
+    (rowIndex: number, warmup: boolean) => {
+      const row = rows[rowIndex];
+      if (!row) return;
+      for (const s of rowSets(row)) updateSet(exercise.exerciseId, s.id, { warmup });
+    },
+    [rows, updateSet, exercise.exerciseId],
+  );
+
+  // Superset chip: shown while this exercise alternates with another (lib/supersets).
+  // Quiet WARMUP / WORKING labels, only when the exercise has warmup rows.
+  const headerFor = (index: number) => {
+    if (!kinds.includes("warmup")) return null;
+    const warm = rowNumbers[index]?.warm != null;
+    if (index > 0 && (warm || rowNumbers[index - 1]?.warm == null)) return null;
+    return (
+      <Text
+        key={`h${index}`}
+        testID={warm ? "warmup-header" : "working-header"}
+        className="mt-1 px-2 text-[10px] font-bold uppercase tracking-wider text-zinc-500"
+      >
+        {warm ? "Warmup" : "Working"}
+      </Text>
+    );
+  };
+
+  const supersetWith = useMemo(() => {
+    if (mode !== "live" || !liveWorkout) return [];
+    const group = supersetGroups(liveWorkout).find((g) => g.includes(exercise.exerciseId));
+    return (group ?? [])
+      .filter((id) => id !== exercise.exerciseId)
+      .map((id) => liveWorkout.exercises.find((e) => e.exerciseId === id))
+      .filter((e): e is NonNullable<typeof e> => !!e);
+  }, [mode, liveWorkout, exercise.exerciseId]);
   // The exercise default picks the mode for new rows; tapping a set number overrides one row.
   const [defaultMode, chooseDefaultMode] = useSideDefault(exercise.exerciseId, lastMode);
 
@@ -581,6 +691,31 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
 
   const handleDuplicateLastSet = useCallback(() => {
     if (!lastRow) return;
+    if (timed) {
+      // Copy the last logged time/speed/incline into a trailing empty row, or a new one.
+      const source = [...exercise.sets].reverse().find(isTimedSet);
+      if (!source) return;
+      const values = timedUpdate(
+        source.durationSeconds,
+        source.speed,
+        source.speedUnit ?? speedUnit,
+        source.incline,
+      );
+      const last = exercise.sets[exercise.sets.length - 1];
+      if (last && !isTimedSet(last)) updateSet(exercise.exerciseId, last.id, values);
+      else
+        addSet(
+          exercise.exerciseId,
+          last?.weightUnit ?? displayUnit,
+          1,
+          0,
+          undefined,
+          undefined,
+          values,
+        );
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+      return;
+    }
     // Copy the last row with real values; empty rows and grey placeholders don't count.
     let sourceIndex = rows.length - 1;
     while (sourceIndex >= 0 && isRowEmpty(rows[sourceIndex])) sourceIndex--;
@@ -617,7 +752,18 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
     const { reps, weight } = valuesOf(set);
     addRow(rowMode(from), set.weightUnit, reps, weight);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
-  }, [rows, lastRow, addRow, updateSet, exercise.exerciseId]);
+  }, [
+    rows,
+    lastRow,
+    addRow,
+    updateSet,
+    exercise.exerciseId,
+    exercise.sets,
+    timed,
+    speedUnit,
+    addSet,
+    displayUnit,
+  ]);
 
   const handleRemoveLastSet = useCallback(() => {
     removeLastSet(exercise.exerciseId);
@@ -640,7 +786,24 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
     (rowIndex: number): boolean => {
       const row = rows[rowIndex];
       if (!row || !isRowEmpty(row)) return false;
-      const setNumber = rowIndex + 1;
+      const setNumber = workingNumber(rowIndex);
+      if (timed && row.kind === "bilateral") {
+        const s = getSuggestion(exercise.exerciseId, exercise.profileId, setNumber);
+        const above = exercise.sets.slice(0, rowIndex).reverse().find(isTimedSet);
+        const from =
+          s.durationSeconds != null
+            ? { ...s, speedUnit: s.speedUnit ?? speedUnit }
+            : above
+              ? above
+              : null;
+        if (!from) return false;
+        handleUpdateSet(
+          exercise.exerciseId,
+          row.set.id,
+          timedUpdate(from.durationSeconds, from.speed, from.speedUnit ?? speedUnit, from.incline),
+        );
+        return true;
+      }
       let sourceIndex = rowIndex - 1;
       while (sourceIndex >= 0 && isRowEmpty(rows[sourceIndex])) sourceIndex--;
       const source = rows[sourceIndex];
@@ -695,11 +858,30 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
       getSuggestion,
       exercise.exerciseId,
       exercise.profileId,
+      exercise.sets,
       isBodyweight,
       handleUpdateSet,
       updateSet,
+      timed,
+      speedUnit,
+      rowNumbers,
     ],
   );
+
+  // A timed set with no history for its number suggests the logged set above it.
+  const timedSuggestion = (rowIndex: number, s: SetSuggestion): SetSuggestion => {
+    if (s.durationSeconds != null) return s;
+    const above = exercise.sets.slice(0, rowIndex).reverse().find(isTimedSet);
+    return above
+      ? {
+          ...s,
+          durationSeconds: above.durationSeconds,
+          speed: above.speed,
+          speedUnit: above.speedUnit,
+          incline: above.incline,
+        }
+      : s;
+  };
 
   // Changing the default also switches rows that have nothing in them yet.
   const handleDefaultMode = useCallback(
@@ -859,36 +1041,66 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
           </View>
         )}
 
-        {/* Default mode for new sets on this exercise */}
-        <View
-          accessibilityRole="radiogroup"
-          className="mt-1.5 flex-row self-start rounded-lg bg-zinc-200 p-0.5 dark:bg-zinc-800"
-        >
-          {(["bilateral", "unilateral", "split"] as const).map((option) => {
-            const selected = option === defaultMode;
-            return (
-              <Pressable
-                key={option}
-                testID={`side-default-${option}`}
-                accessibilityRole="radio"
-                accessibilityLabel={`New sets: ${MODE_LABEL[option]}`}
-                accessibilityState={{ selected }}
-                onPress={() => !selected && handleDefaultMode(option)}
-                hitSlop={4}
-                className={`rounded-md px-3 py-1 ${selected ? "bg-ember-500" : ""}`}
-              >
-                <Text
-                  maxFontSizeMultiplier={1.4}
-                  className={`text-xs font-semibold ${
-                    selected ? "text-ember-ink" : "text-zinc-500 dark:text-zinc-400"
-                  }`}
+        {/* Default mode for new sets on this exercise (not for timed exercises) */}
+        {!timed && (
+          <View
+            accessibilityRole="radiogroup"
+            className="mt-1.5 flex-row self-start rounded-lg bg-zinc-200 p-0.5 dark:bg-zinc-800"
+          >
+            {(["bilateral", "unilateral", "split"] as const).map((option) => {
+              const selected = option === defaultMode;
+              return (
+                <Pressable
+                  key={option}
+                  testID={`side-default-${option}`}
+                  accessibilityRole="radio"
+                  accessibilityLabel={`New sets: ${MODE_LABEL[option]}`}
+                  accessibilityState={{ selected }}
+                  onPress={() => !selected && handleDefaultMode(option)}
+                  hitSlop={4}
+                  className={`rounded-md px-3 py-1 ${selected ? "bg-ember-500" : ""}`}
                 >
-                  {option === "bilateral" ? "Bi" : option === "unilateral" ? "Uni" : "Split"}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+                  <Text
+                    maxFontSizeMultiplier={1.4}
+                    className={`text-xs font-semibold ${
+                      selected ? "text-ember-ink" : "text-zinc-500 dark:text-zinc-400"
+                    }`}
+                  >
+                    {option === "bilateral" ? "Bi" : option === "unilateral" ? "Uni" : "Split"}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
+
+        {supersetWith.length > 0 && (
+          <View
+            testID="superset-chip"
+            className="mt-1.5 flex-row items-center gap-2 self-start rounded-full bg-ember-500/15 px-2.5 py-1"
+          >
+            <Ionicons name="swap-horizontal" size={14} color={colors.accentIcon} />
+            <Text
+              className="text-xs font-semibold text-ember-700 dark:text-ember-400"
+              numberOfLines={1}
+            >
+              Superset with{" "}
+              {supersetWith.map((e) => stripProfileSuffix(e.exerciseName)).join(" + ")}
+            </Text>
+            <Pressable
+              testID="not-superset"
+              accessibilityRole="button"
+              onPress={() =>
+                supersetWith.forEach((e) =>
+                  live?.markNotSuperset(exercise.exerciseId, e.exerciseId),
+                )
+              }
+              hitSlop={6}
+            >
+              <Text className="text-xs text-zinc-500 underline">Not a superset</Text>
+            </Pressable>
+          </View>
+        )}
 
         {/* Persistent note (cue) */}
         <Pressable onPress={openNoteEditor} className="mt-1.5 flex-row items-start gap-1.5">
@@ -907,7 +1119,9 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
       </View>
 
       {/* Set Table Header */}
-      {
+      {timed ? (
+        <TimedHeader speedUnit={speedUnit} />
+      ) : (
         <View className="mb-1 flex-row items-center gap-2 px-2">
           <Text className="w-8 text-center text-xs font-bold uppercase text-zinc-400 dark:text-zinc-500">
             Set
@@ -932,7 +1146,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
           <Text className="w-8 text-xs text-transparent">kg</Text>
           <View style={{ width: ACCEPT_BUTTON_SIZE }} />
         </View>
-      }
+      )}
 
       {/* Sets */}
       <KeyboardAwareScrollView
@@ -941,87 +1155,130 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
         bottomOffset={KEYBOARD_BAR_HEIGHT + 16}
         keyboardShouldPersistTaps="handled"
       >
-        {rows.map((row, index) => {
-          const setNumber = index + 1;
-          const rowModeNow = rowMode(row);
-          const isTarget = setNumber === targetSetCount;
-          const cycle = () => handleCycleMode(index);
-          // Ghost: nothing logged yet. Its number fills it; only real rows cycle mode.
-          const ghost = isRowEmpty(row);
-          const makeReal = () => handleMakeReal(index);
-          const suggestionFor = (side?: "L" | "R") =>
-            getSuggestion(exercise.exerciseId, exercise.profileId, setNumber, side);
-          const common = {
-            setNumber,
-            exerciseId: exercise.exerciseId,
-            displayUnit,
-            updateSet: handleUpdateSet,
-            onBlur: handleSetBlur,
-            isBodyweight,
-            showSideColumn,
-            ghost,
-          };
-          if (row.kind === "bilateral") {
-            return (
-              <SetRow
-                key={row.set.id}
-                {...common}
-                set={row.set}
-                suggestion={suggestionFor()}
-                isTarget={isTarget}
-                mode="bilateral"
-                onCycleMode={cycle}
-                onMakeReal={makeReal}
-              />
-            );
-          }
-          const { left, right } = row;
-          if (rowModeNow === "unilateral" && left && right) {
-            const rightSuggestion = suggestionFor("R");
-            return (
-              <SetRow
-                key={`${right.id}-${left.id}`}
-                {...common}
-                set={right}
-                // L = R implied: every edit and accept writes both sides.
-                updateSet={(exerciseId, _setId, updates) => {
-                  handleUpdateSet(exerciseId, right.id, updates);
-                  updateSet(exerciseId, left.id, updates);
-                }}
-                suggestion={rightSuggestion.reps != null ? rightSuggestion : suggestionFor("L")}
-                isTarget={isTarget}
-                mode="unilateral"
-                onCycleMode={cycle}
-                onMakeReal={makeReal}
-              />
-            );
-          }
-          // Split rows (or a unilateral row missing a side): R row, then L row.
-          const pairDone = [right, left].every((s) => s == null || isRowDone(s, isBodyweight));
-          const sides = [
-            right && { set: right, label: "R" as const },
-            left && { set: left, label: "L" as const },
-          ].filter((x): x is { set: StoredSet; label: "R" | "L" } => !!x);
-          return (
-            <View key={sides.map((x) => x.set.id).join("-")}>
-              {sides.map(({ set, label }, i) => (
-                <SetRow
-                  key={set.id}
-                  {...common}
-                  set={set}
-                  sideLabel={label}
-                  suggestion={suggestionFor(label)}
-                  isTarget={isTarget && i === 0}
-                  targetDone={pairDone}
-                  mode={i === 0 ? rowModeNow : undefined}
-                  onCycleMode={i === 0 ? cycle : undefined}
-                  onMakeReal={i === 0 ? makeReal : undefined}
+        {rows.flatMap((row, index) => [
+          headerFor(index),
+          ((): React.ReactNode => {
+            const setNumber = workingNumber(index);
+            const warmNo = rowNumbers[index]?.warm;
+            const warmupLabel = warmNo != null ? `w${warmNo}` : undefined;
+            const longPress = () => flipWarmup(index, warmNo == null);
+
+            const rowModeNow = rowMode(row);
+            const isTarget = warmNo == null && setNumber === targetSetCount;
+            const cycle = () => handleCycleMode(index);
+            // Ghost: nothing logged yet. Its number fills it; only real rows cycle mode.
+            const ghost = isRowEmpty(row);
+            const makeReal = () => handleMakeReal(index);
+            const suggestionFor = (side?: "L" | "R") =>
+              getSuggestion(exercise.exerciseId, exercise.profileId, setNumber, side);
+            const common = {
+              setNumber,
+              exerciseId: exercise.exerciseId,
+              displayUnit,
+              updateSet: handleUpdateSet,
+              onBlur: handleSetBlur,
+              isBodyweight,
+              showSideColumn,
+              ghost,
+              warmupLabel,
+              onLongPressNumber: ghost ? undefined : longPress,
+            };
+            if (timed && row.kind === "bilateral") {
+              return (
+                <TimedSetRow
+                  key={row.set.id}
+                  set={row.set}
+                  setNumber={setNumber}
+                  ghost={ghost}
+                  suggestion={timedSuggestion(index, suggestionFor())}
+                  speedUnit={speedUnit}
+                  onChange={(updates) => handleUpdateSet(exercise.exerciseId, row.set.id, updates)}
+                  onMakeReal={makeReal}
+                  onBlur={handleSetBlur}
                 />
-              ))}
-            </View>
-          );
-        })}
+              );
+            }
+            if (row.kind === "bilateral") {
+              return (
+                <SetRow
+                  key={row.set.id}
+                  {...common}
+                  set={row.set}
+                  suggestion={suggestionFor()}
+                  isTarget={isTarget}
+                  mode="bilateral"
+                  onCycleMode={cycle}
+                  onMakeReal={makeReal}
+                />
+              );
+            }
+            const { left, right } = row;
+            if (rowModeNow === "unilateral" && left && right) {
+              const rightSuggestion = suggestionFor("R");
+              return (
+                <SetRow
+                  key={`${right.id}-${left.id}`}
+                  {...common}
+                  set={right}
+                  // L = R implied: every edit and accept writes both sides.
+                  updateSet={(exerciseId, _setId, updates) => {
+                    handleUpdateSet(exerciseId, right.id, updates);
+                    updateSet(exerciseId, left.id, updates);
+                  }}
+                  suggestion={rightSuggestion.reps != null ? rightSuggestion : suggestionFor("L")}
+                  isTarget={isTarget}
+                  mode="unilateral"
+                  onCycleMode={cycle}
+                  onMakeReal={makeReal}
+                />
+              );
+            }
+            // Split rows (or a unilateral row missing a side): R row, then L row.
+            const pairDone = [right, left].every((s) => s == null || isRowDone(s, isBodyweight));
+            const sides = [
+              right && { set: right, label: "R" as const },
+              left && { set: left, label: "L" as const },
+            ].filter((x): x is { set: StoredSet; label: "R" | "L" } => !!x);
+            return (
+              <View key={sides.map((x) => x.set.id).join("-")}>
+                {sides.map(({ set, label }, i) => (
+                  <SetRow
+                    key={set.id}
+                    {...common}
+                    set={set}
+                    sideLabel={label}
+                    suggestion={suggestionFor(label)}
+                    isTarget={isTarget && i === 0}
+                    targetDone={pairDone}
+                    mode={i === 0 ? rowModeNow : undefined}
+                    onCycleMode={i === 0 ? cycle : undefined}
+                    onMakeReal={i === 0 ? makeReal : undefined}
+                  />
+                ))}
+              </View>
+            );
+          })(),
+        ])}
       </KeyboardAwareScrollView>
+
+      {workingToast != null && (
+        <View
+          testID="working-toast"
+          className="mx-2 mb-1 flex-row items-center justify-between rounded-lg bg-zinc-800 px-3 py-2"
+        >
+          <Text className="text-sm text-zinc-100">Working sets from here</Text>
+          <Pressable
+            testID="working-toast-undo"
+            onPress={() => {
+              flipWarmup(workingToast, true);
+              setWorkingToast(null);
+            }}
+            hitSlop={8}
+          >
+            <Text className="text-sm font-semibold text-ember-500">Undo</Text>
+          </Pressable>
+        </View>
+      )}
 
       {/* Rest Timer */}
       <RestTimer />

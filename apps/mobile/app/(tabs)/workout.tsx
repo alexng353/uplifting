@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useDayTypes } from "../../hooks/useDayTypes";
+import { nextDayType } from "../../lib/day-types";
+import { getExerciseSequences } from "../../services/storage";
 import { View, Text, Pressable, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import PagerView from "react-native-pager-view";
@@ -48,6 +51,14 @@ export default function WorkoutScreen() {
     finishWorkout,
     cancelWorkout,
   } = useWorkout();
+  const { days } = useDayTypes();
+  // The day to start: his pick, else the next in rotation ("" = Any).
+  // Re-read when a workout starts or ends: the tab stays mounted across workouts.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const rotationDay = useMemo(() => nextDayType(days, getExerciseSequences()), [days, isActive]);
+  const [pickedDayId, setPickedDayId] = useState<string | null>(null);
+  const pickedDay =
+    pickedDayId === "" ? null : (days.find((d) => d.id === pickedDayId) ?? rotationDay);
   const { forceSync } = useSync();
   const colors = useThemeColors();
   const queryClient = useQueryClient();
@@ -275,11 +286,38 @@ export default function WorkoutScreen() {
           <Text className="mb-6 text-center text-base text-zinc-500 dark:text-zinc-400">
             Start a new workout session to begin logging your exercises.
           </Text>
+          {/* Day type: defaults to the next in rotation; "Any" keeps all-history suggestions. */}
+          <View testID="day-picker" className="mb-4 w-full flex-row flex-wrap justify-center gap-2">
+            {[...days, null].map((d) => {
+              const selected = (d?.id ?? null) === (pickedDay?.id ?? null);
+              return (
+                <Pressable
+                  key={d?.id ?? "any"}
+                  testID={`day-chip-${d?.name ?? "Any"}`}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  onPress={() => setPickedDayId(d?.id ?? "")}
+                  className={`rounded-full border px-4 py-2 ${selected ? "border-ember-500 bg-ember-500" : "border-zinc-300 dark:border-zinc-600"}`}
+                >
+                  <Text
+                    className={`text-sm font-semibold ${selected ? "text-ember-ink" : "text-zinc-600 dark:text-zinc-300"}`}
+                  >
+                    {d?.name ?? "Any"}
+                    {d && d.id === rotationDay?.id ? " · next" : ""}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
           <Pressable
-            onPress={() => startWorkout()}
+            onPress={() =>
+              startWorkout(pickedDay ? { id: pickedDay.id, name: pickedDay.name } : undefined)
+            }
             className="mb-3 w-full items-center rounded-lg bg-ember-500 py-3.5 active:bg-ember-600"
           >
-            <Text className="text-base font-semibold text-ember-ink">Start Workout</Text>
+            <Text className="text-base font-semibold text-ember-ink">
+              {pickedDay ? `Start ${pickedDay.name}` : "Start Workout"}
+            </Text>
           </Pressable>
           {!todayHasWorkouts && (
             <Pressable

@@ -1,6 +1,7 @@
 import {
   generateId,
   getSettings,
+  getExercises,
   getSideDefault,
   type StoredSet,
   type StoredWorkout,
@@ -49,14 +50,16 @@ export function addExerciseMutation(
     bodyweight: exerciseType === "Bodyweight" ? (settings.bodyweight ?? undefined) : undefined,
   };
 
+  const measure = getExercises().find((e) => e.id === exerciseId)?.measure;
   const newExercise: StoredWorkoutExercise = {
     exerciseId,
     exerciseName,
     exerciseType,
+    ...(measure === "timed" ? { measure } : null),
     profileId,
     sets: [firstSet],
   };
-  const sideDefault = getSideDefault(exerciseId);
+  const sideDefault = measure === "timed" ? null : getSideDefault(exerciseId);
   if (sideDefault && sideDefault !== "bilateral") {
     const layout = sideDefault === "unilateral" ? { layout: "combined" as const } : {};
     newExercise.isUnilateral = true;
@@ -99,6 +102,7 @@ export function addSetMutation(
   weight?: number,
   side?: "L" | "R",
   autoAdded?: boolean,
+  extra?: Partial<StoredSet>,
 ): StoredWorkout {
   const bodyweight = getBodyweightForExercise(workout, exerciseId);
   const newSet: StoredSet = {
@@ -110,6 +114,7 @@ export function addSetMutation(
     side,
     bodyweight,
     ...(autoAdded ? { autoAdded } : {}),
+    ...extra,
   };
 
   return {

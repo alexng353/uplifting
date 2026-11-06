@@ -2,6 +2,8 @@ import { useCallback, useMemo } from "react";
 import { getPreviousSets, getSetCounts } from "../services/storage";
 import { getPreviousSetSuggestion, type SetSuggestion } from "../lib/previous-sets";
 import { targetSetCount } from "../lib/target-sets";
+import { previousForProfile } from "../lib/warmup-apply";
+import type { StoredSet } from "../services/storage";
 
 export function usePreviousSets(): {
   isLoading: boolean;
@@ -12,6 +14,7 @@ export function usePreviousSets(): {
     side?: "L" | "R",
   ) => SetSuggestion;
   getTargetSetCount: (exerciseId: string, profileId?: string) => number | null;
+  getPrevious: (exerciseId: string, profileId?: string) => StoredSet[];
 } {
   // The hydrated cache is synchronous, so no loading state is needed.
   const previousSets = useMemo(() => getPreviousSets(), []);
@@ -34,5 +37,11 @@ export function usePreviousSets(): {
     [setCounts, previousSets],
   );
 
-  return { isLoading: false, getSuggestion, getTargetSetCount };
+  const getPrevious = useCallback(
+    (exerciseId: string, profileId?: string) =>
+      previousForProfile(previousSets, exerciseId, profileId),
+    [previousSets],
+  );
+
+  return { isLoading: false, getSuggestion, getTargetSetCount, getPrevious };
 }

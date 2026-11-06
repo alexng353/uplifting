@@ -66,6 +66,9 @@ export const exercises = pgTable("exercises", {
   description: text(),
   movementPattern: varchar("movement_pattern", { length: 50 }),
   muscleGroup: varchar("muscle_group", { length: 50 }),
+  // How a set of this exercise is logged: "weights" (reps x weight) or "timed"
+  // (duration, plus optional speed, incline and distance; e.g. treadmill walks).
+  measure: varchar({ length: 10 }).notNull().default("weights"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -172,6 +175,17 @@ export const userSets = pgTable("user_sets", {
   weightUnit: varchar("weight_unit", { length: 3 }).notNull().default("kg"),
   side: varchar({ length: 1 }),
   bodyweight: decimal({ precision: 10, scale: 2 }),
+  // Timed sets (exercises.measure = "timed") store reps 1 and weight 0, so every
+  // reps/weight reader (volume, the gate feed's set count) keeps working; these
+  // columns carry what was actually done. All null on weight sets.
+  durationSeconds: integer("duration_seconds"),
+  speed: decimal({ precision: 6, scale: 2 }),
+  speedUnit: varchar("speed_unit", { length: 4 }),
+  incline: decimal({ precision: 5, scale: 2 }),
+  distance: decimal({ precision: 8, scale: 3 }),
+  distanceUnit: varchar("distance_unit", { length: 3 }),
+  // A warmup set: kept, and counted by the gate feed, but left out of volume and PRs.
+  isWarmup: boolean("is_warmup").notNull().default(false),
   // Order index of this set's exercise within its workout (all sets of the
   // same exercise+profile in a workout share it). Authoritative for exercise
   // display order, so reordering persists independently of createdAt. Sets
