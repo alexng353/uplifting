@@ -51,7 +51,7 @@ private struct LockScreenView: View {
         if let superset = state.superset {
           HStack(spacing: 4) {
             Image(systemName: "arrow.left.arrow.right").font(.caption2)
-            Text(superset).font(.caption.weight(.medium)).lineLimit(1)
+            Text(superset).font(.caption.weight(.medium)).lineLimit(2).minimumScaleFactor(0.85)
           }
           .foregroundStyle(Ember.text)
         }
