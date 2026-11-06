@@ -582,6 +582,8 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   // "Working sets from here" when a logged set first crosses the 80% line, with Undo.
   const [workingToast, setWorkingToast] = useState<number | null>(null);
   const lastKinds = useRef<{ kinds: typeof kinds; done: boolean[] } | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => void (toastTimer.current && clearTimeout(toastTimer.current)), []);
   useEffect(() => {
     const doneNow = rows.map(
       (r) => !isRowEmpty(r) && rowSets(r).every((s) => s.reps != null && s.weight != null),
@@ -592,8 +594,8 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
     const start = newWorkingStart(prev.kinds, kinds, prev.done, doneNow);
     if (start == null) return;
     setWorkingToast(start);
-    const t = setTimeout(() => setWorkingToast(null), 5000);
-    return () => clearTimeout(t);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setWorkingToast(null), 5000);
   }, [kinds, rows, mode]);
   const flipWarmup = useCallback(
     (rowIndex: number, warmup: boolean) => {

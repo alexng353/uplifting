@@ -2,7 +2,7 @@ import { useCallback, useMemo } from "react";
 import { getPreviousSets, getSetCounts } from "../services/storage";
 import { getPreviousSetSuggestion, type SetSuggestion } from "../lib/previous-sets";
 import { targetSetCount } from "../lib/target-sets";
-import { previousFor } from "../lib/warmup-apply";
+import { previousForProfile } from "../lib/warmup-apply";
 import type { StoredSet } from "../services/storage";
 
 export function usePreviousSets(): {
@@ -38,7 +38,8 @@ export function usePreviousSets(): {
   );
 
   const getPrevious = useCallback(
-    (exerciseId: string, profileId?: string) => previousFor(previousSets, exerciseId, profileId),
+    (exerciseId: string, profileId?: string) =>
+      previousForProfile(previousSets, exerciseId, profileId),
     [previousSets],
   );
 

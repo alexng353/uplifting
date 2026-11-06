@@ -17,7 +17,7 @@ interface AddExerciseSlideProps {
 }
 
 export default function AddExerciseSlide({ onExerciseAdded }: AddExerciseSlideProps) {
-  const { addExercise } = useWorkoutActions();
+  const { addExercise, mode } = useWorkoutActions();
   const colors = useThemeColors();
   const [searchText, setSearchText] = useState("");
 
@@ -29,9 +29,9 @@ export default function AddExerciseSlide({ onExerciseAdded }: AddExerciseSlidePr
   const suggestedExerciseIds = useExerciseSuggestions();
   const live = useOptionalWorkout();
   const day = useMemo(() => {
-    const id = live?.workout?.dayTypeId;
+    const id = mode === "live" ? live?.workout?.dayTypeId : undefined;
     return id ? getDayTypes()?.find((d) => d.id === id) : undefined;
-  }, [live?.workout?.dayTypeId]);
+  }, [mode, live?.workout?.dayTypeId]);
   const inWorkout = useMemo(
     () => new Set(live?.workout?.exercises.map((e) => e.exerciseId) ?? []),
     [live?.workout?.exercises],
