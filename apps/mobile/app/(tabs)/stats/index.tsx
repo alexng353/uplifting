@@ -19,6 +19,7 @@ import { useUsedExercises } from "../../../hooks/useUsedExercises";
 import { useSettings } from "../../../hooks/useSettings";
 import { useThemeColors } from "../../../hooks/useThemeColors";
 import { convertWeight } from "../../../services/storage";
+import MusclesWorked from "../../../components/stats/MusclesWorked";
 
 type StatsTab = "week" | "alltime" | "exercises";
 
@@ -310,6 +311,10 @@ function AllTimeTab({ refreshing, onRefresh }: { refreshing: boolean; onRefresh:
             </View>
           ))}
         </>
+      )}
+
+      {allTimeStats.top_exercises?.length > 0 && (
+        <MusclesWorked topExercises={allTimeStats.top_exercises} />
       )}
 
       {/* Muscle group volume */}
