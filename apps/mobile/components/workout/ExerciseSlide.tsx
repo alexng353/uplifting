@@ -61,7 +61,7 @@ interface ExerciseSlideProps {
 const DEFAULT_REPS = 10;
 const DEFAULT_WEIGHT = 20;
 
-const INPUT_HEIGHT = 36;
+const INPUT_HEIGHT = 40;
 const SIDE_BADGE_HEIGHT = 22;
 const ACCEPT_BUTTON_SIZE = 36;
 const TARGET_RING_SIZE = 26;
@@ -99,6 +99,8 @@ function SetNumberCell({
   ringDone,
   mode,
   onCycleMode,
+  ghost,
+  onMakeReal,
 }: {
   setNumber: number;
   label: string;
@@ -107,6 +109,9 @@ function SetNumberCell({
   /** The row's mode; shown small under the number when the number can be tapped. */
   mode?: SideMode;
   onCycleMode?: () => void;
+  /** Nothing logged yet: the number fills the row instead of cycling its mode. */
+  ghost?: boolean;
+  onMakeReal?: () => void;
 }) {
   const colors = useThemeColors();
   const number = !isTarget ? (
@@ -133,6 +138,38 @@ function SetNumberCell({
       </Text>
     </View>
   );
+  const modeGlyph = mode && (
+    <Text
+      className="mt-0.5 text-[8px] font-bold uppercase tracking-wide"
+      style={{
+        color:
+          ghost || mode === "bilateral"
+            ? colors.placeholder
+            : mode === "unilateral"
+              ? colors.leftSideText
+              : colors.rightSideText,
+      }}
+    >
+      {mode === "bilateral" ? "bi" : mode === "unilateral" ? "uni" : "split"}
+    </Text>
+  );
+  // A ghost row's number makes it real (like the accept check); its mode follows the
+  // exercise default until then.
+  if (ghost && onMakeReal) {
+    return (
+      <Pressable
+        testID="make-real"
+        accessibilityRole="button"
+        accessibilityLabel={`Set ${setNumber}, not logged yet. Tap to fill it from last time`}
+        onPress={onMakeReal}
+        hitSlop={6}
+        className="w-8 items-center active:opacity-50"
+      >
+        {number}
+        {modeGlyph}
+      </Pressable>
+    );
+  }
   if (!onCycleMode || !mode) return <View className="w-8 items-center">{number}</View>;
   // Tapping the set number cycles this row: Bilateral -> Unilateral -> Split.
   return (
@@ -145,19 +182,7 @@ function SetNumberCell({
       className="w-8 items-center active:opacity-50"
     >
       {number}
-      <Text
-        className="mt-0.5 text-[8px] font-bold uppercase tracking-wide"
-        style={{
-          color:
-            mode === "bilateral"
-              ? colors.placeholder
-              : mode === "unilateral"
-                ? colors.leftSideText
-                : colors.rightSideText,
-        }}
-      >
-        {mode === "bilateral" ? "bi" : mode === "unilateral" ? "uni" : "split"}
-      </Text>
+      {modeGlyph}
     </Pressable>
   );
 }
@@ -306,6 +331,8 @@ function SetRow({
   mode,
   onCycleMode,
   showSideColumn,
+  ghost,
+  onMakeReal,
 }: {
   set: StoredSet;
   setNumber: number;
@@ -324,6 +351,9 @@ function SetRow({
   onCycleMode?: () => void;
   /** Some row is split, so bilateral rows leave room for the side badge. */
   showSideColumn?: boolean;
+  /** Nothing logged in this row yet: drawn dimmed with dashed fields. */
+  ghost?: boolean;
+  onMakeReal?: () => void;
 }) {
   const colors = useThemeColors();
   const { updates, canAccept, isFilled, suggestedReps, suggestedWeight } = acceptValues(
@@ -333,9 +363,21 @@ function SetRow({
   );
   // Finish keeps any set with reps, so a reps-only bodyweight row counts as done.
   const ringDone = targetDone ?? isRowDone(set, isBodyweight);
+  // Ghost fields: dashed and dim, so they don't read as logged sets. Typing still goes
+  // straight in (the grey number is only a placeholder) and makes the row real.
+  const fieldStyle = {
+    height: INPUT_HEIGHT,
+    fontSize: 16,
+    textAlignVertical: "center" as const,
+    ...(ghost ? { borderStyle: "dashed" as const } : null),
+  };
 
   return (
-    <View className="mb-1 flex-row items-center gap-2 px-2 py-1">
+    <View
+      testID={ghost ? "ghost-row" : "set-row"}
+      className="mb-1 flex-row items-center gap-2 px-2 py-1"
+      style={ghost ? { opacity: 0.55 } : undefined}
+    >
       <SetNumberCell
         setNumber={setNumber}
         label={sideLabel === "L" ? "" : String(setNumber)}
@@ -343,6 +385,8 @@ function SetRow({
         ringDone={ringDone}
         mode={mode}
         onCycleMode={onCycleMode}
+        ghost={ghost}
+        onMakeReal={onMakeReal}
       />
       {sideLabel == null ? (
         showSideColumn && <View className="w-7" />
@@ -375,8 +419,8 @@ function SetRow({
               reps,
             })
           }
-          className="rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 text-center dark:text-zinc-100"
-          style={{ height: INPUT_HEIGHT, fontSize: 16, textAlignVertical: "center" }}
+          className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 text-center font-semibold dark:text-zinc-100"
+          style={fieldStyle}
           selectTextOnFocus
         />
       </View>
@@ -394,8 +438,8 @@ function SetRow({
               weight,
             })
           }
-          className="rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 text-center dark:text-zinc-100"
-          style={{ height: INPUT_HEIGHT, fontSize: 16, textAlignVertical: "center" }}
+          className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 text-center font-semibold dark:text-zinc-100"
+          style={fieldStyle}
           selectTextOnFocus
         />
       </View>
@@ -562,6 +606,60 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
       if (row) setRowMode(exercise.exerciseId, rowIndex, NEXT_MODE[rowMode(row)]);
     },
     [rows, exercise.exerciseId, setRowMode],
+  );
+
+  /**
+   * Makes a ghost row real: each side takes last time's values for this set (as the
+   * accept check does), or else the last filled row's. The first write goes through
+   * handleUpdateSet so auto-add behaves as if it was typed.
+   */
+  const handleMakeReal = useCallback(
+    (rowIndex: number) => {
+      const row = rows[rowIndex];
+      if (!row || !isRowEmpty(row)) return;
+      const setNumber = rowIndex + 1;
+      let sourceIndex = rowIndex - 1;
+      while (sourceIndex >= 0 && isRowEmpty(rows[sourceIndex])) sourceIndex--;
+      const source = rows[sourceIndex];
+      const fromSource = (side: "R" | "L" | undefined): Partial<StoredSet> | null => {
+        if (!source) return null;
+        const s =
+          source.kind === "bilateral"
+            ? source.set
+            : side === "L"
+              ? (source.left ?? source.right)
+              : (source.right ?? source.left);
+        return s && (s.reps != null || s.weight != null)
+          ? { reps: s.reps, weight: s.weight }
+          : null;
+      };
+      const fill = (set: StoredSet, side: "R" | "L" | undefined) => {
+        const suggestion = getSuggestion(exercise.exerciseId, exercise.profileId, setNumber, side);
+        const accepted = acceptValues(set, suggestion, isBodyweight);
+        return accepted.canAccept ? accepted.updates : fromSource(side);
+      };
+      if (row.kind === "bilateral") {
+        const updates = fill(row.set, undefined);
+        if (updates) handleUpdateSet(exercise.exerciseId, row.set.id, updates);
+        return;
+      }
+      // Unilateral means L = R, so both sides take R's values.
+      const rightUpdates = row.right ? fill(row.right, "R") : null;
+      const leftUpdates =
+        row.layout === "combined" ? rightUpdates : row.left ? fill(row.left, "L") : null;
+      if (row.right && rightUpdates)
+        handleUpdateSet(exercise.exerciseId, row.right.id, rightUpdates);
+      if (row.left && leftUpdates) updateSet(exercise.exerciseId, row.left.id, leftUpdates);
+    },
+    [
+      rows,
+      getSuggestion,
+      exercise.exerciseId,
+      exercise.profileId,
+      isBodyweight,
+      handleUpdateSet,
+      updateSet,
+    ],
   );
 
   // Changing the default also switches rows that have nothing in them yet.
@@ -738,14 +836,12 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                 accessibilityState={{ selected }}
                 onPress={() => !selected && handleDefaultMode(option)}
                 hitSlop={4}
-                className={`rounded-md px-3 py-1 ${selected ? "bg-white dark:bg-zinc-600" : ""}`}
+                className={`rounded-md px-3 py-1 ${selected ? "bg-ember-500" : ""}`}
               >
                 <Text
                   maxFontSizeMultiplier={1.4}
                   className={`text-xs font-semibold ${
-                    selected
-                      ? "text-zinc-900 dark:text-zinc-50"
-                      : "text-zinc-500 dark:text-zinc-400"
+                    selected ? "text-ember-ink" : "text-zinc-500 dark:text-zinc-400"
                   }`}
                 >
                   {option === "bilateral" ? "Bi" : option === "unilateral" ? "Uni" : "Split"}
@@ -811,6 +907,9 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
           const rowModeNow = rowMode(row);
           const isTarget = setNumber === targetSetCount;
           const cycle = () => handleCycleMode(index);
+          // Ghost: nothing logged yet. Its number fills it; only real rows cycle mode.
+          const ghost = isRowEmpty(row);
+          const makeReal = () => handleMakeReal(index);
           const suggestionFor = (side?: "L" | "R") =>
             getSuggestion(exercise.exerciseId, exercise.profileId, setNumber, side);
           const common = {
@@ -821,6 +920,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
             onBlur: handleSetBlur,
             isBodyweight,
             showSideColumn,
+            ghost,
           };
           if (row.kind === "bilateral") {
             return (
@@ -832,6 +932,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                 isTarget={isTarget}
                 mode="bilateral"
                 onCycleMode={cycle}
+                onMakeReal={makeReal}
               />
             );
           }
@@ -852,6 +953,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                 isTarget={isTarget}
                 mode="unilateral"
                 onCycleMode={cycle}
+                onMakeReal={makeReal}
               />
             );
           }
@@ -874,6 +976,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                   targetDone={pairDone}
                   mode={i === 0 ? rowModeNow : undefined}
                   onCycleMode={i === 0 ? cycle : undefined}
+                  onMakeReal={i === 0 ? makeReal : undefined}
                 />
               ))}
             </View>
