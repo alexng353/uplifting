@@ -28,6 +28,7 @@ interface NativeModule {
   startWorkoutSession(workoutId: string, startMs: number): Promise<boolean>;
   finishWorkoutSession(workoutId: string, endMs: number): Promise<WorkoutSessionResult>;
   discardWorkoutSession(): Promise<void>;
+  deleteSavedWorkouts(workoutId: string): Promise<void>;
   addListener(event: "onIntent", cb: (e: { action: string }) => void): { remove(): void };
 }
 

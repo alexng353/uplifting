@@ -31,6 +31,9 @@ final class WorkoutSessionController: NSObject, HKWorkoutSessionDelegate, HKLive
     if session != nil { discard() }
 
     if await recoverMatching(workoutId) { return }
+    // HealthKit finishes and saves a session on its own when the app is replaced mid-
+    // workout (an update). Drop that partial entry; this session saves the full one.
+    await deleteSavedWorkouts(workoutId)
 
     let config = configuration()
     let session = try HKWorkoutSession(healthStore: store, configuration: config)
@@ -49,6 +52,24 @@ final class WorkoutSessionController: NSObject, HKWorkoutSessionDelegate, HKLive
     await withCheckedContinuation { continuation in
       store.recoverActiveWorkoutSession { session, _ in continuation.resume(returning: session) }
     }
+  }
+
+  /// Deletes Uplifting's Health workouts tagged with this workout's ID. Used before a
+  /// fresh save so one Uplifting workout is never two Health entries.
+  func deleteSavedWorkouts(_ workoutId: String) async {
+    let predicate = HKQuery.predicateForObjects(
+      withMetadataKey: HKMetadataKeyExternalUUID, allowedValues: [workoutId])
+    let found: [HKSample] = await withCheckedContinuation { continuation in
+      let query = HKSampleQuery(
+        sampleType: .workoutType(), predicate: predicate, limit: HKObjectQueryNoLimit,
+        sortDescriptors: nil
+      ) { _, samples, _ in continuation.resume(returning: samples ?? []) }
+      store.execute(query)
+    }
+    // Only ours: HealthKit refuses to delete other apps' samples anyway.
+    let ours = found.filter { $0.sourceRevision.source == HKSource.default() }
+    guard !ours.isEmpty else { return }
+    try? await store.delete(ours)
   }
 
   /// Adopts a surviving session if it was started for this workout; any other surviving
