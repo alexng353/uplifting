@@ -2,6 +2,7 @@ import { Elysia, t } from "elysia";
 import { eq, and, desc, sql as dsql, asc } from "drizzle-orm";
 import { db, sql } from "../db";
 import { workouts, userSets } from "../db/schema";
+import { timedValues } from "../lib/timed-sets";
 import { authPlugin } from "../lib/auth";
 
 export const workoutRoutes = new Elysia({ prefix: "/workouts" })
@@ -72,7 +73,7 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
             -- Normalize to kg: lbs * 0.453592
             COALESCE(SUM((CASE WHEN s.weight_unit = 'lbs' THEN s.weight * 0.453592 ELSE s.weight END) * s.reps), 0) as total_volume,
             COUNT(s.id) FILTER (WHERE s.side IS NULL OR s.side = 'R') as total_sets,
-            COALESCE(SUM(s.reps), 0) as total_reps
+            COALESCE(SUM(s.reps) FILTER (WHERE s.duration_seconds IS NULL), 0) as total_reps
           FROM workouts w
           LEFT JOIN user_sets s ON s.workout_id = w.id
           WHERE w.user_id = ${userId} AND w.kind = 'workout'
@@ -258,7 +259,7 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
         COALESCE(EXTRACT(EPOCH FROM (COALESCE(w.end_time, NOW()) - w.start_time)) / 60, 0)::bigint as duration_minutes,
         COALESCE(SUM((CASE WHEN s.weight_unit = 'lbs' THEN s.weight * 0.453592 ELSE s.weight END) * s.reps), 0) as total_volume,
         COUNT(s.id) FILTER (WHERE s.side IS NULL OR s.side = 'R') as total_sets,
-        COALESCE(SUM(s.reps), 0) as total_reps,
+        COALESCE(SUM(s.reps) FILTER (WHERE s.duration_seconds IS NULL), 0) as total_reps,
         COUNT(DISTINCT s.exercise_id) as exercises_count
       FROM workouts w
       LEFT JOIN user_sets s ON s.workout_id = w.id
@@ -339,6 +340,7 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
                 weightUnit: s.weight_unit,
                 side: s.side,
                 bodyweight: s.bodyweight ? String(s.bodyweight) : undefined,
+                ...timedValues(s),
                 position,
                 createdAt: s.created_at ? new Date(s.created_at) : new Date(),
               });
@@ -418,6 +420,12 @@ export const workoutRoutes = new Elysia({ prefix: "/workouts" })
                   created_at: t.Optional(t.String()),
                   side: t.Optional(t.String()),
                   bodyweight: t.Optional(t.Number()),
+                  duration_seconds: t.Optional(t.Integer({ minimum: 1 })),
+                  speed: t.Optional(t.Number({ minimum: 0 })),
+                  speed_unit: t.Optional(t.String({ maxLength: 4 })),
+                  incline: t.Optional(t.Number()),
+                  distance: t.Optional(t.Number({ minimum: 0 })),
+                  distance_unit: t.Optional(t.String({ maxLength: 3 })),
                 }),
               ),
             }),
