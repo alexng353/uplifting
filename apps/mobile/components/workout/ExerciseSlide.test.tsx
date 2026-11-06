@@ -321,6 +321,40 @@ describe("accept suggestion", () => {
       expect(pick(set("g"))).toEqual([7, 80]);
     });
 
+    test("a copied set converts units; with nothing to copy, the tap writes nothing", async () => {
+      suggestionFor = () => ({ reps: null, weight: null, weightUnit: null });
+      await renderSets([
+        makeSet("a", { reps: 5, weight: 100, weightUnit: "kg" }),
+        makeSet("g", { weightUnit: "lbs" }),
+      ]);
+      await act(() => host("make-real")[0].props.onPress());
+      expect(set("g").reps).toBe(5);
+      expect(set("g").weight).toBeCloseTo(220.5, 0);
+      await act(() => renderer.unmount());
+
+      await renderSets([makeSet("only")]);
+      // Nothing to fill from: it focuses reps instead of inventing numbers.
+      await act(() => host("make-real")[0].props.onPress());
+      expect(pick(set("only"))).toEqual([undefined, undefined]);
+    });
+
+    test("a unilateral ghost with only left-side history fills both sides from it", async () => {
+      suggestionFor = (_n, side) =>
+        side === "L" ? LEFT_HISTORY : { reps: null, weight: null, weightUnit: null };
+      await renderSets(
+        [
+          makeSet("uR", { side: "R", layout: "combined" }),
+          makeSet("uL", { side: "L", layout: "combined" }),
+        ],
+        true,
+      );
+      await act(() => host("make-real")[0].props.onPress());
+      expect([pick(set("uR")), pick(set("uL"))]).toEqual([
+        [5, 100],
+        [5, 100],
+      ]);
+    });
+
     test.each([
       ["bilateral", [makeSet("g")], "g", ["g"]],
       [

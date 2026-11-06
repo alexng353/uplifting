@@ -271,19 +271,23 @@ function SetNumberInput({
   onBlur,
   onFocus,
   fieldKey,
+  inputRef,
   ...props
 }: Omit<TextInputProps, "value" | "onChangeText" | "keyboardType"> & {
   value?: number;
   onChangeValue: (value: number | undefined) => void;
   /** Stop in the keyboard bar's Previous/Next order. */
   fieldKey?: string;
+  /** The row's own handle, e.g. to focus reps when a ghost has nothing to fill. */
+  inputRef?: { current: TextInput | null };
 }) {
   const navigator = useSetFieldFocus();
   const register = useCallback(
     (input: TextInput | null) => {
+      if (inputRef) inputRef.current = input;
       if (navigator && fieldKey) navigator.register(fieldKey, input);
     },
-    [navigator, fieldKey],
+    [navigator, fieldKey, inputRef],
   );
   // Keep intermediate text such as "20." while saving numeric values on every edit.
   const [draft, setDraft] = useState<string | null>(null);
@@ -353,9 +357,11 @@ function SetRow({
   showSideColumn?: boolean;
   /** Nothing logged in this row yet: drawn dimmed with dashed fields. */
   ghost?: boolean;
-  onMakeReal?: () => void;
+  /** Fills a ghost row; false when there was nothing to fill it with. */
+  onMakeReal?: () => boolean;
 }) {
   const colors = useThemeColors();
+  const repsRef = useRef<TextInput | null>(null);
   const { updates, canAccept, isFilled, suggestedReps, suggestedWeight } = acceptValues(
     set,
     suggestion,
@@ -386,7 +392,8 @@ function SetRow({
         mode={mode}
         onCycleMode={onCycleMode}
         ghost={ghost}
-        onMakeReal={onMakeReal}
+        // Nothing to fill from (no history, nothing above): start typing reps instead.
+        onMakeReal={onMakeReal && (() => void (onMakeReal() || repsRef.current?.focus()))}
       />
       {sideLabel == null ? (
         showSideColumn && <View className="w-7" />
@@ -410,6 +417,7 @@ function SetRow({
         <SetNumberInput
           value={set.reps}
           fieldKey={setFieldKey(set.id, "reps")}
+          inputRef={repsRef}
           placeholder={String(suggestedReps)}
           placeholderTextColor={colors.placeholder}
           selectionColor={colors.caret}
@@ -614,14 +622,17 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
    * handleUpdateSet so auto-add behaves as if it was typed.
    */
   const handleMakeReal = useCallback(
-    (rowIndex: number) => {
+    (rowIndex: number): boolean => {
       const row = rows[rowIndex];
-      if (!row || !isRowEmpty(row)) return;
+      if (!row || !isRowEmpty(row)) return false;
       const setNumber = rowIndex + 1;
       let sourceIndex = rowIndex - 1;
       while (sourceIndex >= 0 && isRowEmpty(rows[sourceIndex])) sourceIndex--;
       const source = rows[sourceIndex];
-      const fromSource = (side: "R" | "L" | undefined): Partial<StoredSet> | null => {
+      const fromSource = (
+        target: StoredSet,
+        side: "R" | "L" | undefined,
+      ): Partial<StoredSet> | null => {
         if (!source) return null;
         const s =
           source.kind === "bilateral"
@@ -629,27 +640,40 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
             : side === "L"
               ? (source.left ?? source.right)
               : (source.right ?? source.left);
-        return s && (s.reps != null || s.weight != null)
-          ? { reps: s.reps, weight: s.weight }
-          : null;
+        if (!s || (s.reps == null && s.weight == null)) return null;
+        // The earlier row may be in another unit if the unit changed mid-workout.
+        const weight =
+          s.weight != null ? convertWeight(s.weight, s.weightUnit, target.weightUnit) : s.weight;
+        return { reps: s.reps, weight };
       };
-      const fill = (set: StoredSet, side: "R" | "L" | undefined) => {
-        const suggestion = getSuggestion(exercise.exerciseId, exercise.profileId, setNumber, side);
+      const suggest = (side: "R" | "L" | undefined) =>
+        getSuggestion(exercise.exerciseId, exercise.profileId, setNumber, side);
+      const fill = (set: StoredSet, side: "R" | "L" | undefined, combined = false) => {
+        // A unilateral row shows R's suggestion, or L's when R has none; fill the same.
+        let suggestion = suggest(side);
+        if (combined && suggestion.reps == null) suggestion = suggest("L");
         const accepted = acceptValues(set, suggestion, isBodyweight);
-        return accepted.canAccept ? accepted.updates : fromSource(side);
+        return accepted.canAccept ? accepted.updates : fromSource(set, side);
       };
       if (row.kind === "bilateral") {
         const updates = fill(row.set, undefined);
         if (updates) handleUpdateSet(exercise.exerciseId, row.set.id, updates);
-        return;
+        return updates != null;
       }
-      // Unilateral means L = R, so both sides take R's values.
-      const rightUpdates = row.right ? fill(row.right, "R") : null;
+      // Unilateral means L = R, so both sides take the row's one value.
+      const combined = row.layout === "combined";
+      const rightUpdates = row.right ? fill(row.right, "R", combined) : null;
       const leftUpdates =
-        row.layout === "combined" ? rightUpdates : row.left ? fill(row.left, "L") : null;
-      if (row.right && rightUpdates)
-        handleUpdateSet(exercise.exerciseId, row.right.id, rightUpdates);
-      if (row.left && leftUpdates) updateSet(exercise.exerciseId, row.left.id, leftUpdates);
+        combined && row.right ? rightUpdates : row.left ? fill(row.left, "L", combined) : null;
+      // The first write goes through handleUpdateSet so auto-add runs once.
+      const writes = [
+        row.right && rightUpdates && { id: row.right.id, updates: rightUpdates },
+        row.left && leftUpdates && { id: row.left.id, updates: leftUpdates },
+      ].filter((w): w is { id: string; updates: Partial<StoredSet> } => !!w);
+      writes.forEach((w, i) =>
+        (i === 0 ? handleUpdateSet : updateSet)(exercise.exerciseId, w.id, w.updates),
+      );
+      return writes.length > 0;
     },
     [
       rows,
