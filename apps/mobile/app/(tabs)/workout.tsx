@@ -20,7 +20,7 @@ import AddExerciseSlide from "../../components/workout/AddExerciseSlide";
 import SetFieldNavigator from "../../components/workout/SetFieldNavigator";
 import WorkoutSummary from "../../components/workout/WorkoutSummary";
 import ReorderModal from "../../components/workout/ReorderModal";
-import { useLiveActivity } from "../../hooks/useLiveActivity";
+import { setActiveSlide as shareActiveSlide } from "../../lib/active-slide";
 import { onFinishRequest, takeFinishRequest } from "../../lib/intent-bus";
 
 function formatElapsed(startTime: string): string {
@@ -66,7 +66,7 @@ export default function WorkoutScreen() {
   const [showSummary, setShowSummary] = useState(false);
   const [showReorder, setShowReorder] = useState(false);
   const [elapsedTime, setElapsedTime] = useState("");
-  useLiveActivity(workout, activeSlide);
+  useEffect(() => shareActiveSlide(activeSlide), [activeSlide]);
 
   // "Finish Workout" from Siri / Shortcuts opens the summary.
   useEffect(() => {

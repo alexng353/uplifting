@@ -428,7 +428,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   );
 
   const cancelWorkout = useCallback(() => {
-    discardHealthForWorkout();
+    discardHealthForWorkout().catch(() => {});
     clearRest();
     setCurrentWorkout(null);
     setWorkout(null);

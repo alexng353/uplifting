@@ -2,10 +2,12 @@ import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeColors } from "../../hooks/useThemeColors";
 import { useWorkoutIntents } from "../../hooks/useWorkoutIntents";
+import { useLiveActivity } from "../../hooks/useLiveActivity";
 
 export default function TabLayout() {
   const colors = useThemeColors();
   useWorkoutIntents();
+  useLiveActivity();
 
   return (
     <Tabs
