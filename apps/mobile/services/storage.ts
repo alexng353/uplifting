@@ -115,7 +115,7 @@ export interface RepRangeConfig {
 export const DEFAULT_REP_RANGES: RepRangeConfig[] = [
   { label: "1 rep", min: 1, max: 1, color: "#ef4444" },
   { label: "2-5 reps", min: 2, max: 5, color: "#f97316" },
-  { label: "6-8 reps", min: 6, max: 8, color: "#3b82f6" },
+  { label: "6-8 reps", min: 6, max: 8, color: "#5DB4FF" },
   { label: "9-12 reps", min: 9, max: 12, color: "#22c55e" },
   { label: "12+ reps", min: 13, max: 9999, color: "#ffffff" },
 ];

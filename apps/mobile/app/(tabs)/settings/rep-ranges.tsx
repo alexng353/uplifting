@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, ScrollView, Pressable, TextInput, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -8,6 +8,7 @@ import { useSettings } from "../../../hooks/useSettings";
 import { DEFAULT_REP_RANGES, type RepRangeConfig } from "../../../services/storage";
 import { useThemeColors } from "../../../hooks/useThemeColors";
 import { inlineInput } from "../../../lib/input-style";
+import { contrastOn, rangeErrors, sameColor, swatchesFor } from "../../../lib/rep-ranges";
 
 type RangeWithId = RepRangeConfig & { _id: number };
 
@@ -16,18 +17,6 @@ function withId(range: RepRangeConfig): RangeWithId {
   return { ...range, _id: nextRangeId++ };
 }
 
-const PRESET_COLORS = [
-  "#ef4444",
-  "#f97316",
-  "#f59e0b",
-  "#22c55e",
-  "#F2894B",
-  "#8b5cf6",
-  "#ec4899",
-  "#6b7280",
-  "#ffffff",
-];
-
 export default function RepRangesScreen() {
   const router = useRouter();
   const colors = useThemeColors();
@@ -35,7 +24,36 @@ export default function RepRangesScreen() {
   const [ranges, setRanges] = useState<RangeWithId[]>(() =>
     (settings.repRanges ?? [...DEFAULT_REP_RANGES]).map(withId),
   );
-  const [hasChanges, setHasChanges] = useState(false);
+  const errors = useMemo(() => rangeErrors(ranges), [ranges]);
+  // Autosave: the latest valid ranges are written after a short pause in typing, at once for
+  // taps (colour, add, remove), and on leaving the screen. Invalid edits stay on screen with
+  // an inline error and are never written.
+  const latest = useRef(ranges);
+  latest.current = ranges;
+  const dirty = useRef(false);
+  const persist = useCallback(() => {
+    if (!dirty.current) return;
+    const current = latest.current;
+    if (rangeErrors(current).some((e) => e !== null)) return;
+    dirty.current = false;
+    updateSettings({ repRanges: current.map(({ _id, ...rest }) => rest) });
+  }, [updateSettings]);
+  const persistRef = useRef(persist);
+  persistRef.current = persist;
+  const [flushTick, setFlushTick] = useState(0);
+  const lastTick = useRef(0);
+  useEffect(() => {
+    if (!dirty.current) return;
+    const immediate = flushTick !== lastTick.current;
+    lastTick.current = flushTick;
+    const t = setTimeout(() => persistRef.current(), immediate ? 0 : 600);
+    return () => clearTimeout(t);
+  }, [ranges, flushTick]);
+  useEffect(() => () => persistRef.current(), []);
+  const markDirty = (now: boolean) => {
+    dirty.current = true;
+    if (now) setFlushTick((n) => n + 1);
+  };
 
   const updateRange = (index: number, field: keyof RepRangeConfig, value: string | number) => {
     setRanges((prev) => {
@@ -43,7 +61,7 @@ export default function RepRangesScreen() {
       next[index] = { ...next[index], [field]: value };
       return next;
     });
-    setHasChanges(true);
+    markDirty(field === "color");
   };
 
   const addRange = () => {
@@ -55,24 +73,16 @@ export default function RepRangesScreen() {
         label: `${newMin}+ reps`,
         min: newMin,
         max: 9999,
-        color: "#6b7280",
+        color: "#6B7280",
       }),
     ]);
-    setHasChanges(true);
+    markDirty(true);
   };
 
   const removeRange = (index: number) => {
     if (ranges.length <= 1) return;
     setRanges((prev) => prev.filter((_, i) => i !== index));
-    setHasChanges(true);
-  };
-
-  const save = () => {
-    updateSettings({
-      repRanges: ranges.map(({ _id, ...rest }) => rest),
-    });
-    setHasChanges(false);
-    Alert.alert("Saved", "Rep range colors have been saved.");
+    markDirty(true);
   };
 
   const reset = () => {
@@ -82,8 +92,8 @@ export default function RepRangesScreen() {
         text: "Reset",
         onPress: () => {
           setRanges([...DEFAULT_REP_RANGES].map(withId));
+          dirty.current = false;
           updateSettings({ repRanges: null });
-          setHasChanges(false);
         },
       },
     ]);
@@ -167,23 +177,67 @@ export default function RepRangesScreen() {
               />
             </View>
 
+            {errors[i] && (
+              <View className="flex-row items-center gap-1.5 border-b border-zinc-100 dark:border-zinc-800 px-4 py-2">
+                <Ionicons name="alert-circle" size={14} color="#F87171" />
+                <Text testID={`range-error-${i}`} className="text-sm text-red-400">
+                  {errors[i]} · not saved yet
+                </Text>
+              </View>
+            )}
+
             {/* Color picker */}
             <View className="px-4 py-3">
               <Text className="mb-2 text-sm text-zinc-400 dark:text-zinc-500">Color</Text>
-              <View className="flex-row flex-wrap gap-2">
-                {PRESET_COLORS.map((color) => (
-                  <Pressable
-                    key={color}
-                    onPress={() => updateRange(i, "color", color)}
-                    className={`h-8 w-8 rounded-full border-2 ${
-                      range.color === color
-                        ? "border-ember-500"
-                        : "border-zinc-200 dark:border-zinc-700"
-                    }`}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
+              <View className="flex-row flex-wrap gap-2.5">
+                {swatchesFor(range.color).map((s) => {
+                  const selected = sameColor(s.color, range.color);
+                  return (
+                    <Pressable
+                      key={s.color}
+                      testID={`swatch-${i}-${s.color}`}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected }}
+                      accessibilityLabel={s.custom ? "Current custom colour" : s.color}
+                      onPress={() => updateRange(i, "color", s.color)}
+                      hitSlop={4}
+                      // Selected: a gap then a white ring, plus a check in whichever ink contrasts
+                      // with the swatch, so it reads on every colour including white and grey.
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 20,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderWidth: 2,
+                        borderColor: selected ? "#FFFFFF" : "transparent",
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: selected ? 28 : 32,
+                          height: selected ? 28 : 32,
+                          borderRadius: 16,
+                          backgroundColor: s.color,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          borderWidth: 1,
+                          borderColor: "rgba(255,255,255,0.15)",
+                        }}
+                      >
+                        {selected && (
+                          <Ionicons name="checkmark" size={20} color={contrastOn(s.color)} />
+                        )}
+                      </View>
+                    </Pressable>
+                  );
+                })}
               </View>
+              {swatchesFor(range.color)[0].custom && (
+                <Text className="mt-2 text-xs text-zinc-500">
+                  The first swatch is your saved colour from the old palette.
+                </Text>
+              )}
             </View>
           </View>
         ))}
@@ -199,19 +253,10 @@ export default function RepRangesScreen() {
               Add Range
             </Text>
           </Pressable>
+          <Text className="mt-3 text-center text-xs text-zinc-500">
+            Changes save automatically.
+          </Text>
         </View>
-
-        {/* Save */}
-        {hasChanges && (
-          <View className="mt-4 px-4">
-            <Pressable
-              onPress={save}
-              className="items-center rounded-xl bg-ember-500 py-3 active:bg-ember-600"
-            >
-              <Text className="text-base font-semibold text-ember-ink">Save Changes</Text>
-            </Pressable>
-          </View>
-        )}
       </ScrollView>
     </SafeAreaView>
   );
