@@ -1,5 +1,6 @@
 import type { StoredSet, StoredWorkoutExercise } from "../services/storage";
 import { rowSets, toRows } from "./set-rows";
+import { formatTimedSet, isTimedSet } from "./timed";
 
 /** A set counts once it has reps, the same rule finishWorkout uses before saving. */
 export function isLoggedSet(set: StoredSet): boolean {
@@ -39,11 +40,12 @@ export function summarizeWorkout(
       const logged = rowSets(row).filter(isLoggedSet);
       if (logged.length === 0) continue;
       for (const s of logged) {
+        if (isTimedSet(s)) continue;
         totalReps += s.reps ?? 0;
         totalVolume += (s.reps ?? 0) * (s.weight ?? 0);
       }
       if (row.kind === "bilateral") {
-        labels.push(format(row.set));
+        labels.push(isTimedSet(row.set) ? formatTimedSet(row.set) : format(row.set));
         continue;
       }
       const right = row.right && isLoggedSet(row.right) ? row.right : undefined;

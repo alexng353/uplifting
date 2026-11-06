@@ -1,4 +1,5 @@
 import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
+import { timedFromServer, timedToServer } from "../lib/timed";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, unwrap } from "../lib/api";
 import {
@@ -47,6 +48,7 @@ function transformToStoredWorkout(
       profileId: group.profile_id ?? undefined,
       exerciseName: displayName,
       exerciseType: exercise?.exercise_type,
+      ...(exercise?.measure === "timed" ? { measure: "timed" as const } : null),
       isUnilateral: group.is_unilateral,
       sets: group.sets.map((s: any) => ({
         id: s.id ?? generateId(),
@@ -56,6 +58,7 @@ function transformToStoredWorkout(
         createdAt: s.createdAt ?? s.created_at ?? new Date().toISOString(),
         side: s.side as "L" | "R" | undefined,
         bodyweight: s.bodyweight ? Number(s.bodyweight) : undefined,
+        ...timedFromServer(s),
       })),
     };
   });
@@ -144,6 +147,7 @@ export function useEditWorkoutState(workoutId: string) {
                   created_at: s.createdAt,
                   side: s.side,
                   bodyweight: s.bodyweight,
+                  ...timedToServer(s),
                 })),
             }))
             .filter((e) => e.sets.length > 0),
@@ -183,8 +187,10 @@ export function useEditWorkoutState(workoutId: string) {
           apply((w) => addExerciseMutation(w, exerciseId, exerciseName, profileId, exerciseType)),
         removeExercise: (exerciseId) => apply((w) => removeExerciseMutation(w, exerciseId)),
         reorderExercises: (newOrder) => apply((w) => reorderExercisesMutation(w, newOrder)),
-        addSet: (exerciseId, weightUnit, reps?, weight?, side?, autoAdded?) =>
-          apply((w) => addSetMutation(w, exerciseId, weightUnit, reps, weight, side, autoAdded)),
+        addSet: (exerciseId, weightUnit, reps?, weight?, side?, autoAdded?, extra?) =>
+          apply((w) =>
+            addSetMutation(w, exerciseId, weightUnit, reps, weight, side, autoAdded, extra),
+          ),
         addUnilateralPair: (exerciseId, weightUnit, reps?, weight?, layout?, autoAdded?) =>
           apply((w) =>
             addUnilateralPairMutation(w, exerciseId, weightUnit, reps, weight, layout, autoAdded),

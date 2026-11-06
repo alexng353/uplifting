@@ -12,10 +12,13 @@ import { useSettings } from "../../../../hooks/useSettings";
 import { useThemeColors } from "../../../../hooks/useThemeColors";
 import { api, unwrap } from "../../../../lib/api";
 import { convertWeight } from "../../../../services/storage";
+import { formatTimedSet, timedFromServer } from "../../../../lib/timed";
 import {
   availableModes,
   defaultMode,
   filterByMode,
+  isTimedHistory,
+  minutesSeries,
   peakSeries,
   xTickLabel,
   type ChartMode,
@@ -75,7 +78,12 @@ export default function ExerciseHistoryScreen() {
 
   // Bilateral and per-side sets are charted apart: a one-handed 45 on the same line as a
   // two-handed 90 looks like a collapse. Defaults to the mode of the newest session.
-  const modes = useMemo(() => availableModes(sortedHistory), [sortedHistory]);
+  // Timed exercises (treadmill walks) chart total minutes and have no side modes.
+  const isTimed = useMemo(() => isTimedHistory(sortedHistory), [sortedHistory]);
+  const modes = useMemo(
+    () => (isTimed ? [] : availableModes(sortedHistory)),
+    [sortedHistory, isTimed],
+  );
   const [pickedMode, setPickedMode] = useState<ChartMode | null>(null);
   const mode: ChartMode =
     pickedMode && modes.includes(pickedMode) ? pickedMode : defaultMode(sortedHistory);
@@ -87,10 +95,12 @@ export default function ExerciseHistoryScreen() {
   // Peak weight per session, x by date.
   const chartData = useMemo(
     () =>
-      peakSeries(shownHistory, (s) =>
-        convertWeight(Number(s.weight), (s.weight_unit ?? "kg") as any, unit),
-      ),
-    [shownHistory, unit],
+      isTimed
+        ? minutesSeries(shownHistory)
+        : peakSeries(shownHistory, (s) =>
+            convertWeight(Number(s.weight), (s.weight_unit ?? "kg") as any, unit),
+          ),
+    [shownHistory, unit, isTimed],
   );
   const spanMs =
     chartData.length > 1 ? chartData[chartData.length - 1].dateMs - chartData[0].dateMs : 0;
@@ -105,6 +115,7 @@ export default function ExerciseHistoryScreen() {
   };
 
   const formatSet = (s: any): string => {
+    if (s.duration_seconds != null) return formatTimedSet(timedFromServer(s));
     const weight = convertWeight(Number(s.weight), s.weight_unit ?? "kg", unit);
     if (s.side) {
       return `${s.reps}x${weight}${unit} ${s.side}`;
@@ -208,7 +219,9 @@ export default function ExerciseHistoryScreen() {
           {chartData.length >= 2 && (
             <View className="mx-4 mb-3 rounded-xl bg-zinc-100 dark:bg-zinc-900 p-3">
               <Text className="mb-2 text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                Peak weight ({unit}){mode === "side" && modes.length > 1 ? " · per side" : ""}
+                {isTimed
+                  ? "Total minutes"
+                  : `Peak weight (${unit})${mode === "side" && modes.length > 1 ? " · per side" : ""}`}
               </Text>
               <View style={{ height: 220 }}>
                 <CartesianChart
