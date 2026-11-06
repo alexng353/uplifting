@@ -3,7 +3,7 @@ import { View, Text, ScrollView, Pressable, RefreshControl } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueries, useQueryClient } from "@tanstack/react-query";
 
 import { useMe } from "../../hooks/useMe";
 import { useWorkouts } from "../../hooks/useWorkouts";
@@ -12,6 +12,9 @@ import { useSync } from "../../hooks/useSync";
 import { useThemeColors } from "../../hooks/useThemeColors";
 import { weekSummary } from "../../lib/week-summary";
 import SyncBanner from "../../components/SyncBanner";
+import MusclesWorked from "../../components/stats/MusclesWorked";
+import { api, unwrap } from "../../lib/api";
+import { weekExerciseSets, type DetailWorkout } from "../../lib/week-sets";
 
 /** First word of a workout name for the day label ("Push day" -> "Push"). */
 function shortName(name?: string | null): string {
@@ -41,6 +44,21 @@ export default function MeScreen() {
 
   // This week, laid out for the card (Sunday start, like Stats and the streak).
   const week = useMemo(() => weekSummary(workouts ?? []), [workouts]);
+
+  // This week's sets per exercise for the muscle map. Same query key as the workout screen,
+  // so opening a workout reuses these.
+  const weekDetails = useQueries({
+    queries: week.workouts.map((w) => ({
+      queryKey: ["workout", w.id],
+      queryFn: async () => unwrap(await api.api.v1.workouts({ workoutId: w.id }).get()),
+      staleTime: 5 * 60_000,
+    })),
+  });
+  const weekSets = useMemo(
+    () => weekExerciseSets(weekDetails.map((q) => q.data as DetailWorkout | undefined)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [weekDetails.map((q) => q.dataUpdatedAt).join(",")],
+  );
 
   const formatDuration = (start: string | Date, end?: string | Date | null): string => {
     if (!end) return "In progress";
@@ -186,6 +204,18 @@ export default function MeScreen() {
               <Text className="text-sm text-zinc-400 dark:text-zinc-500">at the gym</Text>
             </View>
           </View>
+
+          {/* This week's muscles */}
+          {weekSets.length > 0 && (
+            <MusclesWorked
+              embedded
+              testID="me-muscles"
+              title="Muscles this week"
+              caption="Brighter means more sets this week. Tap for all time."
+              exercises={weekSets}
+              onPress={() => router.push("/(tabs)/stats?tab=alltime" as any)}
+            />
+          )}
 
           {/* Recent */}
           {workouts && workouts.length > 0 && (
