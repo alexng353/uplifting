@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { View, Text, ScrollView, Pressable, ActivityIndicator } from "react-native";
+import { View, Text, ScrollView, Pressable, ActivityIndicator, Platform } from "react-native";
+import { matchFont } from "@shopify/react-native-skia";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
@@ -11,6 +12,22 @@ import { useSettings } from "../../../../hooks/useSettings";
 import { useThemeColors } from "../../../../hooks/useThemeColors";
 import { api, unwrap } from "../../../../lib/api";
 import { convertWeight } from "../../../../services/storage";
+import {
+  availableModes,
+  defaultMode,
+  filterByMode,
+  peakSeries,
+  xTickLabel,
+  type ChartMode,
+} from "../../../../lib/exercise-chart";
+
+// Axis labels only draw when the chart gets a Skia font.
+const AXIS_FONT = matchFont({
+  fontFamily: Platform.select({ ios: "Helvetica", default: "sans-serif" }),
+  fontSize: 11,
+});
+
+const MODE_LABEL: Record<ChartMode, string> = { bi: "Bilateral", side: "Per side" };
 
 type TimeRange = "1" | "6" | "12" | "all";
 
@@ -56,19 +73,27 @@ export default function ExerciseHistoryScreen() {
     );
   }, [historyData]);
 
-  // Chart data: peak weight per session, sorted ascending by date
-  const chartData = useMemo(() => {
-    return sortedHistory
-      .map((entry: any) => {
-        const maxWeight = Math.max(
-          ...entry.sets.map((s: any) =>
-            convertWeight(Number(s.weight), s.weight_unit ?? "kg", unit),
-          ),
-        );
-        return { dateMs: new Date(entry.date).getTime(), weight: maxWeight };
-      })
-      .sort((a, b) => a.dateMs - b.dateMs);
-  }, [sortedHistory, unit]);
+  // Bilateral and per-side sets are charted apart: a one-handed 45 on the same line as a
+  // two-handed 90 looks like a collapse. Defaults to the mode of the newest session.
+  const modes = useMemo(() => availableModes(sortedHistory), [sortedHistory]);
+  const [pickedMode, setPickedMode] = useState<ChartMode | null>(null);
+  const mode: ChartMode =
+    pickedMode && modes.includes(pickedMode) ? pickedMode : defaultMode(sortedHistory);
+  const shownHistory = useMemo(
+    () => (modes.length > 1 ? filterByMode(sortedHistory, mode) : sortedHistory),
+    [sortedHistory, modes, mode],
+  );
+
+  // Peak weight per session, x by date.
+  const chartData = useMemo(
+    () =>
+      peakSeries(shownHistory, (s) =>
+        convertWeight(Number(s.weight), (s.weight_unit ?? "kg") as any, unit),
+      ),
+    [shownHistory, unit],
+  );
+  const spanMs =
+    chartData.length > 1 ? chartData[chartData.length - 1].dateMs - chartData[0].dateMs : 0;
 
   const formatDate = (date: string): string => {
     return new Date(date).toLocaleDateString("en-US", {
@@ -152,11 +177,38 @@ export default function ExerciseHistoryScreen() {
         </View>
       ) : (
         <ScrollView className="flex-1" contentContainerClassName="pb-24">
+          {modes.length > 1 && (
+            <View
+              testID="chart-mode"
+              className="mx-4 mb-3 flex-row rounded-xl bg-zinc-100 dark:bg-zinc-800 p-1"
+            >
+              {modes.map((m) => {
+                const active = m === mode;
+                return (
+                  <Pressable
+                    key={m}
+                    testID={`chart-mode-${m}`}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                    onPress={() => setPickedMode(m)}
+                    className={`flex-1 items-center rounded-lg py-1.5 ${active ? "bg-white dark:bg-zinc-700" : ""}`}
+                  >
+                    <Text
+                      className={`text-sm font-medium ${active ? "text-ember-500" : "text-zinc-500 dark:text-zinc-400"}`}
+                    >
+                      {MODE_LABEL[m]}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+
           {/* Weight progression chart */}
           {chartData.length >= 2 && (
             <View className="mx-4 mb-3 rounded-xl bg-zinc-100 dark:bg-zinc-900 p-3">
               <Text className="mb-2 text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                Peak Weight ({unit})
+                Peak weight ({unit}){mode === "side" && modes.length > 1 ? " · per side" : ""}
               </Text>
               <View style={{ height: 220 }}>
                 <CartesianChart
@@ -167,19 +219,15 @@ export default function ExerciseHistoryScreen() {
                   xAxis={{
                     labelColor: colors.secondaryText,
                     lineColor: colors.separator,
+                    font: AXIS_FONT,
                     tickCount: 4,
-                    formatXLabel: (val) => {
-                      const d = new Date(val as number);
-                      return d.toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                      });
-                    },
+                    formatXLabel: (val) => xTickLabel(val as number, spanMs),
                   }}
                   yAxis={[
                     {
                       labelColor: colors.secondaryText,
                       lineColor: colors.separator,
+                      font: AXIS_FONT,
                       tickCount: 5,
                       formatYLabel: (val) => `${Math.round(val as number)}`,
                     },
@@ -191,7 +239,7 @@ export default function ExerciseHistoryScreen() {
                         points={points.weight}
                         color={colors.accentIcon}
                         strokeWidth={2}
-                        curveType="natural"
+                        curveType="monotoneX"
                       />
                       <Scatter
                         points={points.weight}
@@ -206,7 +254,7 @@ export default function ExerciseHistoryScreen() {
             </View>
           )}
 
-          {sortedHistory.map((entry: any) => (
+          {shownHistory.map((entry: any) => (
             <Pressable
               key={entry.workout_id}
               onPress={() => router.push(`/(tabs)/stats/workout/${entry.workout_id}` as any)}
