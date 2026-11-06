@@ -44,7 +44,7 @@ import { convertWeight } from "../../lib/units";
 import type { StoredSet, StoredWorkoutExercise } from "../../services/storage";
 import RestTimer from "./RestTimer";
 import { singleLineInput } from "../../lib/input-style";
-import * as Haptics from "expo-haptics";
+import { lightTap } from "../../lib/haptics";
 import { compareSet, type SetResult } from "../../lib/set-result";
 
 // Stoplight for a done set against its suggestion. The yellow stays clear of Ember.
@@ -184,7 +184,7 @@ function AcceptButton({
   const lastResult = useRef(result);
   useEffect(() => {
     if (isFilled && result && result !== lastResult.current && result !== "same") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      lightTap();
     }
     lastResult.current = isFilled ? result : null;
   }, [isFilled, result]);
@@ -218,17 +218,19 @@ function AcceptButton({
         ...(style ? { backgroundColor: style.bg } : null),
       }}
     >
-      {result === "same" && style ? (
-        <Text style={{ color: style.color, fontSize: 22, fontWeight: "800", lineHeight: 24 }}>
-          =
-        </Text>
-      ) : (
-        <Ionicons
-          name={style ? (result === "above" ? "arrow-up" : "arrow-down") : "checkmark"}
-          size={20}
-          color={style ? style.color : isFilled ? colors.successIcon : colors.placeholder}
-        />
-      )}
+      <Ionicons
+        name={
+          style
+            ? result === "above"
+              ? "arrow-up"
+              : result === "below"
+                ? "arrow-down"
+                : "arrow-forward"
+            : "checkmark"
+        }
+        size={20}
+        color={style ? style.color : isFilled ? colors.successIcon : colors.placeholder}
+      />
     </Pressable>
   );
 }
