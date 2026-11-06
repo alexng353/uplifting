@@ -530,15 +530,13 @@ function ExercisesTab({ refreshing, onRefresh }: { refreshing: boolean; onRefres
 
 export default function StatsScreen() {
   // Other screens can open a tab directly, e.g. Me's muscle map opens /stats?tab=alltime.
-  // The param is cleared once used, so the same link works again after switching tabs.
-  const { tab } = useLocalSearchParams<{ tab?: string }>();
-  const tabRouter = useRouter();
+  // `at` changes on every link tap, so the same link works again after switching tabs
+  // (the screen stays mounted and expo-router keeps the old param).
+  const { tab, at } = useLocalSearchParams<{ tab?: string; at?: string }>();
   const [activeTab, setActiveTab] = useState<StatsTab>("week");
   useEffect(() => {
-    if (!tab) return;
-    if (TABS.some((t) => t.key === tab)) setActiveTab(tab as StatsTab);
-    tabRouter.setParams({ tab: undefined });
-  }, [tab, tabRouter]);
+    if (tab && TABS.some((t) => t.key === tab)) setActiveTab(tab as StatsTab);
+  }, [tab, at]);
   const [refreshing, setRefreshing] = useState(false);
   const { data: workouts, isLoading, refetch: refetchWorkouts } = useWorkouts(1, 20);
   const streak = useStreak();

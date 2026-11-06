@@ -213,7 +213,7 @@ export default function MeScreen() {
               title="Muscles this week"
               caption="Brighter means more sets this week. Tap for all time."
               exercises={weekSets}
-              onPress={() => router.push("/(tabs)/stats?tab=alltime" as any)}
+              onPress={() => router.push(`/(tabs)/stats?tab=alltime&at=${Date.now()}` as any)}
             />
           )}
 
