@@ -46,13 +46,20 @@ private struct LockScreenView: View {
           Text(state.exercise).font(.headline).foregroundStyle(Ember.text).lineLimit(1)
         }
         Text(state.setLabel).font(.subheadline.weight(.semibold)).foregroundStyle(Ember.accent)
+        if let superset = state.superset {
+          HStack(spacing: 4) {
+            Image(systemName: "arrow.left.arrow.right").font(.caption2)
+            Text(superset).font(.caption.weight(.medium)).lineLimit(1)
+          }
+          .foregroundStyle(Ember.text)
+        }
         if !state.detail.isEmpty {
           Text(state.detail).font(.caption).foregroundStyle(Ember.muted).lineLimit(1)
         }
       }
       Spacer(minLength: 8)
       VStack(alignment: .trailing, spacing: 2) {
-        Text(state.rest != nil ? "REST" : "WORKOUT")
+        Text(state.rest != nil ? "REST" : (state.title ?? "Workout").uppercased())
           .font(.caption2.weight(.bold)).foregroundStyle(Ember.muted)
         ClockText(state: state, workoutStart: context.attributes.workoutStart)
           .font(.system(size: 30, weight: .bold, design: .rounded).monospacedDigit())
@@ -89,7 +96,7 @@ struct WorkoutActivityWidget: Widget {
         }
         DynamicIslandExpandedRegion(.trailing) {
           VStack(alignment: .trailing, spacing: 2) {
-            Text(state.rest != nil ? "REST" : "WORKOUT")
+            Text(state.rest != nil ? "REST" : (state.title ?? "Workout").uppercased())
               .font(.caption2.weight(.bold)).foregroundStyle(Ember.muted)
             ClockText(state: state, workoutStart: context.attributes.workoutStart)
               .font(.title2.weight(.bold).monospacedDigit())
@@ -99,7 +106,9 @@ struct WorkoutActivityWidget: Widget {
           .padding(.trailing, 4)
         }
         DynamicIslandExpandedRegion(.bottom) {
-          if !state.detail.isEmpty {
+          if let superset = state.superset {
+            Text(superset).font(.caption.weight(.medium)).foregroundStyle(Ember.text).lineLimit(1)
+          } else if !state.detail.isEmpty {
             Text(state.detail).font(.caption).foregroundStyle(Ember.muted).lineLimit(1)
           }
         }

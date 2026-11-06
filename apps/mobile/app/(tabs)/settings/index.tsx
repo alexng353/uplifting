@@ -581,6 +581,13 @@ export default function SettingsScreen() {
               setColorScheme(v);
             }}
           />
+          <SettingsRow onPress={() => router.push("/(tabs)/settings/day-types" as any)}>
+            <View className="flex-row items-center gap-3">
+              <Ionicons name="calendar" size={20} color={colors.accentIcon} />
+              <Text className="text-base dark:text-zinc-100">Day Types</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.chevron} />
+          </SettingsRow>
           <SettingsRow onPress={() => router.push("/(tabs)/settings/rep-ranges")} last>
             <View className="flex-row items-center gap-3">
               <Ionicons name="color-palette" size={20} color={colors.accentIcon} />

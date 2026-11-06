@@ -59,6 +59,7 @@ export const STORAGE_KEYS = {
   GYM_CHECKINS_USER: "gym_checkins_user",
   SET_COUNTS: "set_counts",
   SIDE_DEFAULTS: "side_defaults",
+  DAY_TYPES: "day_types",
   HEALTH_PROMPTED: "apple_health_prompted",
   HEALTH_STATS: "apple_health_stats",
 } as const;
@@ -76,6 +77,13 @@ export interface StoredWorkout {
   privacy: string;
   gymLocation?: string;
   kind: WorkoutKind;
+  /** Day type picked at Start (Upper, Lower, ...). Device-only. */
+  dayTypeId?: string;
+  dayTypeName?: string;
+  /** Superset pairs he marked "not a superset" (lib/supersets pairKey). */
+  notSupersets?: string[];
+  /** Superset groups seen during the workout, kept for history and suggestions. */
+  supersets?: string[][];
 }
 
 export interface StoredWorkoutLastSlide {
@@ -107,6 +115,10 @@ export interface StoredSet {
   bodyweight?: number;
   /** Added by auto-add-set, not by him: only these empty rows may be trimmed on blur. */
   autoAdded?: boolean;
+  /** When this set was logged (became done); orders sets for superset detection. */
+  doneAt?: string;
+  /** Long-press override: true = warmup, false = working; absent = automatic. */
+  warmup?: boolean;
   // Timed sets only (lib/timed): reps is 1 and weight 0 once a duration is in.
   durationSeconds?: number;
   speed?: number;
@@ -576,4 +588,13 @@ export function setTodayRestDay(data: TodayRestDay): void {
 
 export function clearTodayRestDay(): void {
   deleteKey(STORAGE_KEYS.TODAY_REST_DAY);
+}
+
+// Day types (Upper, Lower, ...) with their exercise lists. Phone-local (lib/day-types).
+export function getDayTypes(): import("../lib/day-types").DayType[] | null {
+  return getJSON<import("../lib/day-types").DayType[]>(STORAGE_KEYS.DAY_TYPES);
+}
+
+export function setDayTypes(days: import("../lib/day-types").DayType[]): void {
+  setJSON(STORAGE_KEYS.DAY_TYPES, days);
 }

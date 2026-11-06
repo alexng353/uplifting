@@ -18,6 +18,8 @@ import {
   setPendingWorkout,
   updatePreviousSets,
   recordExerciseSetCount,
+  getPreviousSets,
+  getSetCounts,
 } from "../services/storage";
 import {
   addExerciseMutation,
@@ -42,13 +44,16 @@ import {
 } from "../services/live-workout";
 import { clearRest, startRest } from "../services/rest-timer";
 import { isSetDone } from "../lib/live-activity";
+import { detectSupersets, nextInRound, pairKey } from "../lib/supersets";
+import { targetSetCount } from "../lib/target-sets";
+import { previousFor, withWarmupFlags } from "../lib/warmup-apply";
 import type { SideMode } from "../lib/set-rows";
 
 interface WorkoutContextValue {
   workout: StoredWorkout | null;
   isActive: boolean;
   todayRestDay: TodayRestDay | null;
-  startWorkout: () => StoredWorkout | null;
+  startWorkout: (day?: { id: string; name: string }) => StoredWorkout | null;
   logRestDay: () => StoredWorkout | null;
   cancelRestDay: () => string | undefined;
   reconcileRestDay: (serverWorkouts: any[]) => void;
@@ -91,10 +96,36 @@ interface WorkoutContextValue {
   ) => void;
   finishWorkout: (name?: string, gymLocation?: string) => StoredWorkout;
   cancelWorkout: () => void;
+  /** "Not a superset": these two never group again in this workout. */
+  markNotSuperset: (a: string, b: string) => void;
   hasPendingWorkout: boolean;
 }
 
 const WorkoutContext = createContext<WorkoutContextValue | null>(null);
+
+/** Live superset groups; an exercise at its usual set count counts as finished. */
+export function supersetGroups(w: StoredWorkout): string[][] {
+  const counts = getSetCounts();
+  const previous = getPreviousSets();
+  const profileOf = new Map(w.exercises.map((e) => [e.exerciseId, e.profileId]));
+  return detectSupersets(w.exercises, {
+    dismissed: w.notSupersets,
+    finished: (id, doneRows) => {
+      const target = targetSetCount(counts, previous, id, profileOf.get(id));
+      return target != null && doneRows >= target;
+    },
+  });
+}
+
+function mergeGroups(saved: string[][] | undefined, groups: string[][]): string[][] {
+  const out = [...(saved ?? [])];
+  for (const g of groups) {
+    const i = out.findIndex((o) => o.some((id) => g.includes(id)));
+    if (i < 0) out.push(g);
+    else out[i] = [...new Set([...out[i], ...g])];
+  }
+  return out;
+}
 
 export function WorkoutProvider({ children }: { children: ReactNode }) {
   const [workout, setWorkout] = useState<StoredWorkout | null>(null);
@@ -148,27 +179,32 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     setCurrentWorkout(w);
   }, []);
 
-  const startWorkout = useCallback(() => {
-    if (todayRestDayState) return null; // Can't start workout on a rest day
+  const startWorkout = useCallback(
+    (day?: { id: string; name: string }) => {
+      if (todayRestDayState) return null; // Can't start workout on a rest day
 
-    const settings = getSettings();
-    const newWorkout: StoredWorkout = {
-      id: generateId(),
-      startTime: new Date().toISOString(),
-      exercises: [],
-      privacy: settings.defaultPrivacy,
-      kind: "workout",
-    };
-    saveWorkout(newWorkout);
+      const settings = getSettings();
+      const newWorkout: StoredWorkout = {
+        id: generateId(),
+        startTime: new Date().toISOString(),
+        exercises: [],
+        privacy: settings.defaultPrivacy,
+        kind: "workout",
+        // The day sets the title (shown on the Live Activity and prefilled at Finish).
+        ...(day ? { dayTypeId: day.id, dayTypeName: day.name, name: day.name } : null),
+      };
+      saveWorkout(newWorkout);
 
-    // Auto-detect nearby gym (fire-and-forget)
-    detectAndSetNearbyGym().catch(() => {});
-    // Where Start was tapped, for Alex's gym gate (fire-and-forget, queued offline).
-    recordGymCheckin(newWorkout.id, "start", newWorkout.startTime);
-    // Live Fitness session; the first Start asks for Health access once.
-    beginHealthForWorkout(newWorkout).catch(() => {});
-    return newWorkout;
-  }, [saveWorkout, todayRestDayState]);
+      // Auto-detect nearby gym (fire-and-forget)
+      detectAndSetNearbyGym().catch(() => {});
+      // Where Start was tapped, for Alex's gym gate (fire-and-forget, queued offline).
+      recordGymCheckin(newWorkout.id, "start", newWorkout.startTime);
+      // Live Fitness session; the first Start asks for Health access once.
+      beginHealthForWorkout(newWorkout).catch(() => {});
+      return newWorkout;
+    },
+    [saveWorkout, todayRestDayState],
+  );
 
   const logRestDay = useCallback((): StoredWorkout | null => {
     if (todayRestDayState) return null; // Already a rest day today
@@ -263,8 +299,10 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 
   const addExercise = useCallback(
     (exerciseId: string, exerciseName: string, profileId?: string, exerciseType?: string) => {
-      if (!workout) return;
-      saveWorkout(addExerciseMutation(workout, exerciseId, exerciseName, profileId, exerciseType));
+      // The synchronous cache, so "add the rest of the day" adds every exercise in one tap.
+      const current = getCurrentWorkout() ?? workout;
+      if (!current) return;
+      saveWorkout(addExerciseMutation(current, exerciseId, exerciseName, profileId, exerciseType));
     },
     [workout, saveWorkout],
   );
@@ -346,15 +384,26 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       // the second write keeps the first.
       const current = getCurrentWorkout() ?? workout;
       if (!current) return;
-      const next = updateSetMutation(current, exerciseId, setId, updates);
-      saveWorkout(next);
-      // The automatic rest timer starts when a set becomes done (accept, or both fields).
+      let next = updateSetMutation(current, exerciseId, setId, updates);
       const find = (w: StoredWorkout) =>
         w.exercises.find((e) => e.exerciseId === exerciseId)?.sets.find((s) => s.id === setId);
       const before = find(current);
       const after = find(next);
-      if (before && after && !isSetDone(before) && isSetDone(after)) {
-        startRest(getSettings().defaultRestTimerSeconds);
+      const justDone = !!before && !!after && !isSetDone(before) && isSetDone(after);
+      if (justDone) {
+        // Log time orders sets across exercises, which is how supersets are found.
+        next = updateSetMutation(next, exerciseId, setId, { doneAt: new Date().toISOString() });
+        const groups = supersetGroups(next);
+        if (groups.length) next = { ...next, supersets: mergeGroups(next.supersets, groups) };
+      }
+      saveWorkout(next);
+      // The automatic rest timer starts when a set becomes done (accept, or both fields),
+      // except mid-superset: then he goes straight to the next exercise, and the normal
+      // rest comes once the round is done.
+      if (justDone) {
+        const group = supersetGroups(next).find((g) => g.includes(exerciseId));
+        if (group && nextInRound(group, next.exercises, exerciseId)) clearRest();
+        else startRest(getSettings().defaultRestTimerSeconds);
       }
     },
     [workout, saveWorkout],
@@ -405,16 +454,20 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     (name?: string, gymLocation?: string): StoredWorkout => {
       if (!workout) throw new Error("No active workout");
 
-      // Remove empty sets before saving
+      // Remove empty sets before saving; warmup rows are flagged with the final call.
+      const previous = getPreviousSets();
       const finishedWorkout: StoredWorkout = {
         ...workout,
         name,
         gymLocation,
         endTime: new Date().toISOString(),
-        exercises: workout.exercises.map((e) => ({
-          ...e,
-          sets: e.sets.filter((s) => s.reps != null && s.reps > 0),
-        })),
+        exercises: workout.exercises.map((e) => {
+          const sets = e.sets.filter((s) => s.reps != null && s.reps > 0);
+          return {
+            ...e,
+            sets: withWarmupFlags({ ...e, sets }, previousFor(previous, e.exerciseId, e.profileId)),
+          };
+        }),
       };
 
       // Save previous sets for each exercise
@@ -425,7 +478,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 
       // Save exercise sequence
       const sequence = finishedWorkout.exercises.map((e) => e.exerciseId);
-      addExerciseSequence(sequence, name);
+      addExerciseSequence(sequence, name ?? finishedWorkout.dayTypeName);
 
       // Mark as pending sync
       setPendingWorkout(finishedWorkout);
@@ -449,6 +502,20 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     setCurrentWorkout(null);
     setWorkout(null);
   }, []);
+
+  const markNotSuperset = useCallback(
+    (a: string, b: string) => {
+      const current = getCurrentWorkout() ?? workout;
+      if (!current) return;
+      const key = pairKey(a, b);
+      saveWorkout({
+        ...current,
+        notSupersets: [...new Set([...(current.notSupersets ?? []), key])],
+        supersets: (current.supersets ?? []).filter((g) => !(g.includes(a) && g.includes(b))),
+      });
+    },
+    [workout, saveWorkout],
+  );
 
   return (
     <WorkoutContext.Provider
@@ -475,6 +542,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
         changeExerciseProfile,
         finishWorkout,
         cancelWorkout,
+        markNotSuperset,
         hasPendingWorkout,
       }}
     >
@@ -489,4 +557,9 @@ export function useWorkout() {
     throw new Error("useWorkout must be used within a WorkoutProvider");
   }
   return context;
+}
+
+/** The live workout, or null outside a WorkoutProvider (tests, previews). */
+export function useOptionalWorkout(): WorkoutContextValue | null {
+  return useContext(WorkoutContext);
 }

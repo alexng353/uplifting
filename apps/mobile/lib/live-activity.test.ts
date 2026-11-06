@@ -89,3 +89,50 @@ test("the widget's copy of the activity attributes matches the app's", () => {
   expect(app.length).toBeGreaterThan(100);
   expect(block("targets/workout-widget/UpliftingWorkoutAttributes.swift")).toBe(app);
 });
+
+test("superset: points at the next exercise, shows both, and carries the day title", async () => {
+  const { liveStateFor } = await import("./live-activity");
+  const set = (id: string, reps?: number, weight?: number) => ({
+    id,
+    reps,
+    weight,
+    weightUnit: "lbs",
+    createdAt: "2026-11-06T22:00:00Z",
+  });
+  const workout = {
+    id: "w",
+    startTime: "2026-11-06T22:00:00Z",
+    privacy: "friends",
+    kind: "workout" as const,
+    exercises: [
+      {
+        exerciseId: "tib",
+        exerciseName: "Tibialis Raise",
+        sets: [set("a", 25, 0), set("b", 25, 0), set("c")],
+      },
+      { exerciseId: "lunge", exerciseName: "Reverse Lunge", sets: [set("d", 10, 20), set("e")] },
+    ],
+  };
+  const state = liveStateFor(workout, 0, {
+    targetSetCount: () => 3,
+    suggestion: () => ({ reps: null, weight: null, weightUnit: null }),
+    unit: "lbs",
+    rest: null,
+    now: 0,
+    title: "Lower",
+    supersets: [["tib", "lunge"]],
+  });
+  expect(state.exercise).toBe("Reverse Lunge");
+  expect(state.setLabel).toBe("Next · Set 2/3");
+  expect(state.superset).toBe("Tibialis Raise 2/3 · Reverse Lunge 1/3");
+  expect(state.title).toBe("Lower");
+  // Bodyweight reads as reps, not 25×0.
+  const tib = liveStateFor(workout, 0, {
+    targetSetCount: () => 3,
+    suggestion: () => ({ reps: null, weight: null, weightUnit: null }),
+    unit: "lbs",
+    rest: null,
+    now: 0,
+  });
+  expect(tib.detail).toBe("Last 25 reps");
+});

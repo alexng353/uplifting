@@ -18,7 +18,9 @@ enum WorkoutLiveActivity {
       setLabel: dict["setLabel"] as? String ?? "",
       detail: dict["detail"] as? String ?? "",
       restStartedAt: date("restStartedAt"),
-      restEndsAt: date("restEndsAt"))
+      restEndsAt: date("restEndsAt"),
+      title: (dict["title"] as? String).flatMap { $0.isEmpty ? nil : $0 },
+      superset: (dict["superset"] as? String).flatMap { $0.isEmpty ? nil : $0 })
   }
 
   static var current: [Activity<UpliftingWorkoutAttributes>] {

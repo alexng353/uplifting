@@ -3,6 +3,7 @@ import type { SetSuggestion } from "./previous-sets";
 import { rowSets, toRows } from "./set-rows";
 import { convertWeight } from "./units";
 import { formatTimedSet, isTimedSet, liftLabel } from "./timed";
+import { supersetProgress } from "./supersets";
 
 /** What the Live Activity shows. Mirrors UpliftingWorkoutAttributes.ContentState. */
 export interface LiveWorkoutState {
@@ -11,6 +12,8 @@ export interface LiveWorkoutState {
   detail: string;
   restStartedAt?: number;
   restEndsAt?: number;
+  title?: string;
+  superset?: string;
 }
 
 export interface RestWindow {
@@ -28,6 +31,10 @@ export interface LiveStateDeps {
   unit: string;
   rest: RestWindow | null;
   now: number;
+  /** The day label (picked at Start, or inferred once there's enough to go on). */
+  title?: string;
+  /** Live superset groups (lib/supersets); none when omitted. */
+  supersets?: string[][];
 }
 
 /** A set counts as done once both fields hold a value, the same as the green check. */
@@ -61,6 +68,35 @@ function exerciseFor(workout: StoredWorkout, index: number): StoredWorkoutExerci
 }
 
 export function liveStateFor(
+  workout: StoredWorkout,
+  activeIndex: number,
+  deps: LiveStateDeps,
+): LiveWorkoutState {
+  const titled = deps.title ? { title: deps.title } : {};
+  // In a superset the Lock Screen points at the next exercise of the round and shows
+  // every member's progress.
+  const active = exerciseFor(workout, activeIndex);
+  const group = active && deps.supersets?.find((g) => g.includes(active.exerciseId));
+  if (group) {
+    const doneRows = (id: string) => {
+      const e = workout.exercises.find((x) => x.exerciseId === id);
+      return e ? toRows(e.sets).filter((r) => rowSets(r).every(isSetDone)).length : 0;
+    };
+    const start = group.indexOf(active.exerciseId);
+    const order = [...group.slice(start + 1), ...group.slice(0, start + 1)];
+    const fewest = Math.min(...order.map(doneRows));
+    const nextId = order.find((id) => doneRows(id) === fewest)!;
+    const nextIndex = workout.exercises.findIndex((e) => e.exerciseId === nextId);
+    const base = liveStateFor(workout, nextIndex, { ...deps, supersets: undefined });
+    const progress = supersetProgress(group, workout.exercises, (id) =>
+      deps.targetSetCount(id, workout.exercises.find((e) => e.exerciseId === id)?.profileId),
+    );
+    return { ...base, setLabel: `Next · ${base.setLabel}`, superset: progress, ...titled };
+  }
+  return { ...singleState(workout, activeIndex, deps), ...titled };
+}
+
+function singleState(
   workout: StoredWorkout,
   activeIndex: number,
   deps: LiveStateDeps,
