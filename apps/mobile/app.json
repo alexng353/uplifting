@@ -18,8 +18,7 @@
       "bundleIdentifier": "dev.alexng.uplifting",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSSupportsLiveActivities": true,
-        "UIBackgroundModes": ["workout-processing"]
+        "NSSupportsLiveActivities": true
       },
       "splash": {
         "image": "./assets/splash-icon.png",
