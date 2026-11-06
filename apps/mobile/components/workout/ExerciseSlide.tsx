@@ -375,14 +375,20 @@ function SetRow({
     height: INPUT_HEIGHT,
     fontSize: 16,
     textAlignVertical: "center" as const,
-    ...(ghost ? { borderStyle: "dashed" as const } : null),
+    // Always set, so ghost -> real only changes a value, never which props exist.
+    borderStyle: ghost ? ("dashed" as const) : ("solid" as const),
   };
 
   return (
     <View
       testID={ghost ? "ghost-row" : "set-row"}
       className="mb-1 flex-row items-center gap-2 px-2 py-1"
-      style={ghost ? { opacity: 0.55 } : undefined}
+      // The first keystroke in a ghost makes the row real. If that dropped the opacity
+      // style, Fabric would flatten this View away and re-parent the focused TextInput,
+      // which resigns first responder: the keyboard closed after one digit. Keep the
+      // view in the native tree in both states.
+      collapsable={false}
+      style={{ opacity: ghost ? 0.55 : 1 }}
     >
       <SetNumberCell
         setNumber={setNumber}
