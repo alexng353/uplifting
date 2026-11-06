@@ -35,8 +35,11 @@ const fuseOptions: IFuseOptions<Exercise> = {
 export function useExercises(search?: string) {
   const queryClient = useQueryClient();
 
-  // On mount, load cached exercises into query cache
+  // On mount, show the cached list at once, but as stale data: the query still refetches,
+  // so new exercises and their muscles arrive. (Seeding it as fresh on every mount kept
+  // the server copy from ever loading while the app was in use.)
   useEffect(() => {
+    if (queryClient.getQueryData(ALL_EXERCISES_KEY)) return;
     const cached = getCachedExercises();
     if (cached.length > 0) {
       const exercises: Exercise[] = cached.map((e) => ({
@@ -50,7 +53,7 @@ export function useExercises(search?: string) {
         primary_muscles: e.primaryMuscles,
         secondary_muscles: e.secondaryMuscles,
       }));
-      queryClient.setQueryData(ALL_EXERCISES_KEY, exercises);
+      queryClient.setQueryData(ALL_EXERCISES_KEY, exercises, { updatedAt: 0 });
     }
   }, [queryClient]);
 
