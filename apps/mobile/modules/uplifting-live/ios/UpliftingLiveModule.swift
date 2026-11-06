@@ -81,5 +81,11 @@ public class UpliftingLiveModule: Module {
     AsyncFunction("discardWorkoutSession") { () async in
       if #available(iOS 26.0, *) { await WorkoutSessionController.shared.discardIncludingRecovered() }
     }
+
+    /// Before the plain (no live session) save: remove an entry HealthKit already saved
+    /// for this workout, so Health keeps one.
+    AsyncFunction("deleteSavedWorkouts") { (workoutId: String) async in
+      if #available(iOS 26.0, *) { await WorkoutSessionController.shared.deleteSavedWorkouts(workoutId) }
+    }
   }
 }

@@ -80,6 +80,8 @@ async function finish(workout: StoredWorkout): Promise<void> {
     });
     return;
   }
+  // No live session to save: drop any partial entry HealthKit saved on its own first.
+  await live?.deleteSavedWorkouts(workout.id).catch(() => {});
   await saveWorkoutToAppleHealth(workout);
 }
 
