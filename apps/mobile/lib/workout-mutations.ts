@@ -6,7 +6,7 @@ import {
   type StoredWorkout,
   type StoredWorkoutExercise,
 } from "../services/storage";
-import { convertRow, fromRows, isRowEmpty, toRows, type SideMode } from "./set-rows";
+import { convertRow, fromRows, isRowEmpty, rowSets, toRows, type SideMode } from "./set-rows";
 
 // isUnilateral now only means "has sided sets"; keep it in step with the rows.
 function withSets(e: StoredWorkoutExercise, sets: StoredSet[]): StoredWorkoutExercise {
@@ -98,6 +98,7 @@ export function addSetMutation(
   reps?: number,
   weight?: number,
   side?: "L" | "R",
+  autoAdded?: boolean,
 ): StoredWorkout {
   const bodyweight = getBodyweightForExercise(workout, exerciseId);
   const newSet: StoredSet = {
@@ -108,6 +109,7 @@ export function addSetMutation(
     createdAt: new Date().toISOString(),
     side,
     bodyweight,
+    ...(autoAdded ? { autoAdded } : {}),
   };
 
   return {
@@ -125,8 +127,10 @@ export function addUnilateralPairMutation(
   reps?: number,
   weight?: number,
   layout?: "combined",
+  autoAdded?: boolean,
 ): StoredWorkout {
   const bodyweight = getBodyweightForExercise(workout, exerciseId);
+  const auto = autoAdded ? { autoAdded } : {};
   const rightSet: StoredSet = {
     id: generateId(),
     reps,
@@ -136,6 +140,7 @@ export function addUnilateralPairMutation(
     side: "R",
     bodyweight,
     ...(layout ? { layout } : {}),
+    ...auto,
   };
 
   const leftSet: StoredSet = {
@@ -147,6 +152,7 @@ export function addUnilateralPairMutation(
     side: "L",
     bodyweight,
     ...(layout ? { layout } : {}),
+    ...auto,
   };
 
   return {
@@ -211,20 +217,19 @@ export function trimTrailingEmptySetsMutation(
   exerciseId: string,
   keepCount: number = 0,
 ): StoredWorkout {
-  // Keep at most `keepCount` empty rows at the end; a row is empty when all its sides are.
+  // Keep at most `keepCount` trailing empty rows that the app auto-added. Rows he added
+  // himself (Add Set, or the first ghost row) are never trimmed: Alex added two sets,
+  // typed into the first, and the blur trim deleted his third (build 31).
   return {
     ...workout,
     exercises: workout.exercises.map((e) => {
       if (e.exerciseId !== exerciseId) return e;
       const rows = toRows(e.sets);
-      let lastNonEmpty = -1;
-      for (let i = rows.length - 1; i >= 0; i -= 1) {
-        if (!isRowEmpty(rows[i])) {
-          lastNonEmpty = i;
-          break;
-        }
-      }
-      const keepUntil = lastNonEmpty + 1 + keepCount;
+      const trimmable = (i: number) =>
+        isRowEmpty(rows[i]) && rowSets(rows[i]).every((s) => s.autoAdded === true);
+      let lastKept = rows.length - 1;
+      while (lastKept >= 0 && trimmable(lastKept)) lastKept -= 1;
+      const keepUntil = lastKept + 1 + keepCount;
       if (keepUntil >= rows.length) return e;
       return withSets(e, fromRows(rows.slice(0, keepUntil)));
     }),

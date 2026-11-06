@@ -525,8 +525,15 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   const [defaultMode, chooseDefaultMode] = useSideDefault(exercise.exerciseId, lastMode);
 
   const addRow = useCallback(
-    (rowModeToAdd: SideMode, weightUnit: string, reps?: number, weight?: number) => {
-      if (rowModeToAdd === "bilateral") addSet(exercise.exerciseId, weightUnit, reps, weight);
+    (
+      rowModeToAdd: SideMode,
+      weightUnit: string,
+      reps?: number,
+      weight?: number,
+      autoAdded?: boolean,
+    ) => {
+      if (rowModeToAdd === "bilateral")
+        addSet(exercise.exerciseId, weightUnit, reps, weight, undefined, autoAdded);
       else
         addUnilateralPair(
           exercise.exerciseId,
@@ -534,6 +541,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
           reps,
           weight,
           rowModeToAdd === "unilateral" ? "combined" : undefined,
+          autoAdded,
         );
     },
     [exercise.exerciseId, addSet, addUnilateralPair],
@@ -554,7 +562,8 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
       if (mode !== "live" || !settings.autoAddSet || index < 0) return;
       if (index !== rows.length - 1 || !isRowEmpty(rows[index])) return;
       if (updates.reps == null && updates.weight == null) return;
-      addRow(defaultMode, displayUnit);
+      // Marked so the blur trim may remove it again if it stays empty.
+      addRow(defaultMode, displayUnit, undefined, undefined, true);
     },
     [rows, updateSet, mode, settings.autoAddSet, addRow, displayUnit, defaultMode],
   );

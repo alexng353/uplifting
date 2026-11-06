@@ -20,7 +20,7 @@ import AddExerciseSlide from "../../components/workout/AddExerciseSlide";
 import SetFieldNavigator from "../../components/workout/SetFieldNavigator";
 import WorkoutSummary from "../../components/workout/WorkoutSummary";
 import ReorderModal from "../../components/workout/ReorderModal";
-import { setActiveSlide as shareActiveSlide } from "../../lib/active-slide";
+import { setActiveSlide as shareActiveSlide, slideAfterRemoval } from "../../lib/active-slide";
 import { onFinishRequest, takeFinishRequest } from "../../lib/intent-bus";
 
 function formatElapsed(startTime: string): string {
@@ -63,6 +63,9 @@ export default function WorkoutScreen() {
 
   const pagerRef = useRef<PagerView>(null);
   const [activeSlide, setActiveSlide] = useState(0);
+  // Bumped when an exercise is removed: the native pager doesn't cope with a middle page
+  // vanishing (it can show the wrong or a blank page), so it remounts on the right page.
+  const [pagerEpoch, setPagerEpoch] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
   const [showReorder, setShowReorder] = useState(false);
   const [elapsedTime, setElapsedTime] = useState("");
@@ -184,10 +187,18 @@ export default function WorkoutScreen() {
       {
         text: "Remove",
         style: "destructive",
-        onPress: () => removeExercise(exercise.exerciseId),
+        onPress: () => {
+          const removedIndex = workout.exercises.indexOf(exercise);
+          removeExercise(exercise.exerciseId);
+          const left = workout.exercises.filter((e) => e.exerciseId !== exercise.exerciseId).length;
+          const next = slideAfterRemoval(activeSlide, removedIndex, left);
+          setActiveSlide(next);
+          if (workoutId) setWorkoutLastSlide(workoutId, next);
+          setPagerEpoch((n) => n + 1);
+        },
       },
     ]);
-  }, [workout, activeSlide, removeExercise]);
+  }, [workout, activeSlide, removeExercise, workoutId]);
 
   const handleLogRestDay = useCallback(() => {
     const result = logRestDay();
@@ -366,9 +377,10 @@ export default function WorkoutScreen() {
         showExercise={showExercise}
       >
         <PagerView
+          key={pagerEpoch}
           ref={pagerRef}
           style={{ flex: 1 }}
-          initialPage={0}
+          initialPage={activeSlide}
           onPageSelected={handlePageSelected}
         >
           {workout.exercises.map((exercise) => (

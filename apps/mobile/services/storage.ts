@@ -103,6 +103,8 @@ export interface StoredSet {
   layout?: "combined";
   side?: "L" | "R";
   bodyweight?: number;
+  /** Added by auto-add-set, not by him: only these empty rows may be trimmed on blur. */
+  autoAdded?: boolean;
 }
 
 export interface RepRangeConfig {
