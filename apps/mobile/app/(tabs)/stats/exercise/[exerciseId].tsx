@@ -274,7 +274,8 @@ export default function ExerciseHistoryScreen() {
                 <Ionicons name="chevron-forward" size={14} color={colors.chevron} />
               </View>
               <Text className="text-sm text-zinc-400 dark:text-zinc-500">
-                {entry.sets.length} sets · {entry.sets.map(formatSet).join(", ")}
+                {entry.sets.length} set{entry.sets.length === 1 ? "" : "s"} ·{" "}
+                {entry.sets.map(formatSet).join(", ")}
               </Text>
             </Pressable>
           ))}
