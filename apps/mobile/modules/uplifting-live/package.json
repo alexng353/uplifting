@@ -1,0 +1,10 @@
+{
+  "name": "uplifting-live",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Uplifting's Live Activity, HealthKit workout session and App Intent inbox",
+  "homepage": "https://github.com/alexng353/uplifting",
+  "license": "UNLICENSED",
+  "author": "Uplifting",
+  "main": "index.ts"
+}

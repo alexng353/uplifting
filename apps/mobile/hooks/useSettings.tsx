@@ -60,7 +60,8 @@ export function useSettings() {
         autoRemoveEmptySet: prev.autoRemoveEmptySet,
         bodyweight: prev.bodyweight,
         repRanges: prev.repRanges,
-        appleHealth: prev.appleHealth ?? DEFAULT_SETTINGS.appleHealth,
+        // Device-only; read storage, since the first Start can turn it on outside this hook.
+        appleHealth: getSettings().appleHealth ?? DEFAULT_SETTINGS.appleHealth,
       };
       saveSettings(newSettings);
       return newSettings;

@@ -18,9 +18,15 @@ mock.module("../services/gym-checkins", () => ({
   flushGymCheckins: () => {},
 }));
 const healthSaves: string[] = [];
+let healthAnswer: "granted" | "denied" = "denied";
+let healthAsks = 0;
 mock.module("../services/apple-health", () => ({
   saveWorkoutToAppleHealth: async (workout: { id: string }) => {
     healthSaves.push(workout.id);
+  },
+  connectAppleHealth: async () => {
+    healthAsks++;
+    return healthAnswer;
   },
 }));
 
@@ -33,7 +39,10 @@ const {
   updatePreviousSets,
   getSettings,
   setSettings,
+  getHealthPrompted,
+  setHealthPrompted,
 } = await import("../services/storage");
+const { getRest, clearRest } = await import("../services/rest-timer");
 let actions: ReturnType<typeof useWorkout>;
 let renderer: ReactTestRenderer;
 
@@ -48,6 +57,7 @@ afterEach(async () => {
   setPreviousSets({});
   healthSaves.length = 0;
   setSettings({ ...getSettings(), appleHealth: false });
+  setHealthPrompted(false);
 });
 
 test("Finish saves to Apple Health only when it is turned on", async () => {
@@ -60,14 +70,67 @@ test("Finish saves to Apple Health only when it is turned on", async () => {
   });
   for (const appleHealth of [false, true]) {
     setSettings({ ...getSettings(), appleHealth });
-    await act(() => actions.startWorkout());
+    let started!: ReturnType<typeof actions.startWorkout>;
+    await act(() => {
+      started = actions.startWorkout();
+    });
+    const exerciseId = "bench";
+    await act(() => actions.addExercise(exerciseId, "Bench"));
+    const setId = getCurrentWorkout()!.exercises[0].sets[0].id;
+    await act(() => actions.updateSet(exerciseId, setId, { reps: 5, weight: 100 }));
+    // Health needs an end after the start.
+    await new Promise((r) => setTimeout(r, 5));
     let finished!: ReturnType<typeof actions.finishWorkout>;
     await act(() => {
       finished = actions.finishWorkout();
     });
+    expect(finished.id).toBe(started!.id);
+    await new Promise((r) => setTimeout(r, 0));
     expect(healthSaves).toEqual(appleHealth ? [finished.id] : []);
   }
   setSettings({ ...getSettings(), appleHealth: false });
+});
+
+test("the first Start asks for Health once and turns it on when granted; a done set starts rest", async () => {
+  await act(() => {
+    renderer = create(
+      <WorkoutProvider>
+        <Probe />
+      </WorkoutProvider>,
+    );
+  });
+  healthAnswer = "granted";
+  healthAsks = 0;
+  await act(() => {
+    actions.startWorkout();
+  });
+  await act(async () => {
+    await new Promise((r) => setTimeout(r, 0));
+  });
+  expect(healthAsks).toBe(1);
+  expect(getHealthPrompted()).toBe(true);
+  expect(getSettings().appleHealth).toBe(true);
+
+  clearRest();
+  await act(() => actions.addExercise("row", "Row"));
+  const setId = getCurrentWorkout()!.exercises[0].sets[0].id;
+  await act(() => actions.updateSet("row", setId, { reps: 8 }));
+  expect(getRest()).toBeNull();
+  await act(() => actions.updateSet("row", setId, { weight: 60 }));
+  const rest = getRest()!;
+  expect(rest.endsAt - rest.startedAt).toBe(getSettings().defaultRestTimerSeconds * 1000);
+  // Editing a done set again does not restart the timer.
+  await act(() => actions.updateSet("row", setId, { weight: 65 }));
+  expect(getRest()).toBe(rest);
+
+  // Cancel discards; a second Start does not ask again.
+  await act(() => actions.cancelWorkout());
+  expect(getRest()).toBeNull();
+  await act(() => {
+    actions.startWorkout();
+  });
+  expect(healthAsks).toBe(1);
+  healthAnswer = "denied";
 });
 
 test.each([false, true])(

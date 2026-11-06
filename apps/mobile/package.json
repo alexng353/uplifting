@@ -11,6 +11,7 @@
     "release:ios": "bash scripts/release-ios.sh"
   },
   "dependencies": {
+    "@bacons/apple-targets": "5.0.0",
     "@elysiajs/eden": "^1.4.9",
     "@expo/vector-icons": "^15.1.1",
     "@kingstinct/react-native-healthkit": "^16.2.0",

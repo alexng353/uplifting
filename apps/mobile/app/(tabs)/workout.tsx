@@ -20,6 +20,8 @@ import AddExerciseSlide from "../../components/workout/AddExerciseSlide";
 import SetFieldNavigator from "../../components/workout/SetFieldNavigator";
 import WorkoutSummary from "../../components/workout/WorkoutSummary";
 import ReorderModal from "../../components/workout/ReorderModal";
+import { useLiveActivity } from "../../hooks/useLiveActivity";
+import { onFinishRequest, takeFinishRequest } from "../../lib/intent-bus";
 
 function formatElapsed(startTime: string): string {
   const ms = Date.now() - new Date(startTime).getTime();
@@ -64,6 +66,16 @@ export default function WorkoutScreen() {
   const [showSummary, setShowSummary] = useState(false);
   const [showReorder, setShowReorder] = useState(false);
   const [elapsedTime, setElapsedTime] = useState("");
+  useLiveActivity(workout, activeSlide);
+
+  // "Finish Workout" from Siri / Shortcuts opens the summary.
+  useEffect(() => {
+    const open = () => {
+      if (takeFinishRequest()) setShowSummary(true);
+    };
+    open();
+    return onFinishRequest(open);
+  }, []);
 
   const workoutId = workout?.id;
   const exerciseCount = workout?.exercises.length ?? 0;
@@ -253,7 +265,7 @@ export default function WorkoutScreen() {
             Start a new workout session to begin logging your exercises.
           </Text>
           <Pressable
-            onPress={startWorkout}
+            onPress={() => startWorkout()}
             className="mb-3 w-full items-center rounded-lg bg-blue-500 py-3.5 active:bg-blue-600"
           >
             <Text className="text-base font-semibold text-white">Start Workout</Text>
