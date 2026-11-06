@@ -246,10 +246,10 @@ describe("accept suggestion", () => {
     rowModeCalls.length = 0;
     await renderSets(
       [
-        makeSet("b"),
-        makeSet("R", { side: "R", layout: "combined" }),
-        makeSet("L", { side: "L", layout: "combined" }),
-        makeSet("R2", { side: "R" }),
+        makeSet("b", { reps: 8, weight: 60 }),
+        makeSet("R", { side: "R", layout: "combined", reps: 8, weight: 20 }),
+        makeSet("L", { side: "L", layout: "combined", reps: 8, weight: 20 }),
+        makeSet("R2", { side: "R", reps: 8 }),
         makeSet("L2", { side: "L" }),
       ],
       true,
@@ -268,6 +268,89 @@ describe("accept suggestion", () => {
       [1, "split"],
       [2, "bilateral"],
     ]);
+  });
+
+  describe("ghost sets", () => {
+    const host = (id: string) =>
+      renderer.root.findAll((n) => n.props.testID === id && typeof n.type === "string");
+    const set = (id: string) => exercise.sets.find((s) => s.id === id)!;
+    const pick = (s: StoredSet) => [s.reps, s.weight];
+
+    test("are drawn as ghosts, and their number fills them instead of cycling", async () => {
+      rowModeCalls.length = 0;
+      await renderSets([makeSet("a", { reps: 5, weight: 100 }), makeSet("g")]);
+      expect(host("ghost-row")).toHaveLength(1);
+      expect(host("set-mode")).toHaveLength(1); // only the real row cycles
+      const [ghostNumber] = host("make-real");
+      expect(ghostNumber.props.accessibilityLabel).toBe(
+        "Set 2, not logged yet. Tap to fill it from last time",
+      );
+      await act(() => ghostNumber.props.onPress());
+      expect(pick(set("g"))).toEqual([6, 220]);
+      expect(rowModeCalls).toEqual([]);
+      expect(host("ghost-row")).toHaveLength(0);
+    });
+
+    test("a unilateral ghost fills both sides the same; a split ghost fills each side", async () => {
+      await renderSets(
+        [
+          makeSet("uR", { side: "R", layout: "combined" }),
+          makeSet("uL", { side: "L", layout: "combined" }),
+        ],
+        true,
+      );
+      await act(() => host("make-real")[0].props.onPress());
+      expect([pick(set("uR")), pick(set("uL"))]).toEqual([
+        [6, 220],
+        [6, 220],
+      ]);
+      await act(() => renderer.unmount());
+
+      await renderSets([makeSet("sR", { side: "R" }), makeSet("sL", { side: "L" })], true);
+      await act(() => host("make-real")[0].props.onPress());
+      expect([pick(set("sR")), pick(set("sL"))]).toEqual([
+        [6, 220],
+        [5, 100],
+      ]);
+    });
+
+    test("without history a ghost copies the last filled set", async () => {
+      suggestionFor = () => ({ reps: null, weight: null, weightUnit: null });
+      await renderSets([makeSet("a", { reps: 7, weight: 80 }), makeSet("g")]);
+      await act(() => host("make-real")[0].props.onPress());
+      expect(pick(set("g"))).toEqual([7, 80]);
+    });
+
+    test.each([
+      ["bilateral", [makeSet("g")], "g", ["g"]],
+      [
+        "unilateral",
+        [
+          makeSet("R", { side: "R", layout: "combined" }),
+          makeSet("L", { side: "L", layout: "combined" }),
+        ],
+        "R",
+        ["R", "L"],
+      ],
+      ["split", [makeSet("R", { side: "R" }), makeSet("L", { side: "L" })], "R", ["R"]],
+    ] as const)(
+      "typing into a %s ghost's weight makes it real with exactly what was typed",
+      async (_mode, sets, _first, written) => {
+        await renderSets([...sets], true);
+        const field = input(0, "weight");
+        // The suggestion is only a placeholder: the field starts empty, so the first
+        // keystroke lands in it rather than appending to the grey number.
+        expect(field.props.value).toBe("");
+        expect(field.props.placeholder).toBe("220");
+        await act(() => field.props.onFocus?.({}));
+        await enter(0, "weight", "1");
+        await enter(0, "weight", "15");
+        await enter(0, "weight", "150");
+        expect(input(0, "weight").props.value).toBe("150");
+        for (const id of written) expect(set(id).weight).toBe(150);
+        expect(host("ghost-row").length).toBeLessThan(sets.length);
+      },
+    );
   });
 
   test("a mixed exercise shows a bilateral row then a one-row L/R set", async () => {
