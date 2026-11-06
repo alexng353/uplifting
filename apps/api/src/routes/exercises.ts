@@ -3,6 +3,7 @@ import { eq, and } from "drizzle-orm";
 import { db, sql } from "../db";
 import { exercises, exerciseMuscleRelations, exerciseProfiles, muscles } from "../db/schema";
 import { authPlugin } from "../lib/auth";
+import { timedColumns } from "../lib/timed-sets";
 
 const EXERCISE_TYPES = [
   "dumbbell",
@@ -145,7 +146,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
       const offsetIdx = paramIdx;
 
       const queryText = `
-        SELECT DISTINCT e.id, e.name, e.exercise_type, e.official, e.author_id, e.description, e.created_at,
+        SELECT DISTINCT e.id, e.name, e.exercise_type, e.measure, e.official, e.author_id, e.description, e.created_at,
           COALESCE(
             (SELECT array_agg(m2.name) FROM exercise_muscle_relations emr2
              JOIN muscles m2 ON m2.id = emr2.muscle_id
@@ -171,6 +172,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
         id: r.id,
         name: r.name,
         exercise_type: r.exercise_type,
+        measure: (r.measure as string) ?? "weights",
         official: r.official,
         author_id: r.author_id,
         description: r.description,
@@ -206,6 +208,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
           .values({
             name: body.name,
             exerciseType: body.exercise_type as any,
+            measure: body.measure ?? "weights",
             official: true,
             authorId: userId,
             description: body.description,
@@ -259,6 +262,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
       body: t.Object({
         name: t.String(),
         exercise_type: t.String(),
+        measure: t.Optional(t.Union([t.Literal("weights"), t.Literal("timed")])),
         description: t.Optional(t.String()),
         primary_muscles: t.Optional(t.Array(t.String())),
         secondary_muscles: t.Optional(t.Array(t.String())),
@@ -292,6 +296,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
       sql`
           SELECT weight, weight_unit, reps, created_at FROM user_sets
           WHERE user_id = ${userId} AND exercise_id = ${params.exerciseId} AND reps > 0
+            AND duration_seconds IS NULL
           ORDER BY weight DESC, reps DESC LIMIT 1
         `,
     ]);
@@ -306,6 +311,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
       id: e.id,
       name: e.name,
       exercise_type: e.exercise_type,
+      measure: (e.measure as string) ?? "weights",
       official: e.official,
       author_id: e.author_id,
       description: e.description,
@@ -335,7 +341,8 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
         : null;
 
       const rows = await sql`
-        SELECT s.reps, s.weight, s.weight_unit, s.side, s.workout_id, w.start_time
+        SELECT s.reps, s.weight, s.weight_unit, s.side, s.workout_id, w.start_time,
+          s.duration_seconds, s.speed, s.speed_unit, s.incline, s.distance, s.distance_unit
         FROM user_sets s JOIN workouts w ON w.id = s.workout_id
         WHERE s.user_id = ${userId} AND s.exercise_id = ${params.exerciseId}
           AND (${profileId}::uuid IS NULL OR s.profile_id = ${profileId}::uuid)
@@ -349,7 +356,12 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
         {
           date: string;
           workout_id: string;
-          sets: { reps: number; weight: number; weight_unit: string; side: string | null }[];
+          sets: ({
+            reps: number;
+            weight: number;
+            weight_unit: string;
+            side: string | null;
+          } & Partial<ReturnType<typeof timedColumns>>)[];
         }
       >();
 
@@ -367,6 +379,7 @@ export const exerciseRoutes = new Elysia({ prefix: "/exercises" })
           weight: Number(r.weight),
           weight_unit: r.weight_unit as string,
           side: r.side as string | null,
+          ...timedColumns(r),
         });
       }
 
