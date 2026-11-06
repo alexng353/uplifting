@@ -29,6 +29,7 @@ export interface WeekSummary {
   range: string;
 }
 
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
 
 function sameDay(a: Date, b: Date): boolean {
@@ -91,7 +92,8 @@ export function weekSummary(all: readonly WeekWorkout[], now = new Date()): Week
   const topGym = [...gymCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 
   const last = days[6].date;
-  const month = (d: Date) => d.toLocaleDateString("en-US", { month: "short" });
+  // A fixed table: Hermes formats toLocaleDateString months unreliably (it showed Oct for Nov).
+  const month = (d: Date) => MONTHS[d.getMonth()];
   const range =
     start.getMonth() === last.getMonth()
       ? `${month(start)} ${start.getDate()} – ${last.getDate()}`
