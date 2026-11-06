@@ -387,6 +387,47 @@ describe("accept suggestion", () => {
     );
   });
 
+  describe("typing a multi-digit value into a ghost keeps the field", () => {
+    const rowOf = (field: { parent: any }) => {
+      let n = field.parent;
+      while (n && !(typeof n.type === "string" && /^(ghost|set)-row$/.test(n.props.testID ?? "")))
+        n = n.parent;
+      return n;
+    };
+    test.each([
+      ["bilateral", [makeSet("B")]],
+      [
+        "unilateral",
+        [
+          makeSet("R", { side: "R", layout: "combined" }),
+          makeSet("L", { side: "L", layout: "combined" }),
+        ],
+      ],
+      ["split", [makeSet("R", { side: "R" }), makeSet("L", { side: "L" })]],
+    ] as const)("%s: 25 reps and 135 weight, key by key", async (_mode, sets) => {
+      await renderSets([...sets], true);
+      const reps = input(0, "reps");
+      const ghostRow = rowOf(reps);
+      expect(ghostRow.props.testID).toBe("ghost-row");
+      await act(() => reps.props.onFocus?.({}));
+      for (const text of ["2", "25"]) await enter(0, "reps", text);
+      for (const text of ["1", "13", "135"]) await enter(0, "weight", text);
+      expect(input(0, "reps").props.value).toBe("25");
+      expect(input(0, "weight").props.value).toBe("135");
+      expect(exercise.sets[0]).toMatchObject({ reps: 25, weight: 135 });
+      // Same host field, and its row never becomes flattenable: on device a flattened
+      // parent re-parents the native input and the keyboard closes after one digit.
+      expect(input(0, "reps")).toBe(reps);
+      const realRow = rowOf(input(0, "reps"));
+      expect(realRow.props.testID).toBe("set-row");
+      for (const row of [ghostRow, realRow]) {
+        expect(row.props.collapsable).toBe(false);
+        expect(row.props.style?.opacity).toBeDefined();
+      }
+      expect(Object.keys(input(0, "reps").props.style)).toEqual(Object.keys(reps.props.style));
+    });
+  });
+
   test("a mixed exercise shows a bilateral row then a one-row L/R set", async () => {
     await renderSets(
       [
