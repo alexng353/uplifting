@@ -10,9 +10,13 @@ import { useWorkouts } from "../../hooks/useWorkouts";
 import { useStreak } from "../../hooks/useStreak";
 import { useSync } from "../../hooks/useSync";
 import { useThemeColors } from "../../hooks/useThemeColors";
-import WeekStreak from "../../components/WeekStreak";
-import type { WorkoutEntry } from "../../components/WeekStreak";
+import { weekSummary } from "../../lib/week-summary";
 import SyncBanner from "../../components/SyncBanner";
+
+/** First word of a workout name for the day label ("Push day" -> "Push"). */
+function shortName(name?: string | null): string {
+  return (name || "Done").split(" ")[0];
+}
 
 export default function MeScreen() {
   const router = useRouter();
@@ -35,65 +39,8 @@ export default function MeScreen() {
     setRefreshing(false);
   }, [queryClient]);
 
-  // Calculate this week's stats
-  const weekStats = useMemo(() => {
-    if (!workouts) return null;
-
-    const now = new Date();
-    const dayOfWeek = now.getDay();
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - dayOfWeek);
-    startOfWeek.setHours(0, 0, 0, 0);
-
-    const weekWorkouts = workouts.filter((w) => {
-      const d = new Date(w.startTime);
-      return d >= startOfWeek && w.kind === "workout";
-    });
-
-    const weekRests = workouts.filter((w) => {
-      const d = new Date(w.startTime);
-      return d >= startOfWeek && w.kind === "rest";
-    });
-
-    let totalMinutes = 0;
-    for (const w of weekWorkouts) {
-      if (!w.endTime) continue;
-      const start = new Date(w.startTime);
-      const end = new Date(w.endTime);
-      totalMinutes += Math.round((end.getTime() - start.getTime()) / 60000);
-    }
-
-    return {
-      workouts: weekWorkouts,
-      restDays: weekRests.length,
-      totalMinutes,
-    };
-  }, [workouts]);
-
-  // Build entries for the WeekStreak component
-  const weekEntries = useMemo((): WorkoutEntry[] => {
-    if (!workouts) return [];
-
-    const now = new Date();
-    const dayOfWeek = now.getDay();
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - dayOfWeek);
-    startOfWeek.setHours(0, 0, 0, 0);
-
-    return workouts
-      .filter((w) => new Date(w.startTime) >= startOfWeek)
-      .map((w) => ({
-        date: w.startTime,
-        kind: w.kind === "rest" ? ("rest" as const) : ("workout" as const),
-      }));
-  }, [workouts]);
-
-  const formatTime = (date: string | Date): string => {
-    return new Date(date).toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  };
+  // This week, laid out for the card (Sunday start, like Stats and the streak).
+  const week = useMemo(() => weekSummary(workouts ?? []), [workouts]);
 
   const formatDuration = (start: string | Date, end?: string | Date | null): string => {
     if (!end) return "In progress";
@@ -117,17 +64,12 @@ export default function MeScreen() {
   const displayName = me?.real_name || me?.username || "User";
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-900" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-zinc-50 dark:bg-black" edges={["top"]}>
       <ScrollView
         className="flex-1"
         contentContainerClassName="pb-8"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        {/* Header */}
-        <View className="px-4 pb-2 pt-4">
-          <Text className="text-3xl font-bold dark:text-zinc-100">Me</Text>
-        </View>
-
         {/* Sync Banner */}
         <SyncBanner
           isOnline={isOnline}
@@ -137,139 +79,156 @@ export default function MeScreen() {
         />
 
         <View className="px-4 pt-4">
-          {/* Profile Section */}
-          <View className="mb-4 flex-row items-center gap-3">
-            <View className="h-14 w-14 items-center justify-center rounded-full bg-ember-500">
-              <Text className="text-lg font-bold text-ember-ink">{initials}</Text>
+          {/* Header: avatar, name, streak */}
+          <View className="mb-5 flex-row items-center gap-3">
+            <View className="h-14 w-14 items-center justify-center rounded-full bg-ember-100 dark:bg-ember-950">
+              <Text className="text-lg font-bold text-ember-700 dark:text-ember-500">
+                {initials}
+              </Text>
             </View>
-            <View>
-              <Text className="text-xl font-semibold dark:text-zinc-100">{displayName}</Text>
-              {me?.username && me?.real_name && (
+            <View className="flex-1">
+              <Text className="text-2xl font-bold dark:text-zinc-100">{displayName}</Text>
+              {me?.username && (
                 <Text className="text-sm text-zinc-500 dark:text-zinc-400">@{me.username}</Text>
               )}
             </View>
-          </View>
-
-          {/* Streak Banner */}
-          {streak > 0 && (
-            <View className="mb-4 flex-row items-center justify-center gap-1.5 rounded-xl bg-amber-100 dark:bg-amber-950 px-4 py-3">
-              <Ionicons name="flame" size={24} color={colors.warningIcon} />
-              <Text className="text-2xl font-extrabold text-amber-600 dark:text-amber-400">
-                {streak}
-              </Text>
-              <Text className="text-base font-medium text-amber-600 dark:text-amber-400">
-                day{streak !== 1 ? "s" : ""} streak
-              </Text>
-            </View>
-          )}
-
-          {/* Week Streak */}
-          <View className="mb-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4">
-            <Text className="mb-3 text-lg font-semibold dark:text-zinc-100">This Week</Text>
-            <WeekStreak entries={weekEntries} size="large" />
-          </View>
-
-          {/* This Week Stats */}
-          <View className="mb-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4">
-            <Text className="mb-3 text-lg font-semibold dark:text-zinc-100">Week Stats</Text>
-
-            {!weekStats || (weekStats.workouts.length === 0 && weekStats.restDays === 0) ? (
-              <Text className="text-center text-zinc-400 dark:text-zinc-500">
-                No activity this week
-              </Text>
-            ) : (
-              <>
-                <View className="mb-3 flex-row justify-center gap-8">
-                  <View className="items-center">
-                    <Text className="text-2xl font-bold dark:text-zinc-100">
-                      {weekStats.workouts.length}
-                    </Text>
-                    <Text className="text-xs uppercase text-zinc-400 dark:text-zinc-500">
-                      {weekStats.workouts.length === 1 ? "Workout" : "Workouts"}
-                    </Text>
-                  </View>
-                  <View className="items-center">
-                    <Text className="text-2xl font-bold dark:text-zinc-100">
-                      {weekStats.totalMinutes}
-                    </Text>
-                    <Text className="text-xs uppercase text-zinc-400 dark:text-zinc-500">
-                      Minutes
-                    </Text>
-                  </View>
-                  {weekStats.restDays > 0 && (
-                    <View className="items-center">
-                      <Text className="text-2xl font-bold dark:text-zinc-100">
-                        {weekStats.restDays}
-                      </Text>
-                      <Text className="text-xs uppercase text-zinc-400 dark:text-zinc-500">
-                        Rest
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                {/* Workout list */}
-                <View className="mt-1 border-t border-zinc-100 dark:border-zinc-800 pt-2">
-                  {weekStats.workouts.map((w) => (
-                    <Pressable
-                      key={w.id}
-                      className="flex-row items-center justify-between border-b border-zinc-50 dark:border-zinc-800 py-3 active:bg-zinc-50 dark:active:bg-zinc-800"
-                      onPress={() => router.push(`/(tabs)/stats/workout/${w.id}`)}
-                    >
-                      <View className="flex-1">
-                        <Text className="text-base font-medium dark:text-zinc-100">
-                          {w.name || "Workout"}
-                        </Text>
-                        <Text className="text-sm text-zinc-400 dark:text-zinc-500">
-                          {formatTime(w.startTime)}
-                          {w.gymLocation ? ` \u00b7 ${w.gymLocation}` : ""}
-                        </Text>
-                      </View>
-                      <View className="flex-row items-center gap-1">
-                        <Text className="text-sm text-zinc-400 dark:text-zinc-500">
-                          {formatDuration(w.startTime, w.endTime)}
-                        </Text>
-                        <Ionicons name="chevron-forward" size={16} color={colors.chevron} />
-                      </View>
-                    </Pressable>
-                  ))}
-                </View>
-              </>
+            {streak > 0 && (
+              <View
+                testID="streak-chip"
+                className="flex-row items-center gap-1 rounded-full bg-ember-100 dark:bg-ember-950 px-3 py-1.5"
+              >
+                <Ionicons name="flame" size={16} color={colors.accentIcon} />
+                <Text className="text-sm font-bold text-ember-700 dark:text-ember-500">
+                  {streak}
+                </Text>
+              </View>
             )}
           </View>
 
-          {/* Recent Workouts */}
-          {workouts && workouts.length > 0 && (
-            <View className="mb-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4">
-              <Text className="mb-3 text-lg font-semibold dark:text-zinc-100">Recent Workouts</Text>
-              {workouts.slice(0, 5).map((w) => (
-                <Pressable
-                  key={w.id}
-                  className="flex-row items-center justify-between border-b border-zinc-50 dark:border-zinc-800 py-3 active:bg-zinc-50 dark:active:bg-zinc-800"
-                  onPress={() => router.push(`/(tabs)/stats/workout/${w.id}`)}
-                >
-                  <View className="flex-1">
-                    <Text className="text-base font-medium dark:text-zinc-100">
-                      {w.name || (w.kind === "rest" ? "Rest Day" : "Workout")}
-                    </Text>
-                    <Text className="text-sm text-zinc-400 dark:text-zinc-500">
-                      {new Date(w.startTime).toLocaleDateString(undefined, {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                      {w.gymLocation ? ` \u00b7 ${w.gymLocation}` : ""}
-                    </Text>
-                  </View>
-                  <View className="flex-row items-center gap-1">
-                    <Text className="text-sm text-zinc-400 dark:text-zinc-500">
-                      {formatDuration(w.startTime, w.endTime)}
-                    </Text>
-                    <Ionicons name="chevron-forward" size={16} color={colors.chevron} />
-                  </View>
-                </Pressable>
-              ))}
+          {/* This week */}
+          <View className="mb-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-4">
+            <View className="mb-3 flex-row items-center justify-between">
+              <Text className="text-lg font-semibold dark:text-zinc-100">This week</Text>
+              <Text className="text-sm text-zinc-400 dark:text-zinc-500">{week.range}</Text>
             </View>
+            <View className="flex-row justify-between">
+              {week.days.map((day) => {
+                const done = !!day.workout;
+                return (
+                  <View key={day.date.toISOString()} className="items-center" style={{ width: 44 }}>
+                    <Text className="mb-1.5 text-xs font-semibold text-zinc-400 dark:text-zinc-500">
+                      {day.letter}
+                    </Text>
+                    <View
+                      testID={done ? "day-done" : day.isToday ? "day-today" : "day"}
+                      className="items-center justify-center rounded-full"
+                      style={{
+                        width: 36,
+                        height: 36,
+                        backgroundColor: done
+                          ? colors.successIcon
+                          : day.rest
+                            ? colors.inputBorder
+                            : colors.subtleBg,
+                        borderWidth: day.isToday && !done ? 2 : 0,
+                        borderStyle: "dashed",
+                        borderColor: colors.accentIcon,
+                        opacity: day.isFuture ? 0.6 : 1,
+                      }}
+                    >
+                      {done ? (
+                        <Ionicons name="checkmark" size={18} color="#03170D" />
+                      ) : (
+                        <Text
+                          className="text-sm font-semibold"
+                          style={{ color: day.isToday ? colors.accentIcon : colors.secondaryText }}
+                        >
+                          {day.dayOfMonth}
+                        </Text>
+                      )}
+                    </View>
+                    <Text
+                      numberOfLines={1}
+                      className="mt-1 text-[10px] font-semibold"
+                      style={{ color: colors.successIcon }}
+                    >
+                      {day.workout ? shortName(day.workout.name) : day.rest ? "Rest" : " "}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+            {week.gymDays > 0 && (
+              <View className="mt-3 flex-row items-center gap-2 border-t border-zinc-100 dark:border-zinc-800 pt-3">
+                <Ionicons name="location-outline" size={18} color={colors.successIcon} />
+                <Text className="text-base font-semibold dark:text-zinc-100">
+                  {week.gymDays} gym day{week.gymDays !== 1 ? "s" : ""}
+                  {week.topGym ? ` at ${week.topGym}` : ""}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Week stats strip */}
+          <View className="mb-6 flex-row justify-around rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 py-4">
+            <View className="items-center">
+              <Text className="text-3xl font-bold dark:text-zinc-100">{week.workouts.length}</Text>
+              <Text className="text-sm text-zinc-400 dark:text-zinc-500">
+                workout{week.workouts.length !== 1 ? "s" : ""}
+              </Text>
+            </View>
+            <View className="items-center">
+              <Text className="text-3xl font-bold dark:text-zinc-100">{week.totalMinutes}</Text>
+              <Text className="text-sm text-zinc-400 dark:text-zinc-500">min</Text>
+            </View>
+            <View className="items-center">
+              <Text className="text-3xl font-bold dark:text-zinc-100">{week.gymDays}</Text>
+              <Text className="text-sm text-zinc-400 dark:text-zinc-500">at the gym</Text>
+            </View>
+          </View>
+
+          {/* Recent */}
+          {workouts && workouts.length > 0 && (
+            <>
+              <View className="mb-2 flex-row items-center justify-between px-1">
+                <Text className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                  Recent
+                </Text>
+                <Pressable onPress={() => router.push("/(tabs)/stats")} hitSlop={8}>
+                  <Text className="text-sm font-semibold text-ember-700 dark:text-ember-500">
+                    All workouts
+                  </Text>
+                </Pressable>
+              </View>
+              <View className="mb-4 overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+                {workouts.slice(0, 5).map((w, i) => (
+                  <Pressable
+                    key={w.id}
+                    className={`flex-row items-center justify-between px-4 py-3.5 active:bg-zinc-50 dark:active:bg-zinc-900 ${
+                      i > 0 ? "border-t border-zinc-100 dark:border-zinc-800" : ""
+                    }`}
+                    onPress={() => router.push(`/(tabs)/stats/workout/${w.id}`)}
+                  >
+                    <View className="flex-1 pr-3">
+                      <Text className="text-base font-semibold dark:text-zinc-100">
+                        {w.name || (w.kind === "rest" ? "Rest Day" : "Workout")}
+                      </Text>
+                      <Text numberOfLines={1} className="text-sm text-zinc-400 dark:text-zinc-500">
+                        {new Date(w.startTime).toLocaleDateString(undefined, {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                        {w.gymLocation ? ` · ${w.gymLocation}` : ""}
+                      </Text>
+                    </View>
+                    <Text className="text-base font-semibold dark:text-zinc-100">
+                      {w.kind === "rest" ? "" : formatDuration(w.startTime, w.endTime)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </>
           )}
 
           {/* Last Sync Time */}
