@@ -19,7 +19,8 @@ public class UpliftingLiveModule: Module {
       let center = NotificationCenter.default
       self.observers.append(center.addObserver(forName: intentNotification, object: nil, queue: .main) { [weak self] note in
         guard let action = note.userInfo?["action"] as? String else { return }
-        UserDefaults.standard.removeObject(forKey: pendingIntentKey)
+        // The UserDefaults copy stays until JS consumes it: on a cold launch nobody is
+        // listening yet, and the event alone would be lost.
         self?.sendEvent("onIntent", ["action": action])
       })
       self.observers.append(center.addObserver(forName: UIApplication.willTerminateNotification, object: nil, queue: nil) { _ in
@@ -73,13 +74,12 @@ public class UpliftingLiveModule: Module {
 
     AsyncFunction("finishWorkoutSession") { (workoutId: String, endMs: Double) async throws -> [String: Any] in
       guard #available(iOS 26.0, *) else { return ["saved": false] }
-      let controller = WorkoutSessionController.shared
-      guard controller.isRunning, controller.workoutId == workoutId else { return ["saved": false] }
-      return try await controller.finish(endDate: Date(timeIntervalSince1970: endMs / 1000))
+      return try await WorkoutSessionController.shared.finish(
+        workoutId: workoutId, endDate: Date(timeIntervalSince1970: endMs / 1000))
     }
 
-    Function("discardWorkoutSession") {
-      if #available(iOS 26.0, *) { WorkoutSessionController.shared.discard() }
+    AsyncFunction("discardWorkoutSession") { () async in
+      if #available(iOS 26.0, *) { await WorkoutSessionController.shared.discardIncludingRecovered() }
     }
   }
 }

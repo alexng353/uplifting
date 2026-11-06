@@ -24,7 +24,8 @@ export function useWorkoutIntents(): void {
       router.navigate("/workout");
     };
     handle(live.consumePendingIntent());
-    const sub = live.addListener("onIntent", (e) => handle(e.action));
+    // The event only says "look"; consuming clears the copy kept for cold launches.
+    const sub = live.addListener("onIntent", () => handle(live.consumePendingIntent()));
     const appSub = AppState.addEventListener("change", (state) => {
       if (state === "active") handle(live.consumePendingIntent());
     });

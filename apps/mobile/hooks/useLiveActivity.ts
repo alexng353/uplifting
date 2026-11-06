@@ -1,16 +1,21 @@
 import { useEffect, useState } from "react";
 import { liveStateFor } from "../lib/live-activity";
+import { getActiveSlide, subscribeActiveSlide } from "../lib/active-slide";
 import { upliftingLive } from "../modules/uplifting-live";
 import { clearRest, getRest, subscribeRest } from "../services/rest-timer";
-import type { StoredWorkout } from "../services/storage";
 import { usePreviousSets } from "./usePreviousSets";
 import { useSettings } from "./useSettings";
+import { useWorkout } from "./useWorkout";
 
 /**
  * Keeps the workout Live Activity (Lock Screen + Dynamic Island) in step with the
  * workout: started with the workout, updated on every change, ended at Finish/cancel.
+ * Mounted once in the tab layout.
  */
-export function useLiveActivity(workout: StoredWorkout | null, activeIndex: number): void {
+export function useLiveActivity(): void {
+  const { workout } = useWorkout();
+  const [activeIndex, setActiveIndex] = useState(getActiveSlide);
+  useEffect(() => subscribeActiveSlide(setActiveIndex), []);
   const { getSuggestion, getTargetSetCount } = usePreviousSets();
   const { getDisplayUnit } = useSettings();
   const unit = getDisplayUnit();
