@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { clearRest, getRest, subscribeRest } from "../../services/rest-timer";
+import { lightTap } from "../../lib/haptics";
 
 // Ember, the redesign's action colour; also the Live Activity's rest countdown.
 const REST_COLOR = "#F2894B";
@@ -34,6 +35,7 @@ export default function RestTimer() {
         <Pressable
           onPress={clearRest}
           accessibilityLabel="Skip rest"
+          hitSlop={2}
           className="h-10 w-10 items-center justify-center rounded-full active:opacity-70"
           style={{ backgroundColor: REST_COLOR }}
         >
@@ -79,6 +81,8 @@ function Stopwatch() {
   }, []);
 
   const handleLongPress = useCallback(() => {
+    // The reset fires mid-hold with the finger still down; the tap says it took.
+    lightTap();
     setIsRunning(false);
     setElapsedMs(0);
   }, []);
@@ -91,6 +95,10 @@ function Stopwatch() {
       <Pressable
         onPress={handlePress}
         onLongPress={handleLongPress}
+        accessibilityRole="button"
+        accessibilityLabel={isRunning ? "Pause stopwatch" : "Start stopwatch"}
+        accessibilityHint="Long-press to reset"
+        hitSlop={2}
         className="h-10 w-10 items-center justify-center rounded-full active:opacity-70"
         style={{ backgroundColor: isRunning ? "#f59e0b" : "#F2894B" }}
       >

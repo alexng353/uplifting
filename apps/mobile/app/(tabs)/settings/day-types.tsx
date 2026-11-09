@@ -11,6 +11,11 @@ import { listFromSessions, sessionsForDay, type DayType } from "../../../lib/day
 import { generateId, getExerciseSequences } from "../../../services/storage";
 import { inlineInput } from "../../../lib/input-style";
 
+// Row icons sit in a 36x32 box with slop to a 44pt target. They are 8pt apart (gap-2),
+// so the side slop meets without overlapping, and the vertical slop stays inside the
+// row's own padding. Before this they were 30pt, and "remove" sat beside "move down".
+const ROW_ICON_HIT_SLOP = { top: 6, bottom: 6, left: 4, right: 4 };
+
 /**
  * Day types (Upper, Lower, ...): name and ordered exercise list. Changes save as you
  * make them. "Update from history" rebuilds a list from the last few sessions of that day.
@@ -91,17 +96,32 @@ export default function DayTypesScreen() {
                 <Text className="flex-1 text-base dark:text-zinc-100" numberOfLines={1}>
                   {nameOf.get(id) ?? "Unknown exercise"}
                 </Text>
-                <Pressable onPress={() => move(i, k, -1)} hitSlop={6}>
+                <Pressable
+                  onPress={() => move(i, k, -1)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Move ${nameOf.get(id) ?? "exercise"} up`}
+                  hitSlop={ROW_ICON_HIT_SLOP}
+                  className="h-8 w-9 items-center justify-center"
+                >
                   <Ionicons name="chevron-up" size={18} color={colors.mutedIcon} />
                 </Pressable>
-                <Pressable onPress={() => move(i, k, 1)} hitSlop={6}>
+                <Pressable
+                  onPress={() => move(i, k, 1)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Move ${nameOf.get(id) ?? "exercise"} down`}
+                  hitSlop={ROW_ICON_HIT_SLOP}
+                  className="h-8 w-9 items-center justify-center"
+                >
                   <Ionicons name="chevron-down" size={18} color={colors.mutedIcon} />
                 </Pressable>
                 <Pressable
                   onPress={() =>
                     update(i, { ...day, exerciseIds: day.exerciseIds.filter((x) => x !== id) })
                   }
-                  hitSlop={6}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Remove ${nameOf.get(id) ?? "exercise"} from this day`}
+                  hitSlop={ROW_ICON_HIT_SLOP}
+                  className="h-8 w-9 items-center justify-center"
                 >
                   <Ionicons name="close" size={18} color={colors.dangerIcon} />
                 </Pressable>

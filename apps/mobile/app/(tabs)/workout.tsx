@@ -26,6 +26,10 @@ import ReorderModal from "../../components/workout/ReorderModal";
 import { setActiveSlide as shareActiveSlide, slideAfterRemoval } from "../../lib/active-slide";
 import { onFinishRequest, takeFinishRequest } from "../../lib/intent-bus";
 
+// The header buttons are 36pt; 4pt of slop on each side makes them 44pt touch targets.
+// Neighbours sit 8pt apart (gap-2), so the slop meets but never overlaps.
+const HEADER_HIT_SLOP = 4;
+
 function formatElapsed(startTime: string): string {
   const ms = Date.now() - new Date(startTime).getTime();
   const totalSeconds = Math.floor(ms / 1000);
@@ -347,6 +351,9 @@ export default function WorkoutScreen() {
           {/* Reorder button */}
           <Pressable
             onPress={() => setShowReorder(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Reorder exercises"
+            hitSlop={HEADER_HIT_SLOP}
             className="h-9 w-9 items-center justify-center rounded-md active:bg-zinc-100 dark:active:bg-zinc-800"
           >
             <Ionicons name="reorder-four" size={22} color={colors.secondaryText} />
@@ -355,6 +362,9 @@ export default function WorkoutScreen() {
           {isOnExerciseSlide && (
             <Pressable
               onPress={handleRemoveCurrentExercise}
+              accessibilityRole="button"
+              accessibilityLabel="Remove this exercise"
+              hitSlop={HEADER_HIT_SLOP}
               className="h-9 w-9 items-center justify-center rounded-md active:bg-red-50 dark:active:bg-red-950"
             >
               <Ionicons name="trash-outline" size={20} color={colors.dangerIcon} />
@@ -371,6 +381,9 @@ export default function WorkoutScreen() {
           {/* Cancel button */}
           <Pressable
             onPress={handleCancelWorkout}
+            accessibilityRole="button"
+            accessibilityLabel="Cancel workout"
+            hitSlop={HEADER_HIT_SLOP}
             className="h-9 w-9 items-center justify-center rounded-md active:bg-red-50 dark:active:bg-red-950"
           >
             <Ionicons name="close" size={22} color={colors.dangerIcon} />
@@ -378,6 +391,9 @@ export default function WorkoutScreen() {
           {/* Finish button */}
           <Pressable
             onPress={handleFinish}
+            accessibilityRole="button"
+            accessibilityLabel="Finish workout"
+            hitSlop={HEADER_HIT_SLOP}
             className="h-9 w-9 items-center justify-center rounded-md active:bg-green-50 dark:active:bg-green-950"
           >
             <Ionicons name="checkmark" size={22} color={colors.successIcon} />

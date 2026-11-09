@@ -191,7 +191,7 @@ function SetNumberCell({
         onLongPress={onLongPress}
         delayLongPress={350}
         hitSlop={6}
-        className="w-8 items-center"
+        className="w-8 items-center active:opacity-50"
       >
         <Text className="text-center text-sm font-medium italic text-zinc-500">{label}</Text>
       </Pressable>
@@ -1161,7 +1161,11 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
             const setNumber = workingNumber(index);
             const warmNo = rowNumbers[index]?.warm;
             const warmupLabel = warmNo != null ? `w${warmNo}` : undefined;
-            const longPress = () => flipWarmup(index, warmNo == null);
+            // The flip lands while the finger is still down, so pair it with a tap.
+            const longPress = () => {
+              lightTap();
+              flipWarmup(index, warmNo == null);
+            };
 
             const rowModeNow = rowMode(row);
             const isTarget = warmNo == null && setNumber === targetSetCount;

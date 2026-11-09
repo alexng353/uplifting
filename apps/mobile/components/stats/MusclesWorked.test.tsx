@@ -3,8 +3,9 @@ import { act } from "react";
 import { create, type ReactTestRenderer } from "react-test-renderer";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
-mock.module("react-native", () => ({ View: "View", Text: "Text" }));
+mock.module("react-native", () => ({ View: "View", Text: "Text", Pressable: "Pressable" }));
 mock.module("react-native-svg", () => ({ SvgXml: "SvgXml" }));
+mock.module("@expo/vector-icons", () => ({ Ionicons: "Ionicons" }));
 let exercises: unknown[] = [];
 mock.module("../../hooks/useExercises", () => ({ useExercises: () => ({ data: exercises }) }));
 
