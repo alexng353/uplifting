@@ -58,7 +58,7 @@ import TimedSetRow, { TimedHeader } from "./TimedSetRow";
 import { isTimedSet, speedUnitFor, timedUpdate } from "../../lib/timed";
 import { singleLineInput } from "../../lib/input-style";
 import { lightTap } from "../../lib/haptics";
-import { compareSet, type SetResult } from "../../lib/set-result";
+import { compareSet, repFloorFromHistory, type SetResult } from "../../lib/set-result";
 
 // Stoplight for a done set against its suggestion. The yellow stays clear of Ember.
 const RESULT_STYLE: Record<SetResult, { color: string; bg: string; label: string }> = {
@@ -370,6 +370,7 @@ function SetRow({
   mode,
   onCycleMode,
   showSideColumn,
+  repFloor,
   ghost,
   onMakeReal,
   onLongPressNumber,
@@ -396,6 +397,8 @@ function SetRow({
   onCycleMode?: () => void;
   /** Some row is split, so bilateral rows leave room for the side badge. */
   showSideColumn?: boolean;
+  /** Bottom of his rep range for the arrows (lib/set-result). */
+  repFloor?: number;
   /** Nothing logged in this row yet: drawn dimmed with dashed fields. */
   ghost?: boolean;
   /** Fills a ghost row; false when there was nothing to fill it with. */
@@ -509,7 +512,9 @@ function SetRow({
         onPress={() => canAccept && updateSet(exerciseId, set.id, updates)}
         // Warmups aren't measured against last time's working sets.
         result={
-          isFilled && warmupLabel == null ? compareSet(set, suggestion, set.weightUnit) : null
+          isFilled && warmupLabel == null
+            ? compareSet(set, suggestion, set.weightUnit, repFloor)
+            : null
         }
       />
     </View>
@@ -539,6 +544,8 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
     () => (historyData?.history ? setCountsFromHistory(historyData.history) : []),
     [historyData],
   );
+  // Bottom of his rep range: the arrows treat more reps, then more weight, as progress.
+  const repFloor = useMemo(() => repFloorFromHistory(historyData?.history ?? []), [historyData]);
   useEffect(() => {
     if (rebuiltCounts.length)
       replaceSetCounts(exercise.exerciseId, exercise.profileId, rebuiltCounts);
@@ -1221,6 +1228,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
               onBlur: handleSetBlur,
               isBodyweight,
               showSideColumn,
+              repFloor,
               ghost,
               warmupLabel,
               onLongPressNumber: ghost ? undefined : longPress,
