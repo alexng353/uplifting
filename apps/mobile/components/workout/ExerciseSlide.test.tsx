@@ -618,6 +618,58 @@ describe("warmup sets", () => {
   });
 });
 
+describe("working-sets toast", () => {
+  const toast = () =>
+    renderer.root.findAll((n) => n.props.testID === "working-toast" && typeof n.type === "string");
+  const uni = (id: string) => [
+    makeSet(`${id}R`, { side: "R", layout: "combined" }),
+    makeSet(`${id}L`, { side: "L", layout: "combined" }),
+  ];
+  const sided = (w: number) => [
+    makeSet(`p${w}R`, { reps: 6, weight: w, side: "R" }),
+    makeSet(`p${w}L`, { reps: 6, weight: w, side: "L" }),
+  ];
+
+  // Alex, build 33, preacher curl (uni): w1 6x25 logged, then 6 typed into working set 1
+  // reps; the toast showed with no working set logged yet.
+  test.each([
+    ["reps then weight", ["reps", "6"], ["weight", "2"], ["weight", "25"]],
+    ["weight then reps", ["weight", "2"], ["weight", "25"], ["reps", "6"]],
+  ] as const)("logging a warmup and starting set 1 shows no toast (%s)", async (_o, ...keys) => {
+    mode = "live";
+    settings = { autoAddSet: true };
+    previous = [...sided(25), ...sided(45), ...sided(45)];
+    await renderSets([...uni("a")], true);
+    for (const [field, text] of keys) await enter(0, field, text);
+    expect(toast()).toHaveLength(0);
+    await enter(1, "reps", "6");
+    expect(toast()).toHaveLength(0);
+    // It shows once a working set is really logged.
+    await enter(1, "weight", "4");
+    await enter(1, "weight", "45");
+    expect(toast()).toHaveLength(1);
+  });
+
+  test.each([["accept-suggestion"], ["make-real"]])(
+    "logging w1 with %s and starting set 1 shows no toast",
+    async (testID) => {
+      mode = "live";
+      settings = { autoAddSet: true };
+      previous = [...sided(25), ...sided(45), ...sided(45)];
+      suggestionFor = () => ({ reps: 6, weight: 25, weightUnit: "kg" });
+      await renderSets([...uni("a")], true);
+      const [btn] = renderer.root.findAll(
+        (n) => n.props.testID === testID && typeof n.type === "string",
+      );
+      await act(() => btn.props.onPress());
+      expect(exercise.sets[0]).toMatchObject({ reps: 6, weight: 25 });
+      const after = toast().length;
+      if (input(1, "reps")) await enter(1, "reps", "6");
+      expect([after, toast().length]).toEqual([0, 0]);
+    },
+  );
+});
+
 describe("set weight entry", () => {
   test.each([0, 1])("keeps a decimal point while typing in row %i", async (row) => {
     await renderSets([makeSet("1"), makeSet("2")]);
