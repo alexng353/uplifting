@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { classifyRows, lastWorkingWeight, newWorkingStart } from "./warmup";
+import { classifyRows, lastWorkingWeight } from "./warmup";
 
 const bi = (weight: number | null, done = true, flag?: boolean) => ({
   mode: "bi" as const,
@@ -55,24 +55,6 @@ describe("warmup classification", () => {
     expect(lastWorkingWeight(prev, "bi")).toBe(145);
     expect(lastWorkingWeight(prev, "side")).toBe(60);
     expect(lastWorkingWeight([], "bi")).toBeNull();
-  });
-
-  test("the toast fires once, when the line is first crossed", () => {
-    expect(
-      newWorkingStart(["warmup", "working"], ["warmup", "working"], [true, false], [true, true]),
-    ).toBe(1);
-    expect(
-      newWorkingStart(
-        ["warmup", "working", "working"],
-        ["warmup", "working", "working"],
-        [true, true, false],
-        [true, true, true],
-      ),
-    ).toBeNull();
-    // Typing 120 goes 1 -> 12 -> 120: the row is "done" from the first digit, as a warmup.
-    expect(
-      newWorkingStart(["warmup", "warmup"], ["warmup", "working"], [true, true], [true, true]),
-    ).toBe(1);
   });
 });
 

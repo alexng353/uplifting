@@ -44,7 +44,6 @@ import {
 import { convertWeight } from "../../lib/units";
 import { useOptionalWorkout, supersetGroups } from "../../hooks/useWorkout";
 import { warmupKinds } from "../../lib/warmup-apply";
-import { newWorkingStart } from "../../lib/warmup";
 import type { StoredSet, StoredWorkoutExercise } from "../../services/storage";
 import RestTimer from "./RestTimer";
 import { useExerciseHistory } from "../../hooks/useExerciseHistory";
@@ -608,24 +607,6 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
     });
   };
 
-  // "Working sets from here" when a logged set first crosses the 80% line, with Undo.
-  const [workingToast, setWorkingToast] = useState<number | null>(null);
-  const lastKinds = useRef<{ kinds: typeof kinds; done: boolean[] } | null>(null);
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => void (toastTimer.current && clearTimeout(toastTimer.current)), []);
-  useEffect(() => {
-    const doneNow = rows.map(
-      (r) => !isRowEmpty(r) && rowSets(r).every((s) => s.reps != null && s.weight != null),
-    );
-    const prev = lastKinds.current;
-    lastKinds.current = { kinds, done: doneNow };
-    if (!prev || mode !== "live") return;
-    const start = newWorkingStart(prev.kinds, kinds, prev.done, doneNow);
-    if (start == null) return;
-    setWorkingToast(start);
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setWorkingToast(null), 5000);
-  }, [kinds, rows, mode]);
   const flipWarmup = useCallback(
     (rowIndex: number, warmup: boolean) => {
       const row = rows[rowIndex];
@@ -1294,25 +1275,6 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
           })(),
         ])}
       </KeyboardAwareScrollView>
-
-      {workingToast != null && (
-        <View
-          testID="working-toast"
-          className="mx-2 mb-1 flex-row items-center justify-between rounded-lg bg-zinc-800 px-3 py-2"
-        >
-          <Text className="text-sm text-zinc-100">Working sets from here</Text>
-          <Pressable
-            testID="working-toast-undo"
-            onPress={() => {
-              flipWarmup(workingToast, true);
-              setWorkingToast(null);
-            }}
-            hitSlop={8}
-          >
-            <Text className="text-sm font-semibold text-ember-500">Undo</Text>
-          </Pressable>
-        </View>
-      )}
 
       {/* Rest Timer */}
       <RestTimer />

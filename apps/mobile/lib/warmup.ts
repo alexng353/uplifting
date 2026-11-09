@@ -74,22 +74,3 @@ export function lastWorkingWeight(
     .filter((w) => w > 0);
   return ws.length ? Math.max(...ws) : null;
 }
-
-/**
- * The row where working sets begin, if this edit just moved it there automatically: the
- * first logged working row, after logged warmups, that wasn't a logged working row
- * before (typing 120 passes through 1 and 12, which are still warmups). For the
- * "Working sets from here" toast.
- */
-export function newWorkingStart(
-  before: readonly WarmupKind[],
-  after: readonly WarmupKind[],
-  rowsDoneBefore: readonly boolean[],
-  rowsDoneAfter: readonly boolean[],
-): number | null {
-  const first = after.findIndex((k, i) => k === "working" && rowsDoneAfter[i]);
-  if (first <= 0) return null;
-  if (!after.slice(0, first).some((k, i) => k === "warmup" && rowsDoneAfter[i])) return null;
-  const wasWorking = before[first] === "working" && rowsDoneBefore[first];
-  return wasWorking ? null : first;
-}
