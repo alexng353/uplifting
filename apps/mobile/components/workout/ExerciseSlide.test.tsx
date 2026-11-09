@@ -38,6 +38,7 @@ mock.module("../../hooks/usePreviousSets", () => ({
   usePreviousSets: () => ({
     getSuggestion: (_exerciseId: string, _profileId: string, setNumber: number, side?: "L" | "R") =>
       suggestionFor(setNumber, side),
+    getWarmupCount: () => 0,
     getTargetSetCount: () => target,
     getPrevious: () => previous,
   }),

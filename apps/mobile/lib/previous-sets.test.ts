@@ -74,3 +74,44 @@ test("a missing side may use the other unilateral side, never bilateral sets", (
     ).weight,
   ).toBe(95);
 });
+
+// Yolanda, build 33: last session 6x40, 6x60, 6x60 (before warmups were flagged). With
+// today's 6x40 as w1, working set 1 suggested 40 instead of 60.
+test("an unflagged old session splits at 80% of its top weight", async () => {
+  const { lastWarmupCount } = await import("./previous-sets");
+  const history = {
+    chest_default: [set(40, undefined, 6), set(60, undefined, 6), set(60, undefined, 6)],
+  };
+  expect(getPreviousSetSuggestion(history, "chest", undefined, 1).weight).toBe(60);
+  expect(getPreviousSetSuggestion(history, "chest", undefined, 2).weight).toBe(60);
+  expect(
+    getPreviousSetSuggestion(history, "chest", undefined, 1, undefined, { warmup: true }).weight,
+  ).toBe(40);
+  expect(lastWarmupCount(history, "chest", undefined)).toBe(1);
+});
+
+test("flagged sessions split by their flags", () => {
+  const history = {
+    chest_default: [{ ...set(150), warmup: true }, set(155), set(200)],
+  };
+  expect(getPreviousSetSuggestion(history, "chest", undefined, 1).weight).toBe(155);
+  expect(
+    getPreviousSetSuggestion(history, "chest", undefined, 1, undefined, { warmup: true }).weight,
+  ).toBe(150);
+});
+
+test("rows take warmup or working slots", async () => {
+  const { suggestionSlot } = await import("./previous-sets");
+  // Fresh exercise, last time had one warmup: the first empty row offers the warmup.
+  expect(suggestionSlot(["working"], [false], 0, 1)).toEqual({ warmup: true, n: 1 });
+  // Yolanda: w1 logged, the next empty row is working set 1.
+  const kinds = ["warmup", "working", "working"] as const;
+  expect(suggestionSlot(kinds, [true, false, false], 1, 1)).toEqual({ warmup: false, n: 1 });
+  expect(suggestionSlot(kinds, [true, false, false], 2, 1)).toEqual({ warmup: false, n: 2 });
+  expect(suggestionSlot(kinds, [true, false, false], 0, 1)).toEqual({ warmup: true, n: 1 });
+  // No warmups last time: plain working numbers.
+  expect(suggestionSlot(["working", "working"], [true, false], 1, 0)).toEqual({
+    warmup: false,
+    n: 2,
+  });
+});

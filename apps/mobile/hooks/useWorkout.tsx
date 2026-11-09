@@ -46,7 +46,7 @@ import { clearRest, startRest } from "../services/rest-timer";
 import { isSetDone } from "../lib/live-activity";
 import { detectSupersets, nextInRound, pairKey } from "../lib/supersets";
 import { targetSetCount } from "../lib/target-sets";
-import { previousForProfile, withWarmupFlags } from "../lib/warmup-apply";
+import { previousFor, withWarmupFlags } from "../lib/warmup-apply";
 import type { SideMode } from "../lib/set-rows";
 
 interface WorkoutContextValue {
@@ -465,10 +465,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
           const sets = e.sets.filter((s) => s.reps != null && s.reps > 0);
           return {
             ...e,
-            sets: withWarmupFlags(
-              { ...e, sets },
-              previousForProfile(previous, e.exerciseId, e.profileId),
-            ),
+            sets: withWarmupFlags({ ...e, sets }, previousFor(previous, e.exerciseId, e.profileId)),
           };
         }),
       };

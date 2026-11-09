@@ -1,8 +1,12 @@
 import { useCallback, useMemo } from "react";
 import { getPreviousSets, getSetCounts } from "../services/storage";
-import { getPreviousSetSuggestion, type SetSuggestion } from "../lib/previous-sets";
+import {
+  getPreviousSetSuggestion,
+  lastWarmupCount,
+  type SetSuggestion,
+} from "../lib/previous-sets";
 import { targetSetCount } from "../lib/target-sets";
-import { previousForProfile } from "../lib/warmup-apply";
+import { previousFor } from "../lib/warmup-apply";
 import type { StoredSet } from "../services/storage";
 
 export function usePreviousSets(): {
@@ -12,7 +16,9 @@ export function usePreviousSets(): {
     profileId: string | undefined,
     setNumber: number,
     side?: "L" | "R",
+    opts?: { warmup?: boolean },
   ) => SetSuggestion;
+  getWarmupCount: (exerciseId: string, profileId: string | undefined, side?: "L" | "R") => number;
   getTargetSetCount: (exerciseId: string, profileId?: string) => number | null;
   getPrevious: (exerciseId: string, profileId?: string) => StoredSet[];
 } {
@@ -26,8 +32,15 @@ export function usePreviousSets(): {
       profileId: string | undefined,
       setNumber: number,
       side?: "L" | "R",
+      opts?: { warmup?: boolean },
     ): SetSuggestion =>
-      getPreviousSetSuggestion(previousSets, exerciseId, profileId, setNumber, side),
+      getPreviousSetSuggestion(previousSets, exerciseId, profileId, setNumber, side, opts),
+    [previousSets],
+  );
+
+  const getWarmupCount = useCallback(
+    (exerciseId: string, profileId: string | undefined, side?: "L" | "R") =>
+      lastWarmupCount(previousSets, exerciseId, profileId, side),
     [previousSets],
   );
 
@@ -38,10 +51,9 @@ export function usePreviousSets(): {
   );
 
   const getPrevious = useCallback(
-    (exerciseId: string, profileId?: string) =>
-      previousForProfile(previousSets, exerciseId, profileId),
+    (exerciseId: string, profileId?: string) => previousFor(previousSets, exerciseId, profileId),
     [previousSets],
   );
 
-  return { isLoading: false, getSuggestion, getTargetSetCount, getPrevious };
+  return { isLoading: false, getSuggestion, getWarmupCount, getTargetSetCount, getPrevious };
 }
