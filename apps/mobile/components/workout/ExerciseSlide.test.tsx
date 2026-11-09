@@ -635,12 +635,12 @@ describe("working-sets toast", () => {
   test.each([
     ["reps then weight", ["reps", "6"], ["weight", "2"], ["weight", "25"]],
     ["weight then reps", ["weight", "2"], ["weight", "25"], ["reps", "6"]],
-  ] as const)("logging a warmup and starting set 1 shows no toast (%s)", async (_o, ...keys) => {
+  ] as const)("logging a warmup and starting set 1 shows no toast (%s)", async (_o, k1, k2, k3) => {
     mode = "live";
     settings = { autoAddSet: true };
     previous = [...sided(25), ...sided(45), ...sided(45)];
     await renderSets([...uni("a")], true);
-    for (const [field, text] of keys) await enter(0, field, text);
+    for (const [field, text] of [k1, k2, k3]) await enter(0, field, text);
     expect(toast()).toHaveLength(0);
     await enter(1, "reps", "6");
     expect(toast()).toHaveLength(0);
