@@ -47,11 +47,18 @@ import { warmupKinds } from "../../lib/warmup-apply";
 import { newWorkingStart } from "../../lib/warmup";
 import type { StoredSet, StoredWorkoutExercise } from "../../services/storage";
 import RestTimer from "./RestTimer";
+import { useExerciseHistory } from "../../hooks/useExerciseHistory";
+import {
+  setCountKey,
+  setCountsFromHistory,
+  targetSetCount as targetFromCounts,
+} from "../../lib/target-sets";
+import { replaceSetCounts } from "../../services/storage";
 import TimedSetRow, { TimedHeader } from "./TimedSetRow";
 import { isTimedSet, speedUnitFor, timedUpdate } from "../../lib/timed";
 import { singleLineInput } from "../../lib/input-style";
 import { lightTap } from "../../lib/haptics";
-import { compareSet, type SetResult } from "../../lib/set-result";
+import { compareSet, repFloorFromHistory, type SetResult } from "../../lib/set-result";
 
 // Stoplight for a done set against its suggestion. The yellow stays clear of Ember.
 const RESULT_STYLE: Record<SetResult, { color: string; bg: string; label: string }> = {
@@ -363,6 +370,7 @@ function SetRow({
   mode,
   onCycleMode,
   showSideColumn,
+  repFloor,
   ghost,
   onMakeReal,
   onLongPressNumber,
@@ -389,6 +397,8 @@ function SetRow({
   onCycleMode?: () => void;
   /** Some row is split, so bilateral rows leave room for the side badge. */
   showSideColumn?: boolean;
+  /** Bottom of his rep range for the arrows (lib/set-result). */
+  repFloor?: number;
   /** Nothing logged in this row yet: drawn dimmed with dashed fields. */
   ghost?: boolean;
   /** Fills a ghost row; false when there was nothing to fill it with. */
@@ -502,7 +512,9 @@ function SetRow({
         onPress={() => canAccept && updateSet(exerciseId, set.id, updates)}
         // Warmups aren't measured against last time's working sets.
         result={
-          isFilled && warmupLabel == null ? compareSet(set, suggestion, set.weightUnit) : null
+          isFilled && warmupLabel == null
+            ? compareSet(set, suggestion, set.weightUnit, repFloor)
+            : null
         }
       />
     </View>
@@ -525,7 +537,27 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   const { getSuggestion, getWarmupCount, getTargetSetCount, getPrevious } = usePreviousSets();
   const live = useOptionalWorkout();
   const liveWorkout = live?.workout ?? null;
-  const targetSetCount = getTargetSetCount(exercise.exerciseId, exercise.profileId);
+  // The usual last set, rebuilt from server history without warmups once it loads (old
+  // on-phone counts included warmups); the cached count stands in until then.
+  const { data: historyData } = useExerciseHistory(exercise.exerciseId, 6, exercise.profileId);
+  const rebuiltCounts = useMemo(
+    () => (historyData?.history ? setCountsFromHistory(historyData.history) : []),
+    [historyData],
+  );
+  // Bottom of his rep range: the arrows treat more reps, then more weight, as progress.
+  const repFloor = useMemo(() => repFloorFromHistory(historyData?.history ?? []), [historyData]);
+  useEffect(() => {
+    if (rebuiltCounts.length)
+      replaceSetCounts(exercise.exerciseId, exercise.profileId, rebuiltCounts);
+  }, [rebuiltCounts, exercise.exerciseId, exercise.profileId]);
+  const targetSetCount = rebuiltCounts.length
+    ? targetFromCounts(
+        { [setCountKey(exercise.exerciseId, exercise.profileId)]: rebuiltCounts },
+        {},
+        exercise.exerciseId,
+        exercise.profileId,
+      )
+    : getTargetSetCount(exercise.exerciseId, exercise.profileId);
   const { data: profiles = [] } = useExerciseProfiles(exercise.exerciseId);
   const createProfileMutation = useCreateExerciseProfile(exercise.exerciseId);
   const renameProfileMutation = useRenameExerciseProfile();
@@ -1196,6 +1228,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
               onBlur: handleSetBlur,
               isBodyweight,
               showSideColumn,
+              repFloor,
               ghost,
               warmupLabel,
               onLongPressNumber: ghost ? undefined : longPress,

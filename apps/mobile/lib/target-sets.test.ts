@@ -45,3 +45,33 @@ test("records unilateral pairs as one set and keeps the last 8 sessions", () => 
   expect(history).toEqual({ lat: [3, 4, 5, 6, 7, 8, 9, 10] });
   expect(recordSetCount(history, "lat", [])).toBe(history);
 });
+
+// Alex's chest press before warmups were flagged: 6x100, 8x200, 6x200 counted 3 sets,
+// so the ring sat one set too late.
+test("history counts leave out warmups, flagged or by the 80% line", async () => {
+  const { setCountsFromHistory } = await import("./target-sets");
+  const s = (reps: number, weight: number, side?: "L" | "R", is_warmup?: boolean) => ({
+    reps,
+    weight,
+    side,
+    is_warmup,
+  });
+  expect(
+    setCountsFromHistory([
+      { sets: [s(6, 100), s(8, 200), s(6, 200)] },
+      { sets: [s(6, 150, undefined, true), s(6, 200), s(6, 205)] },
+      // Preacher curl per side: 25 R/L then 45 R/L twice = 2 working rows.
+      {
+        sets: [
+          s(6, 25, "R"),
+          s(6, 25, "L"),
+          s(6, 45, "R"),
+          s(6, 45, "L"),
+          s(5, 45, "R"),
+          s(5, 45, "L"),
+        ],
+      },
+      { sets: [] },
+    ]),
+  ).toEqual([2, 2, 2]);
+});

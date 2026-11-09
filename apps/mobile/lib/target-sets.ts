@@ -1,5 +1,6 @@
 import type { StoredPreviousSets, StoredSet } from "../services/storage";
 import { toRows } from "./set-rows";
+import { splitSession } from "./previous-sets";
 
 // Recent finished set counts per exercise and profile key, oldest first.
 export type SetCountHistory = Record<string, number[]>;
@@ -71,4 +72,43 @@ export function targetSetCount(
     }
   }
   return best;
+}
+
+/** A set from the exercise history API. */
+export interface HistoryCountSet {
+  reps: number;
+  weight: number | string;
+  side?: string | null;
+  is_warmup?: boolean;
+}
+
+/**
+ * Working-set counts per session from the server's history, oldest first, for the usual
+ * last-set ring. Warmups are left out: flagged ones, and in sessions logged before
+ * warmups existed, the sets before the 80% line (the same split the suggestions use).
+ * A per-side session counts its rows (an L/R pair is one set).
+ */
+export function setCountsFromHistory(
+  history: readonly { sets: readonly HistoryCountSet[] }[],
+  max = MAX_SESSIONS,
+): number[] {
+  const counts: number[] = [];
+  for (const session of history) {
+    const toStored = (s: HistoryCountSet, i: number): StoredSet => ({
+      id: String(i),
+      reps: Number(s.reps),
+      weight: Number(s.weight),
+      weightUnit: "kg",
+      createdAt: "",
+      side: (s.side as "L" | "R" | null) ?? undefined,
+      ...(s.is_warmup ? { warmup: true } : {}),
+    });
+    const sets = session.sets.filter((s) => Number(s.reps) > 0).map(toStored);
+    const bi = splitSession(sets.filter((s) => s.side == null)).working.length;
+    const sided = (side: "L" | "R") =>
+      splitSession(sets.filter((s) => s.side === side)).working.length;
+    const n = bi + Math.max(sided("R"), sided("L"));
+    if (n > 0) counts.push(n);
+  }
+  return counts.slice(-max);
 }
