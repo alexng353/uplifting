@@ -4,6 +4,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { useThemeColors } from "../../hooks/useThemeColors";
 import { useWorkoutActions } from "../../hooks/useWorkoutActions";
 
+// The arrows are 36pt and sit 4pt apart; slop above and below makes them 44pt tall
+// without letting neighbouring arrows' targets overlap.
+const REORDER_HIT_SLOP = { top: 4, bottom: 4 };
+
 interface ReorderModalProps {
   visible: boolean;
   onClose: () => void;
@@ -74,6 +78,9 @@ export default function ReorderModal({ visible, onClose }: ReorderModalProps) {
                 <Pressable
                   onPress={() => handleMoveUp(index)}
                   disabled={index === 0}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Move ${exercise.exerciseName} up`}
+                  hitSlop={REORDER_HIT_SLOP}
                   className="h-9 w-9 items-center justify-center rounded-md bg-zinc-200 dark:bg-zinc-700 active:bg-zinc-300 dark:active:bg-zinc-600"
                   style={{ opacity: index === 0 ? 0.3 : 1 }}
                 >
@@ -82,6 +89,9 @@ export default function ReorderModal({ visible, onClose }: ReorderModalProps) {
                 <Pressable
                   onPress={() => handleMoveDown(index)}
                   disabled={!workout || index === workout.exercises.length - 1}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Move ${exercise.exerciseName} down`}
+                  hitSlop={REORDER_HIT_SLOP}
                   className="h-9 w-9 items-center justify-center rounded-md bg-zinc-200 dark:bg-zinc-700 active:bg-zinc-300 dark:active:bg-zinc-600"
                   style={{
                     opacity: !workout || index === workout.exercises.length - 1 ? 0.3 : 1,

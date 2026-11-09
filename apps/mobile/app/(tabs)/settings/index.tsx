@@ -109,7 +109,12 @@ function PickerRow({
           className="flex-1 items-center justify-center bg-black/40"
           onPress={() => setShowPicker(false)}
         >
-          <View className="mx-8 w-72 rounded-2xl bg-white dark:bg-zinc-900 p-2">
+          {/* The card claims its own touches, so a tap on its title or padding doesn't fall
+              through to the backdrop and close the picker; only a tap outside dismisses. */}
+          <View
+            onStartShouldSetResponder={() => true}
+            className="mx-8 w-72 rounded-2xl bg-white dark:bg-zinc-900 p-2"
+          >
             <Text className="px-4 py-3 text-center text-lg font-semibold dark:text-zinc-100">
               {label}
             </Text>
