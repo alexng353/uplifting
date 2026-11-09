@@ -30,9 +30,9 @@ import { api } from "../../../lib/api";
 import { clearAllData } from "../../../services/storage";
 import GymManagerModal from "../../../components/settings/GymManagerModal";
 import { inlineInput, singleLineInput, singleLineInputLarge } from "../../../lib/input-style";
+import { formatRestTime, parseRestTime, REST_PRESETS } from "../../../lib/rest-time";
 
 // Picker options
-const REST_TIMER_OPTIONS = [30, 60, 90, 120, 180];
 const MAX_DURATION_OPTIONS = [0, 60, 90, 120, 180, 240]; // 0 = disabled
 const PRIVACY_OPTIONS = ["public", "friends", "private"] as const;
 const UNIT_OPTIONS = [null, "kg", "lbs"] as const;
@@ -70,6 +70,72 @@ function SettingsRow({
     >
       {children}
     </Wrapper>
+  );
+}
+
+/**
+ * Default rest: typed as seconds, m:ss or 1m30s (10 s - 15 min), saved when editing ends;
+ * text that isn't a time reverts. The chips are quick picks.
+ */
+function RestTimeRow({
+  seconds,
+  onChange,
+}: {
+  seconds: number;
+  onChange: (seconds: number) => void;
+}) {
+  const colors = useThemeColors();
+  const [draft, setDraft] = useState<string | null>(null);
+  const commit = () => {
+    if (draft == null) return;
+    const parsed = parseRestTime(draft);
+    if (parsed != null && parsed !== seconds) onChange(parsed);
+    setDraft(null);
+  };
+  return (
+    <View className="border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
+      <View className="flex-row items-center justify-between">
+        <Text className="text-base dark:text-zinc-100">Rest Timer</Text>
+        <TextInput
+          testID="rest-time-input"
+          accessibilityLabel="Default rest time, minutes and seconds"
+          className="w-24 text-right text-zinc-500 dark:text-zinc-400"
+          style={inlineInput}
+          keyboardType="numbers-and-punctuation"
+          returnKeyType="done"
+          selectTextOnFocus
+          placeholder="1:30"
+          placeholderTextColor={colors.placeholder}
+          value={draft ?? formatRestTime(seconds)}
+          onChangeText={setDraft}
+          onEndEditing={commit}
+          onSubmitEditing={commit}
+        />
+      </View>
+      <View className="mt-2 flex-row gap-2">
+        {REST_PRESETS.map((p) => {
+          const on = p === seconds;
+          return (
+            <Pressable
+              key={p}
+              testID={`rest-preset-${p}`}
+              accessibilityState={{ selected: on }}
+              onPress={() => {
+                setDraft(null);
+                onChange(p);
+              }}
+              className={`rounded-full px-3 py-1 ${on ? "bg-ember-500" : "bg-zinc-100 dark:bg-zinc-800"}`}
+            >
+              <Text
+                className={`text-sm ${on ? "font-semibold text-zinc-950" : "text-zinc-600 dark:text-zinc-300"}`}
+              >
+                {formatRestTime(p)}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
   );
 }
 
@@ -374,14 +440,9 @@ export default function SettingsScreen() {
             }))}
             onChange={(v: "kg" | "lbs" | null) => updateSettings({ displayUnit: v })}
           />
-          <PickerRow
-            label="Rest Timer"
-            value={settings.defaultRestTimerSeconds}
-            options={REST_TIMER_OPTIONS.map((s) => ({
-              label: `${s} seconds`,
-              value: s,
-            }))}
-            onChange={(v: number) => updateSettings({ defaultRestTimerSeconds: v })}
+          <RestTimeRow
+            seconds={settings.defaultRestTimerSeconds}
+            onChange={(v) => updateSettings({ defaultRestTimerSeconds: v })}
           />
           <PickerRow
             label="Max Workout Duration"
