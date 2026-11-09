@@ -64,6 +64,7 @@ mock.module("../../hooks/useGymProfileSuggestion", () => ({
   }),
 }));
 mock.module("./RestTimer", () => ({ default: () => null }));
+mock.module("../../hooks/useExerciseHistory", () => ({ useExerciseHistory: () => ({}) }));
 mock.module("../../hooks/useWorkout", () => ({
   useOptionalWorkout: () => null,
   supersetGroups: () => [],
