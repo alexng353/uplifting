@@ -29,7 +29,7 @@ import { exerciseTitle, stripProfileSuffix, withoutPickerHint } from "../../lib/
 import { useExerciseNotes, useSetExerciseNote } from "../../hooks/useExerciseNotes";
 import { useGymProfileSuggestion } from "../../hooks/useGymProfileSuggestion";
 import { useSideDefault } from "../../hooks/useSideDefault";
-import type { SetSuggestion } from "../../lib/previous-sets";
+import { suggestionSlot, type SetSuggestion } from "../../lib/previous-sets";
 import {
   isRowEmpty,
   MODE_LABEL,
@@ -522,7 +522,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   } = useWorkoutActions();
   const colors = useThemeColors();
   const { settings, getDisplayUnit } = useSettings();
-  const { getSuggestion, getTargetSetCount, getPrevious } = usePreviousSets();
+  const { getSuggestion, getWarmupCount, getTargetSetCount, getPrevious } = usePreviousSets();
   const live = useOptionalWorkout();
   const liveWorkout = live?.workout ?? null;
   const targetSetCount = getTargetSetCount(exercise.exerciseId, exercise.profileId);
@@ -578,6 +578,26 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
     return kinds.map((k) => (k === "warmup" ? { warm: ++w } : { work: ++n }));
   }, [kinds]);
   const workingNumber = (i: number) => rowNumbers[i]?.work ?? i + 1;
+  const rowsDone = useMemo(
+    () =>
+      rows.map(
+        (r) => !isRowEmpty(r) && rowSets(r).every((s) => s.reps != null && s.weight != null),
+      ),
+    [rows],
+  );
+  // Each row suggests from the matching part of last session: warmups for warmup rows,
+  // working sets for the rest (lib/previous-sets suggestionSlot).
+  const suggestFor = (rowIndex: number, side?: "L" | "R") => {
+    const slot = suggestionSlot(
+      kinds,
+      rowsDone,
+      rowIndex,
+      getWarmupCount(exercise.exerciseId, exercise.profileId, side),
+    );
+    return getSuggestion(exercise.exerciseId, exercise.profileId, slot.n, side, {
+      warmup: slot.warmup,
+    });
+  };
 
   // "Working sets from here" when a logged set first crosses the 80% line, with Undo.
   const [workingToast, setWorkingToast] = useState<number | null>(null);
@@ -786,9 +806,8 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
     (rowIndex: number): boolean => {
       const row = rows[rowIndex];
       if (!row || !isRowEmpty(row)) return false;
-      const setNumber = workingNumber(rowIndex);
       if (timed && row.kind === "bilateral") {
-        const s = getSuggestion(exercise.exerciseId, exercise.profileId, setNumber);
+        const s = suggestFor(rowIndex);
         const above = exercise.sets.slice(0, rowIndex).reverse().find(isTimedSet);
         const from =
           s.durationSeconds != null
@@ -824,8 +843,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
           s.weight != null ? convertWeight(s.weight, s.weightUnit, target.weightUnit) : s.weight;
         return { reps: s.reps, weight };
       };
-      const suggest = (side: "R" | "L" | undefined) =>
-        getSuggestion(exercise.exerciseId, exercise.profileId, setNumber, side);
+      const suggest = (side: "R" | "L" | undefined) => suggestFor(rowIndex, side);
       const fill = (set: StoredSet, side: "R" | "L" | undefined, combined = false) => {
         // A unilateral row shows R's suggestion, or L's when R has none; fill the same.
         let suggestion = suggest(side);
@@ -1169,8 +1187,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
             // Ghost: nothing logged yet. Its number fills it; only real rows cycle mode.
             const ghost = isRowEmpty(row);
             const makeReal = () => handleMakeReal(index);
-            const suggestionFor = (side?: "L" | "R") =>
-              getSuggestion(exercise.exerciseId, exercise.profileId, setNumber, side);
+            const suggestionFor = (side?: "L" | "R") => suggestFor(index, side);
             const common = {
               setNumber,
               exerciseId: exercise.exerciseId,

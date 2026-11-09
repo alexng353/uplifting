@@ -8,16 +8,10 @@ type Ex = Pick<
   "exerciseId" | "profileId" | "sets" | "exerciseType" | "measure"
 >;
 
-/** Last session's sets for an exercise: this profile, else another profile's. */
-/** Last session's sets for exactly this exercise and profile. */
-export function previousForProfile(
-  previous: StoredPreviousSets,
-  exerciseId: string,
-  profileId?: string,
-): StoredSet[] {
-  return previous[`${exerciseId}_${profileId ?? "default"}`] ?? [];
-}
-
+/**
+ * Last session's sets for an exercise: this profile, else another profile's. Warmups and
+ * suggestions both use this, so what the ghost rows suggest and what counts as a warmup agree.
+ */
 export function previousFor(
   previous: StoredPreviousSets,
   exerciseId: string,
