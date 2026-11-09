@@ -9,8 +9,8 @@ export interface Lift {
   weightUnit?: string | null;
 }
 
-// Within 1% of the suggestion's estimated 1RM counts as the same set.
-const SAME_TOLERANCE = 0.01;
+// Within 1.5% of the suggestion's estimated 1RM counts as the same set: smaller gaps are noise.
+const SAME_TOLERANCE = 0.015;
 
 /** Epley estimated one-rep max: w * (1 + reps / 30). Bodyweight-only sets use reps. */
 export function estimatedOneRepMax(weight: number, reps: number): number {
