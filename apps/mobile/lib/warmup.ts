@@ -26,19 +26,27 @@ export function classifyRows(
   eligible: boolean,
 ): WarmupKind[] {
   const reached: Record<"bi" | "side", boolean> = { bi: false, side: false };
+  // Warmups come before the work: once any working set is logged, nothing below it is a
+  // warmup, in any mode and even with a long-press flag (a back-off set stays working).
+  let workingLogged = false;
+  const working = (row: WarmupRow): WarmupKind => {
+    if (row.done) workingLogged = true;
+    return "working";
+  };
   return rows.map((row) => {
+    if (workingLogged) return "working";
     if (row.flag === true) return "warmup";
     if (row.flag === false) {
       reached[row.mode] = true;
-      return "working";
+      return working(row);
     }
     const last = lastWorking[row.mode];
     if (!eligible || last == null || !(last > 0) || reached[row.mode] || !row.done) {
-      return "working";
+      return working(row);
     }
     if ((row.weight ?? 0) >= last * WARMUP_SHARE) {
       reached[row.mode] = true;
-      return "working";
+      return working(row);
     }
     return "warmup";
   });

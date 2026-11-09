@@ -44,9 +44,10 @@ describe("warmup classification", () => {
   });
 
   test("modes compare with their own history", () => {
-    const rows = [bi(100), { mode: "side" as const, weight: 40, done: true }];
+    // Before any working set is logged, each mode compares with its own history.
+    const rows = [{ mode: "side" as const, weight: 40, done: true }, bi(100)];
     expect(classifyRows(rows, { bi: 100, side: 45 }, true)).toEqual(["working", "working"]);
-    expect(classifyRows(rows, { bi: 100, side: 100 }, true)).toEqual(["working", "warmup"]);
+    expect(classifyRows(rows, { bi: 100, side: 100 }, true)).toEqual(["warmup", "working"]);
   });
 
   test("last working weight skips warmups and other modes", () => {
@@ -73,4 +74,22 @@ describe("warmup classification", () => {
       newWorkingStart(["warmup", "warmup"], ["warmup", "working"], [true, true], [true, true]),
     ).toBe(1);
   });
+});
+
+// Alex, build 34: "for some reason you can have a warmup after your working set?"
+test("no warmup below a logged working set, in any mode or by flag", () => {
+  const side = (weight: number) => ({ mode: "side" as const, weight, done: true });
+  expect(classifyRows([bi(100), side(40)], { bi: 100, side: 100 }, true)).toEqual([
+    "working",
+    "working",
+  ]);
+  expect(classifyRows([bi(140), bi(60, true, true)], { bi: 145 }, true)).toEqual([
+    "working",
+    "working",
+  ]);
+  expect(classifyRows([bi(45), bi(140), bi(45)], { bi: 145 }, true)).toEqual([
+    "warmup",
+    "working",
+    "working",
+  ]);
 });
