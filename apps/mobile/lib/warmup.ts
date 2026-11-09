@@ -1,12 +1,18 @@
 /**
- * Automatic warmup sets. Within an exercise, logged sets count as warmup until one
- * reaches about 80% of last session's working weight for the same mode (bilateral or
- * per side); from that set on they are working sets. A set's own flag (long-press on
- * its number) always wins and moves the line. No automatic classification for
- * bodyweight or timed exercises, or without a previous session.
+ * Automatic warmup sets. Within an exercise and mode (bilateral or per side), a logged
+ * set is a warmup until the line is reached, and it is reached by the first set that is
+ * both at 80% of last session's working weight and at 90% of the heaviest set logged in
+ * this session. The second test catches heavy ramp sets (100, 170, then 200s: 170 is a
+ * warmup), and since it only compares with sets actually logged today, a lighter day
+ * (all 170s after 200 last time) stays working. Once a working set is logged, nothing
+ * below it is a warmup, so back-off sets stay working. A set's own flag (long-press on
+ * its number) always wins. No automatic classification for bodyweight or timed
+ * exercises, or without a previous session.
  */
 
 export const WARMUP_SHARE = 0.8;
+/** Share of today's top set a set before it must reach to count as working. */
+export const RAMP_SHARE = 0.9;
 
 export interface WarmupRow {
   /** "bi" or "side": rows only compare with history of their own mode. */
@@ -26,6 +32,10 @@ export function classifyRows(
   eligible: boolean,
 ): WarmupKind[] {
   const reached: Record<"bi" | "side", boolean> = { bi: false, side: false };
+  const top: Record<"bi" | "side", number> = { bi: 0, side: 0 };
+  for (const row of rows) {
+    if (row.done && row.flag !== true) top[row.mode] = Math.max(top[row.mode], row.weight ?? 0);
+  }
   // Warmups come before the work: once any working set is logged, nothing below it is a
   // warmup, in any mode and even with a long-press flag (a back-off set stays working).
   let workingLogged = false;
@@ -44,7 +54,8 @@ export function classifyRows(
     if (!eligible || last == null || !(last > 0) || reached[row.mode] || !row.done) {
       return working(row);
     }
-    if ((row.weight ?? 0) >= last * WARMUP_SHARE) {
+    const w = row.weight ?? 0;
+    if (w >= last * WARMUP_SHARE && w >= top[row.mode] * RAMP_SHARE) {
       reached[row.mode] = true;
       return working(row);
     }

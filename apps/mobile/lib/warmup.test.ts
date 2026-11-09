@@ -93,3 +93,62 @@ test("no warmup below a logged working set, in any mode or by flag", () => {
     "working",
   ]);
 });
+
+// Alex, Nov 9: "I like heavy warmups". Pec deck 100, 170, then 200s after 200 last time.
+describe("heavy ramp sets", () => {
+  test("a ramp set under 90% of a heavier set logged after it is a warmup", () => {
+    expect(classifyRows([bi(100), bi(170), bi(200), bi(200)], { bi: 200 }, true)).toEqual([
+      "warmup",
+      "warmup",
+      "working",
+      "working",
+    ]);
+  });
+
+  test("before the top set is logged the ramp set reads as working, then moves", () => {
+    expect(classifyRows([bi(100), bi(170), bi(null, false)], { bi: 200 }, true)).toEqual([
+      "warmup",
+      "working",
+      "working",
+    ]);
+  });
+
+  test("a lighter day after a heavy one stays working", () => {
+    expect(classifyRows([bi(100), bi(170), bi(170), bi(170)], { bi: 200 }, true)).toEqual([
+      "warmup",
+      "working",
+      "working",
+      "working",
+    ]);
+  });
+
+  test("back-off sets after the top set stay working", () => {
+    expect(classifyRows([bi(100), bi(200), bi(170), bi(150)], { bi: 200 }, true)).toEqual([
+      "warmup",
+      "working",
+      "working",
+      "working",
+    ]);
+  });
+
+  test("chest press 100 then 200s; Yolanda's 40 then 60s", () => {
+    expect(classifyRows([bi(100), bi(200), bi(200)], { bi: 200 }, true)).toEqual([
+      "warmup",
+      "working",
+      "working",
+    ]);
+    expect(classifyRows([bi(40), bi(60), bi(60)], { bi: 60 }, true)).toEqual([
+      "warmup",
+      "working",
+      "working",
+    ]);
+  });
+
+  test("a flag still wins: long-press marks a ramp set working", () => {
+    expect(classifyRows([bi(100), bi(170, true, false), bi(200)], { bi: 200 }, true)).toEqual([
+      "warmup",
+      "working",
+      "working",
+    ]);
+  });
+});
