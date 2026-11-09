@@ -1,4 +1,5 @@
 import type { StoredPreviousSets, StoredSet } from "../services/storage";
+import { RAMP_SHARE } from "./warmup";
 
 // A null field means the history has no value for it; callers pick their own fallback.
 export interface SetSuggestion {
@@ -15,7 +16,7 @@ export interface SetSuggestion {
 /**
  * Last session's sets of one mode, split into warmups and working sets. Flagged sessions
  * use their flags. Sessions logged before warmups existed carry no flags, so the same
- * rule applies to them: sets before the first one at 80% of the session's top weight
+ * rule applies to them: sets before the first one at 90% of the session's top weight
  * were warmups. Without that, working set 1 suggested last time's warmup weight.
  */
 export function splitSession(sets: readonly StoredSet[]): {
@@ -26,7 +27,7 @@ export function splitSession(sets: readonly StoredSet[]): {
     return { warmups: sets.filter((s) => s.warmup), working: sets.filter((s) => !s.warmup) };
   }
   const top = Math.max(0, ...sets.map((s) => s.weight ?? 0));
-  const first = top > 0 ? sets.findIndex((s) => (s.weight ?? 0) >= top * 0.8) : 0;
+  const first = top > 0 ? sets.findIndex((s) => (s.weight ?? 0) >= top * RAMP_SHARE) : 0;
   return { warmups: sets.slice(0, first), working: sets.slice(first) };
 }
 

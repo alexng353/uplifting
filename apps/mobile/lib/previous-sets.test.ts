@@ -77,7 +77,7 @@ test("a missing side may use the other unilateral side, never bilateral sets", (
 
 // Yolanda, build 33: last session 6x40, 6x60, 6x60 (before warmups were flagged). With
 // today's 6x40 as w1, working set 1 suggested 40 instead of 60.
-test("an unflagged old session splits at 80% of its top weight", async () => {
+test("an unflagged old session splits at 90% of its top weight", async () => {
   const { lastWarmupCount } = await import("./previous-sets");
   const history = {
     chest_default: [set(40, undefined, 6), set(60, undefined, 6), set(60, undefined, 6)],
@@ -114,4 +114,20 @@ test("rows take warmup or working slots", async () => {
     warmup: false,
     n: 2,
   });
+});
+
+// Alex's pec deck, logged before warmups were flagged: 100, 170, 200, 200. The 170 ramp
+// set is a warmup, so working set 1 suggests 200 and he has 2 working sets, not 3.
+test("an unflagged old session counts heavy ramp sets as warmups", async () => {
+  const { lastWarmupCount, splitSession } = await import("./previous-sets");
+  const sets = [
+    set(100, undefined, 6),
+    set(170, undefined, 6),
+    set(200, undefined, 4),
+    set(200, undefined, 4),
+  ];
+  const history = { pec_default: sets };
+  expect(getPreviousSetSuggestion(history, "pec", undefined, 1).weight).toBe(200);
+  expect(lastWarmupCount(history, "pec", undefined)).toBe(2);
+  expect(splitSession(sets).working.length).toBe(2);
 });
