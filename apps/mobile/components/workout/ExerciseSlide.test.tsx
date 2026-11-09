@@ -284,19 +284,36 @@ describe("accept suggestion", () => {
       renderer.root.findAll((n) => n.props.testID === id && typeof n.type === "string");
     const set = (id: string) => exercise.sets.find((s) => s.id === id)!;
     const pick = (s: StoredSet) => [s.reps, s.weight];
+    // The right-hand check on the first ghost row fills it; the set number does not.
+    const fillGhost = () =>
+      host("ghost-row")[0].findAll(
+        (n) => n.props.testID === "accept-suggestion" && typeof n.type === "string",
+      )[0];
 
-    test("are drawn as ghosts, and their number fills them instead of cycling", async () => {
+    test("ghost number cycles the mode and long-press marks a warmup; only the check fills", async () => {
       rowModeCalls.length = 0;
       await renderSets([makeSet("a", { reps: 5, weight: 100 }), makeSet("g")]);
       expect(host("ghost-row")).toHaveLength(1);
-      expect(host("set-mode")).toHaveLength(1); // only the real row cycles
-      const [ghostNumber] = host("make-real");
-      expect(ghostNumber.props.accessibilityLabel).toBe(
-        "Set 2, not logged yet. Tap to fill it from last time",
-      );
-      await act(() => ghostNumber.props.onPress());
+      expect(host("make-real")).toHaveLength(0);
+      const numbers = host("set-mode");
+      expect(numbers).toHaveLength(2);
+      await act(() => numbers[1].props.onPress());
+      expect(rowModeCalls).toEqual([[1, "unilateral"]]);
+      expect(pick(set("g"))).toEqual([undefined, undefined]);
+      // Below a logged working set a ghost can't be marked warmup.
+      expect(numbers[1].props.onLongPress).toBeUndefined();
+      await act(() => renderer.unmount());
+
+      // The first row can: long-press marks it, still empty.
+      await renderSets([makeSet("g")]);
+      await act(() => host("set-mode")[0].props.onLongPress());
+      expect(set("g").warmup).toBe(true);
+      expect(pick(set("g"))).toEqual([undefined, undefined]);
+      await act(() => renderer.unmount());
+
+      await renderSets([makeSet("a", { reps: 5, weight: 100 }), makeSet("g")]);
+      await act(() => fillGhost().props.onPress());
       expect(pick(set("g"))).toEqual([6, 220]);
-      expect(rowModeCalls).toEqual([]);
       expect(host("ghost-row")).toHaveLength(0);
     });
 
@@ -308,7 +325,7 @@ describe("accept suggestion", () => {
         ],
         true,
       );
-      await act(() => host("make-real")[0].props.onPress());
+      await act(() => fillGhost().props.onPress());
       expect([pick(set("uR")), pick(set("uL"))]).toEqual([
         [6, 220],
         [6, 220],
@@ -316,7 +333,12 @@ describe("accept suggestion", () => {
       await act(() => renderer.unmount());
 
       await renderSets([makeSet("sR", { side: "R" }), makeSet("sL", { side: "L" })], true);
-      await act(() => host("make-real")[0].props.onPress());
+      // A split row has a check per side.
+      const checks = host("ghost-row").map(
+        (r) =>
+          r.findAll((n) => n.props.testID === "accept-suggestion" && typeof n.type === "string")[0],
+      );
+      for (const c of checks) await act(() => c.props.onPress());
       expect([pick(set("sR")), pick(set("sL"))]).toEqual([
         [6, 220],
         [5, 100],
@@ -326,7 +348,7 @@ describe("accept suggestion", () => {
     test("without history a ghost copies the last filled set", async () => {
       suggestionFor = () => ({ reps: null, weight: null, weightUnit: null });
       await renderSets([makeSet("a", { reps: 7, weight: 80 }), makeSet("g")]);
-      await act(() => host("make-real")[0].props.onPress());
+      await act(() => fillGhost().props.onPress());
       expect(pick(set("g"))).toEqual([7, 80]);
     });
 
@@ -336,14 +358,14 @@ describe("accept suggestion", () => {
         makeSet("a", { reps: 5, weight: 100, weightUnit: "kg" }),
         makeSet("g", { weightUnit: "lbs" }),
       ]);
-      await act(() => host("make-real")[0].props.onPress());
+      await act(() => fillGhost().props.onPress());
       expect(set("g").reps).toBe(5);
       expect(set("g").weight).toBeCloseTo(220.5, 0);
       await act(() => renderer.unmount());
 
       await renderSets([makeSet("only")]);
       // Nothing to fill from: it focuses reps instead of inventing numbers.
-      await act(() => host("make-real")[0].props.onPress());
+      await act(() => fillGhost().props.onPress());
       expect(pick(set("only"))).toEqual([undefined, undefined]);
     });
 
@@ -357,7 +379,7 @@ describe("accept suggestion", () => {
         ],
         true,
       );
-      await act(() => host("make-real")[0].props.onPress());
+      await act(() => fillGhost().props.onPress());
       expect([pick(set("uR")), pick(set("uL"))]).toEqual([
         [5, 100],
         [5, 100],

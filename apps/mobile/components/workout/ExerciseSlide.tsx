@@ -113,7 +113,6 @@ function SetNumberCell({
   mode,
   onCycleMode,
   ghost,
-  onMakeReal,
   onLongPress,
   warmup,
 }: {
@@ -128,9 +127,8 @@ function SetNumberCell({
   /** The row's mode; shown small under the number when the number can be tapped. */
   mode?: SideMode;
   onCycleMode?: () => void;
-  /** Nothing logged yet: the number fills the row instead of cycling its mode. */
+  /** Nothing logged yet: drawn dim; the number still cycles the mode. */
   ghost?: boolean;
-  onMakeReal?: () => void;
 }) {
   const colors = useThemeColors();
   const number = !isTarget ? (
@@ -172,23 +170,6 @@ function SetNumberCell({
       {mode === "bilateral" ? "bi" : mode === "unilateral" ? "uni" : "split"}
     </Text>
   );
-  // A ghost row's number makes it real (like the accept check); its mode follows the
-  // exercise default until then.
-  if (ghost && onMakeReal) {
-    return (
-      <Pressable
-        testID="make-real"
-        accessibilityRole="button"
-        accessibilityLabel={`Set ${setNumber}, not logged yet. Tap to fill it from last time`}
-        onPress={onMakeReal}
-        hitSlop={6}
-        className="w-8 items-center active:opacity-50"
-      >
-        {number}
-        {modeGlyph}
-      </Pressable>
-    );
-  }
   if (!onCycleMode || !mode) return <View className="w-8 items-center">{number}</View>;
   if (warmup) {
     return (
@@ -441,8 +422,6 @@ function SetRow({
         mode={mode}
         onCycleMode={onCycleMode}
         ghost={ghost}
-        // Nothing to fill from (no history, nothing above): start typing reps instead.
-        onMakeReal={onMakeReal && (() => void (onMakeReal() || repsRef.current?.focus()))}
       />
       {sideLabel == null ? (
         showSideColumn && <View className="w-7" />
@@ -504,9 +483,14 @@ function SetRow({
       <AcceptButton
         setNumber={setNumber}
         isFilled={isFilled}
-        canAccept={canAccept}
+        // The check is the only autofill: last time's values, or on a ghost with no history
+        // the set above. The set number never fills.
+        canAccept={canAccept || (!!ghost && !!onMakeReal)}
         label={`Use last time's ${suggestedReps} reps at ${suggestedWeight} ${displayUnit}`}
-        onPress={() => canAccept && updateSet(exerciseId, set.id, updates)}
+        onPress={() => {
+          if (canAccept) updateSet(exerciseId, set.id, updates);
+          else if (ghost && onMakeReal) onMakeReal();
+        }}
         // Warmups aren't measured against last time's working sets.
         result={
           isFilled && warmupLabel == null ? compareSet(set, suggestion, set.weightUnit) : null
@@ -1212,6 +1196,10 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
             // Ghost: nothing logged yet. Its number fills it; only real rows cycle mode.
             const ghost = isRowEmpty(row);
             const makeReal = () => handleMakeReal(index);
+            // Copying the set above needs a logged set above.
+            const copyAbove = rows.slice(0, index).some((r) => !isRowEmpty(r))
+              ? makeReal
+              : undefined;
             const suggestionFor = (side?: "L" | "R") => suggestFor(index, side);
             const common = {
               setNumber,
@@ -1223,7 +1211,11 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
               showSideColumn,
               ghost,
               warmupLabel,
-              onLongPressNumber: ghost ? undefined : longPress,
+              // Marking a warmup only makes sense above the first logged working set.
+              onLongPressNumber:
+                warmNo != null || !rowsDone.some((d, i) => i < index && d && kinds[i] === "working")
+                  ? longPress
+                  : undefined,
             };
             if (timed && row.kind === "bilateral") {
               return (
@@ -1250,7 +1242,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                   isTarget={isTarget}
                   mode="bilateral"
                   onCycleMode={cycle}
-                  onMakeReal={makeReal}
+                  onMakeReal={copyAbove}
                 />
               );
             }
@@ -1271,7 +1263,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                   isTarget={isTarget}
                   mode="unilateral"
                   onCycleMode={cycle}
-                  onMakeReal={makeReal}
+                  onMakeReal={copyAbove}
                 />
               );
             }
@@ -1294,7 +1286,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
                     targetDone={pairDone}
                     mode={i === 0 ? rowModeNow : undefined}
                     onCycleMode={i === 0 ? cycle : undefined}
-                    onMakeReal={i === 0 ? makeReal : undefined}
+                    onMakeReal={i === 0 ? copyAbove : undefined}
                   />
                 ))}
               </View>
