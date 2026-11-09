@@ -47,6 +47,13 @@ import { warmupKinds } from "../../lib/warmup-apply";
 import { newWorkingStart } from "../../lib/warmup";
 import type { StoredSet, StoredWorkoutExercise } from "../../services/storage";
 import RestTimer from "./RestTimer";
+import { useExerciseHistory } from "../../hooks/useExerciseHistory";
+import {
+  setCountKey,
+  setCountsFromHistory,
+  targetSetCount as targetFromCounts,
+} from "../../lib/target-sets";
+import { replaceSetCounts } from "../../services/storage";
 import TimedSetRow, { TimedHeader } from "./TimedSetRow";
 import { isTimedSet, speedUnitFor, timedUpdate } from "../../lib/timed";
 import { singleLineInput } from "../../lib/input-style";
@@ -525,7 +532,25 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   const { getSuggestion, getWarmupCount, getTargetSetCount, getPrevious } = usePreviousSets();
   const live = useOptionalWorkout();
   const liveWorkout = live?.workout ?? null;
-  const targetSetCount = getTargetSetCount(exercise.exerciseId, exercise.profileId);
+  // The usual last set, rebuilt from server history without warmups once it loads (old
+  // on-phone counts included warmups); the cached count stands in until then.
+  const { data: historyData } = useExerciseHistory(exercise.exerciseId, 6, exercise.profileId);
+  const rebuiltCounts = useMemo(
+    () => (historyData?.history ? setCountsFromHistory(historyData.history) : []),
+    [historyData],
+  );
+  useEffect(() => {
+    if (rebuiltCounts.length)
+      replaceSetCounts(exercise.exerciseId, exercise.profileId, rebuiltCounts);
+  }, [rebuiltCounts, exercise.exerciseId, exercise.profileId]);
+  const targetSetCount = rebuiltCounts.length
+    ? targetFromCounts(
+        { [setCountKey(exercise.exerciseId, exercise.profileId)]: rebuiltCounts },
+        {},
+        exercise.exerciseId,
+        exercise.profileId,
+      )
+    : getTargetSetCount(exercise.exerciseId, exercise.profileId);
   const { data: profiles = [] } = useExerciseProfiles(exercise.exerciseId);
   const createProfileMutation = useCreateExerciseProfile(exercise.exerciseId);
   const renameProfileMutation = useRenameExerciseProfile();

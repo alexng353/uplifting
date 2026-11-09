@@ -335,6 +335,18 @@ export function getSetCounts(): SetCountHistory {
   return getJSON<SetCountHistory>(STORAGE_KEYS.SET_COUNTS) ?? {};
 }
 
+/** Replaces one exercise's set-count history (rebuilt from the server's history). */
+export function replaceSetCounts(
+  exerciseId: string,
+  profileId: string | null | undefined,
+  counts: number[],
+): void {
+  const current = getSetCounts();
+  const key = setCountKey(exerciseId, profileId);
+  if (JSON.stringify(current[key]) === JSON.stringify(counts)) return;
+  setJSON(STORAGE_KEYS.SET_COUNTS, { ...current, [key]: counts });
+}
+
 export function recordExerciseSetCount(
   exerciseId: string,
   profileId: string | null | undefined,
