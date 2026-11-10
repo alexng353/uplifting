@@ -22,13 +22,14 @@ const OUTLINE = "#09090b";
 export default function MusclesWorked({
   exercises: done,
   title = "Muscles Worked",
-  caption = "From your top exercises: brighter means more sets.",
+  caption,
   onPress,
   embedded = false,
   testID = "muscles-worked",
 }: {
   exercises: readonly ExerciseSets[];
   title?: string;
+  /** Optional note under the figures; Alex found the old ones redundant. */
   caption?: string;
   /** Makes the card tappable, with a chevron by the title. */
   onPress?: () => void;
@@ -74,16 +75,16 @@ export default function MusclesWorked({
         </View>
       )}
       <View className="flex-row justify-around">
-        <View className="items-center">
+        <View className="items-center" accessibilityLabel="Front">
           {map("front")}
-          <Text className="mt-1 text-xs uppercase text-zinc-400">Front</Text>
         </View>
-        <View className="items-center">
+        <View className="items-center" accessibilityLabel="Back">
           {map("back")}
-          <Text className="mt-1 text-xs uppercase text-zinc-400">Back</Text>
         </View>
       </View>
-      <Text className="mt-3 text-center text-xs text-zinc-400 dark:text-zinc-500">{caption}</Text>
+      {caption ? (
+        <Text className="mt-3 text-center text-xs text-zinc-400 dark:text-zinc-500">{caption}</Text>
+      ) : null}
     </>
   );
   const cardClass = embedded

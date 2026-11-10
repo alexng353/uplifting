@@ -47,6 +47,9 @@ test("draws front and back maps heated by the top exercises' muscles", async () 
   expect(front).toContain('id="leftBicep" fill="#F2894B"');
   expect(back).toContain('id="leftGlute"');
   expect(back).not.toContain('id="leftGlute" fill="#27272a"');
+  // Alex, Nov 9: "Useless tagline". No FRONT/BACK labels or caption under the figures.
+  const texts = renderer.root.findAllByType("Text" as never).map((t) => String(t.props.children));
+  expect(texts.filter((t) => /front|back|brighter/i.test(t))).toEqual([]);
 });
 
 test("renders nothing without muscle data", async () => {
