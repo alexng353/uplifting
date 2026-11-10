@@ -1,7 +1,9 @@
 import { useEffect, useRef } from "react";
+import { AppState } from "react-native";
 import { useAuth } from "../hooks/useAuth";
 import { useWorkout } from "../hooks/useWorkout";
 import { api } from "../lib/api";
+import { detectAndSetNearbyGym } from "../services/geolocation";
 import { flushGymCheckins } from "../services/gym-checkins";
 
 const HEARTBEAT_INTERVAL = 60_000; // 60 seconds
@@ -41,6 +43,19 @@ export function ActivityTracker() {
 
     const interval = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
     return () => clearInterval(interval);
+  }, [isAuthenticated]);
+
+  // Coming back to the app at a gym switches the current gym to it (launch and Start
+  // already do), at most once a minute.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let last = 0;
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state !== "active" || Date.now() - last < 60_000) return;
+      last = Date.now();
+      detectAndSetNearbyGym().catch(() => {});
+    });
+    return () => sub.remove();
   }, [isAuthenticated]);
 
   return null;

@@ -1,13 +1,15 @@
 import * as Location from "expo-location";
 import type { Fix } from "../lib/gym-checkins";
-import { getGyms, setCurrentGymId } from "./storage";
-
-export const GYM_PROXIMITY_THRESHOLD_METERS = 300;
-
-interface Coordinates {
-  latitude: number;
-  longitude: number;
-}
+import { api } from "../lib/api";
+import { type Coordinates, nearestGym, nextCurrentGym } from "../lib/current-gym";
+import {
+  getCurrentGymId,
+  getCurrentGymManualFor,
+  getCurrentWorkout,
+  getGyms,
+  setCurrentGymDetectedAt,
+  setCurrentGymId,
+} from "./storage";
 
 /**
  * Get current position only if permission is already granted.
@@ -93,44 +95,24 @@ const FIX_TIMEOUT_MS = 15_000;
 /** Short, so a fix from the drive over or the walk out can't stand in for the tap. */
 const LAST_KNOWN_MAX_AGE_MS = 30_000;
 
-export function haversineDistance(a: Coordinates, b: Coordinates): number {
-  const R = 6371000; // Earth radius in meters
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const dLat = toRad(b.latitude - a.latitude);
-  const dLon = toRad(b.longitude - a.longitude);
-  const sinDLat = Math.sin(dLat / 2);
-  const sinDLon = Math.sin(dLon / 2);
-  const h =
-    sinDLat * sinDLat +
-    Math.cos(toRad(a.latitude)) * Math.cos(toRad(b.latitude)) * sinDLon * sinDLon;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
-
-export async function detectAndSetNearbyGym() {
+/**
+ * Switch the current gym to the saved gym the phone is at (within 300 m), at workout
+ * Start and when the app comes to the foreground. Never asks for location: without
+ * permission or with nothing near, the last gym stays. The pick is saved to the server
+ * too, so the next settings sync doesn't bring the old gym back.
+ */
+export async function detectAndSetNearbyGym(): Promise<string | null> {
   const position = await getCurrentPosition();
   if (!position) return null;
-
-  const gyms = getGyms();
-  let nearestGym: { id: string; distance: number } | null = null;
-
-  for (const gym of gyms) {
-    if (gym.latitude == null || gym.longitude == null) continue;
-    const distance = haversineDistance(position, {
-      latitude: gym.latitude,
-      longitude: gym.longitude,
-    });
-    if (
-      distance <= GYM_PROXIMITY_THRESHOLD_METERS &&
-      (!nearestGym || distance < nearestGym.distance)
-    ) {
-      nearestGym = { id: gym.id, distance };
-    }
-  }
-
-  if (nearestGym) {
-    setCurrentGymId(nearestGym.id);
-    return nearestGym.id;
-  }
-
-  return null;
+  const next = nextCurrentGym({
+    detected: nearestGym(position, getGyms())?.id ?? null,
+    current: getCurrentGymId(),
+    manualForWorkout: getCurrentGymManualFor(),
+    activeWorkoutId: getCurrentWorkout()?.id ?? null,
+  });
+  if (!next) return null;
+  setCurrentGymDetectedAt(Date.now());
+  setCurrentGymId(next);
+  api.api.v1.users.settings.put({ current_gym_id: next }).catch(() => {});
+  return next;
 }
