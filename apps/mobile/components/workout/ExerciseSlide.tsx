@@ -507,6 +507,7 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
     setRowMode,
     removeLastSet,
     trimTrailingEmptySets,
+    moveWarmupsFirst,
     changeExerciseProfile,
     mode,
   } = useWorkoutActions();
@@ -607,6 +608,19 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
     });
   };
 
+  // A warmup logged below ghost working rows moves above them once no field is being
+  // typed in (moving a row under the keyboard would drop focus).
+  const settleWarmupOrder = useCallback(() => {
+    const firstWorking = kinds.indexOf("working");
+    if (firstWorking < 0 || !kinds.slice(firstWorking).includes("warmup")) return;
+    if (TextInput.State?.currentlyFocusedInput?.()) return;
+    const ids = rows.flatMap((r, i) => (kinds[i] === "warmup" ? rowSets(r).map((s) => s.id) : []));
+    moveWarmupsFirst(exercise.exerciseId, ids);
+  }, [kinds, rows, moveWarmupsFirst, exercise.exerciseId]);
+  const settleRef = useRef(settleWarmupOrder);
+  settleRef.current = settleWarmupOrder;
+  useEffect(() => settleWarmupOrder(), [settleWarmupOrder]);
+
   const flipWarmup = useCallback(
     (rowIndex: number, warmup: boolean) => {
       const row = rows[rowIndex];
@@ -689,6 +703,8 @@ export default function ExerciseSlide({ exercise }: ExerciseSlideProps) {
   );
 
   const handleSetBlur = useCallback(() => {
+    // Focus has moved on (or the keyboard closed) by the next tick.
+    setTimeout(() => settleRef.current(), 0);
     if (mode !== "live" || !settings.autoAddSet || !settings.autoRemoveEmptySet) return;
     trimTrailingEmptySets(exercise.exerciseId, 1);
   }, [

@@ -18,6 +18,7 @@ import {
   addSetMutation,
   addUnilateralPairMutation,
   trimTrailingEmptySetsMutation,
+  moveWarmupsFirstMutation,
   changeExerciseProfileMutation,
   removeExerciseMutation,
   removeLastSetMutation,
@@ -203,6 +204,8 @@ export function useEditWorkoutState(workoutId: string) {
           apply((w) => removeLastUnilateralPairMutation(w, exerciseId)),
         trimTrailingEmptySets: (exerciseId, keepCount) =>
           apply((w) => trimTrailingEmptySetsMutation(w, exerciseId, keepCount)),
+        moveWarmupsFirst: (exerciseId, warmupSetIds) =>
+          apply((w) => moveWarmupsFirstMutation(w, exerciseId, warmupSetIds)),
         toggleUnilateral: (exerciseId) => apply((w) => toggleUnilateralMutation(w, exerciseId)),
         setRowMode: (exerciseId, rowIndex, mode) =>
           apply((w) => setRowModeMutation(w, exerciseId, rowIndex, mode)),

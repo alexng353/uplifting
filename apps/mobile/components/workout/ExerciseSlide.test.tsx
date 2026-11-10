@@ -78,6 +78,7 @@ function updateExercise(next: StoredWorkoutExercise) {
   setExerciseState(next);
 }
 const trimTrailingEmptySets = mock(() => {});
+const moveWarmupsFirst = mock(() => {});
 const rowModeCalls: [number, string][] = [];
 
 mock.module("../../hooks/useWorkoutActions", () => ({
@@ -112,6 +113,7 @@ mock.module("../../hooks/useWorkoutActions", () => ({
         ],
       }),
     trimTrailingEmptySets,
+    moveWarmupsFirst,
     setRowMode: (_exerciseId: string, row: number, mode: string) => rowModeCalls.push([row, mode]),
     changeExerciseProfile: (
       _exerciseId: string,

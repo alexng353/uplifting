@@ -37,6 +37,7 @@ export interface WorkoutActions {
   removeLastSet: (exerciseId: string) => void;
   removeLastUnilateralPair: (exerciseId: string) => void;
   trimTrailingEmptySets: (exerciseId: string, keepCount?: number) => void;
+  moveWarmupsFirst: (exerciseId: string, warmupSetIds: readonly string[]) => void;
   toggleUnilateral: (exerciseId: string) => void;
   setRowMode: (exerciseId: string, rowIndex: number, mode: SideMode) => void;
   changeExerciseProfile: (
@@ -96,6 +97,7 @@ export function useWorkoutActions(): WorkoutActions {
     removeLastSet: liveWorkout.removeLastSet,
     removeLastUnilateralPair: liveWorkout.removeLastUnilateralPair,
     trimTrailingEmptySets: liveWorkout.trimTrailingEmptySets,
+    moveWarmupsFirst: liveWorkout.moveWarmupsFirst,
     toggleUnilateral: liveWorkout.toggleUnilateral,
     setRowMode: liveWorkout.setRowMode,
     changeExerciseProfile: liveWorkout.changeExerciseProfile,
