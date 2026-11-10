@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import {
   DETECTION_HOLD_MS,
+  gymInRange,
   haversineDistance,
   nearestGym,
   nextCurrentGym,
@@ -73,4 +74,23 @@ test("a stale server gym doesn't undo a fresh detection, but later wins again", 
   expect(
     serverGymApplies({ serverGymId: "golds", localGymId: "golds", detectedAt: now, now }),
   ).toBe(true);
+});
+
+// Alex's Nov 9 workout says "Golds gym west broadway", Nov 5 "Gold's Gym West Broadway":
+// two saved gyms at one place. The current one holds while it is in range.
+test("a duplicate saved gym at the same place doesn't replace the current one", () => {
+  const dupe = { id: "golds2", latitude: golds.latitude + 0.0004, longitude: golds.longitude };
+  const here = near(golds, 0.0004);
+  expect(nearestGym(here, [golds, dupe])?.id).toBe("golds2");
+  expect(gymInRange(here, golds)).toBe(true);
+  expect(
+    nextCurrentGym({
+      detected: "golds2",
+      current: "golds",
+      currentInRange: gymInRange(here, golds),
+      manualForWorkout: null,
+      activeWorkoutId: "w1",
+    }),
+  ).toBeNull();
+  expect(gymInRange(near(sfu), golds)).toBe(false);
 });

@@ -57,12 +57,18 @@ export function nearestGym(
 export function nextCurrentGym(args: {
   detected: string | null;
   current: string | null;
+  /**
+   * The current gym is also within range. Two saved gyms at one place (Alex has "Gold's
+   * Gym West Broadway" and, it seems, "Golds gym west broadway") then don't flip.
+   */
+  currentInRange?: boolean;
   /** The workout during which the current gym was picked by hand, if any. */
   manualForWorkout: string | null;
   activeWorkoutId: string | null;
 }): string | null {
-  const { detected, current, manualForWorkout, activeWorkoutId } = args;
+  const { detected, current, currentInRange, manualForWorkout, activeWorkoutId } = args;
   if (manualForWorkout != null && manualForWorkout === activeWorkoutId) return null;
+  if (currentInRange) return null;
   if (!detected || detected === current) return null;
   return detected;
 }
@@ -79,4 +85,16 @@ export function serverGymApplies(args: {
   const { serverGymId, localGymId, detectedAt, now } = args;
   if (serverGymId === localGymId) return true;
   return detectedAt == null || now - detectedAt > DETECTION_HOLD_MS;
+}
+
+/** Whether a saved gym is within the radius of the position. */
+export function gymInRange(
+  position: Coordinates,
+  gym: GymPoint | undefined,
+  radius = GYM_PROXIMITY_THRESHOLD_METERS,
+): boolean {
+  if (!gym || gym.latitude == null || gym.longitude == null) return false;
+  return (
+    haversineDistance(position, { latitude: gym.latitude, longitude: gym.longitude }) <= radius
+  );
 }

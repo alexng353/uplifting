@@ -1,7 +1,7 @@
 import * as Location from "expo-location";
 import type { Fix } from "../lib/gym-checkins";
 import { api } from "../lib/api";
-import { type Coordinates, nearestGym, nextCurrentGym } from "../lib/current-gym";
+import { type Coordinates, gymInRange, nearestGym, nextCurrentGym } from "../lib/current-gym";
 import {
   getCurrentGymId,
   getCurrentGymManualFor,
@@ -104,9 +104,15 @@ const LAST_KNOWN_MAX_AGE_MS = 30_000;
 export async function detectAndSetNearbyGym(): Promise<string | null> {
   const position = await getCurrentPosition();
   if (!position) return null;
+  const gyms = getGyms();
+  const current = getCurrentGymId();
   const next = nextCurrentGym({
-    detected: nearestGym(position, getGyms())?.id ?? null,
-    current: getCurrentGymId(),
+    detected: nearestGym(position, gyms)?.id ?? null,
+    current,
+    currentInRange: gymInRange(
+      position,
+      gyms.find((g) => g.id === current),
+    ),
     manualForWorkout: getCurrentGymManualFor(),
     activeWorkoutId: getCurrentWorkout()?.id ?? null,
   });
