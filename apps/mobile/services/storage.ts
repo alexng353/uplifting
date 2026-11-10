@@ -53,6 +53,8 @@ export const STORAGE_KEYS = {
   GYMS: "gyms",
   CURRENT_GYM: "current_gym",
   GYM_PROFILE_MAP: "gym_profile_map",
+  CURRENT_GYM_MANUAL_FOR: "current_gym_manual_for",
+  CURRENT_GYM_DETECTED_AT: "current_gym_detected_at",
   EXERCISE_SEQUENCES: "exercise_sequences",
   TODAY_REST_DAY: "today_rest_day",
   GYM_CHECKINS: "gym_checkins",
@@ -506,12 +508,41 @@ export function getCurrentGymId(): string | null {
   return storage.getString(STORAGE_KEYS.CURRENT_GYM) ?? null;
 }
 
+const currentGymListeners = new Set<(gymId: string | null) => void>();
+
+/** Called whenever the current gym changes (a detection, a pick, a sync). */
+export function subscribeCurrentGym(listener: (gymId: string | null) => void): () => void {
+  currentGymListeners.add(listener);
+  return () => void currentGymListeners.delete(listener);
+}
+
 export function setCurrentGymId(gymId: string | null): void {
+  if (gymId === getCurrentGymId()) return;
   if (gymId === null) {
     deleteKey(STORAGE_KEYS.CURRENT_GYM);
   } else {
     storage.set(STORAGE_KEYS.CURRENT_GYM, gymId);
   }
+  for (const l of currentGymListeners) l(gymId);
+}
+
+/** The workout during which the current gym was picked by hand (it holds until Finish). */
+export function getCurrentGymManualFor(): string | null {
+  return storage.getString(STORAGE_KEYS.CURRENT_GYM_MANUAL_FOR) ?? null;
+}
+
+export function setCurrentGymManualFor(workoutId: string | null): void {
+  if (workoutId === null) deleteKey(STORAGE_KEYS.CURRENT_GYM_MANUAL_FOR);
+  else storage.set(STORAGE_KEYS.CURRENT_GYM_MANUAL_FOR, workoutId);
+}
+
+export function getCurrentGymDetectedAt(): number | null {
+  const v = storage.getString(STORAGE_KEYS.CURRENT_GYM_DETECTED_AT);
+  return v ? Number(v) : null;
+}
+
+export function setCurrentGymDetectedAt(at: number): void {
+  storage.set(STORAGE_KEYS.CURRENT_GYM_DETECTED_AT, String(at));
 }
 
 // --- Gym profile mapping operations ---
