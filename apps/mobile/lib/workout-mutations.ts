@@ -217,6 +217,31 @@ export function removeLastUnilateralPairMutation(
   return removeLastSetMutation(workout, exerciseId);
 }
 
+/**
+ * Warmup rows go above the working rows, as shown and as saved (the server keeps set
+ * order). The classifier never calls a set below a logged working set a warmup, so only
+ * empty (ghost) rows move down: a warmup logged in the third row while sets 1 and 2 were
+ * still ghosts showed under them (Alex, build 35, shoulder press).
+ */
+export function moveWarmupsFirstMutation(
+  workout: StoredWorkout,
+  exerciseId: string,
+  warmupSetIds: readonly string[],
+): StoredWorkout {
+  const warm = new Set(warmupSetIds);
+  return {
+    ...workout,
+    exercises: workout.exercises.map((e) => {
+      if (e.exerciseId !== exerciseId) return e;
+      const rows = toRows(e.sets);
+      const isWarm = (r: (typeof rows)[number]) => rowSets(r).some((s) => warm.has(s.id));
+      const ordered = [...rows.filter(isWarm), ...rows.filter((r) => !isWarm(r))];
+      if (ordered.every((r, i) => r === rows[i])) return e;
+      return withSets(e, fromRows(ordered));
+    }),
+  };
+}
+
 export function trimTrailingEmptySetsMutation(
   workout: StoredWorkout,
   exerciseId: string,

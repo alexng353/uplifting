@@ -35,6 +35,7 @@ import {
   setRowModeMutation,
   changeExerciseProfileMutation,
   trimTrailingEmptySetsMutation,
+  moveWarmupsFirstMutation,
 } from "../lib/workout-mutations";
 import {
   beginHealthForWorkout,
@@ -87,6 +88,7 @@ interface WorkoutContextValue {
   removeLastSet: (exerciseId: string) => void;
   removeLastUnilateralPair: (exerciseId: string) => void;
   trimTrailingEmptySets: (exerciseId: string, keepCount?: number) => void;
+  moveWarmupsFirst: (exerciseId: string, warmupSetIds: readonly string[]) => void;
   toggleUnilateral: (exerciseId: string) => void;
   setRowMode: (exerciseId: string, rowIndex: number, mode: SideMode) => void;
   changeExerciseProfile: (
@@ -450,6 +452,15 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     [workout, saveWorkout],
   );
 
+  const moveWarmupsFirst = useCallback(
+    (exerciseId: string, warmupSetIds: readonly string[]) => {
+      if (!workout) return;
+      const next = moveWarmupsFirstMutation(workout, exerciseId, warmupSetIds);
+      if (next.exercises.some((e, i) => e !== workout.exercises[i])) saveWorkout(next);
+    },
+    [workout, saveWorkout],
+  );
+
   const finishWorkout = useCallback(
     (name?: string, gymLocation?: string): StoredWorkout => {
       if (!workout) throw new Error("No active workout");
@@ -537,6 +548,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
         removeLastSet,
         removeLastUnilateralPair,
         trimTrailingEmptySets,
+        moveWarmupsFirst,
         toggleUnilateral,
         setRowMode,
         changeExerciseProfile,
