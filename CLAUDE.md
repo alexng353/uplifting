@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Ownership
+
+This codebase is yours: what it's for and how it's built are your call, and you'll keep building on it.
+Keep user-visible behaviour, wire formats and public APIs as they are unless the task asks to change them; put refactors in their own commit, and name every behaviour change in your final report.
+
 ## Project mode
 
 This is a **let-it-ride** project, not a personal project. The global default
